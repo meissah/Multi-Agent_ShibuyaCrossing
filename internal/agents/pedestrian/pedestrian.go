@@ -1,11 +1,10 @@
 package pedestrian
 
 import (
-	"math/rand/v2"
-
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/pedestrian_lights"
 )
 
+// Pedestrian agent struct
 type Pedestrian struct {
 	X, Y             float64 // world position
 	TargetX, TargetY float64 // destination point
@@ -13,13 +12,15 @@ type Pedestrian struct {
 	State            string  // "waiting", "walking"
 }
 
+// Method to be implemented by Game struct, gives the pedestrians the necessary information for his movement
 type PedestrianEnvironment interface {
-	nearbyPedestrianLights() []pedestrian_lights.PedestrianLight
+	nearbyPedestrianLights(x, y float64) []pedestrian_lights.PedestrianLight
 }
 
+// Method where pedestrian percepts the environment then acts accordingly
 func (p *Pedestrian) Act(env PedestrianEnvironment) {
-	p.X += rand.Float64()*4 - 2 // move randomly within ±2px per frame
-	p.Y += rand.Float64()*4 - 2
+	p.X += 2 //rand.Float64()*4 - 2 // move randomly within ±2px per frame
+	//p.Y += rand.Float64()*4 - 2
 	if p.X < 0 {
 		p.X = 0
 	}

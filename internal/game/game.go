@@ -8,6 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
@@ -15,15 +16,10 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/vehicule_lights"
 )
 
+// allows for the import of an image from a file, in this case the road pavement image
 var img *ebiten.Image
 
-type Game struct {
-	Pedestrians []*pedestrian.Pedestrian
-	Cars        []*vehicule.Vehicule
-	CarLights   []*vehicule_lights.VehiculeLight
-	PedLights   []*pedestrian_lights.PedestrianLight
-}
-
+// initializes the import of the image
 func init() {
 	var err error
 	img, _, err = ebitenutil.NewImageFromFile("internal/assets/road.png")
@@ -32,7 +28,15 @@ func init() {
 	}
 }
 
-// --- NEW: initialize some agents ---
+// Structure of the environment.
+type Game struct {
+	Pedestrians []*pedestrian.Pedestrian
+	Cars        []*vehicule.Vehicule
+	CarLights   []*vehicule_lights.VehiculeLight
+	PedLights   []*pedestrian_lights.PedestrianLight
+}
+
+// initializes some agents, to be removed later as agents will have to continuously spawn.
 func NewGame() *Game {
 	g := &Game{}
 	for i := 0; i < 5; i++ {
@@ -50,8 +54,8 @@ func NewGame() *Game {
 	return g
 }
 
+// Function responsible for updating the game's state (but not the graphics), automatically called by RunGame in main 60 times/second
 func (g *Game) Update() error {
-	// g_temp := g
 	for _, agt := range g.Pedestrians {
 		agt.Act(nil)
 	}
@@ -62,6 +66,7 @@ func (g *Game) Update() error {
 	return nil
 }
 
+// Function responsible for updating the graphics according to the game's state Games, automatically called by RunGame in main 60 times/second
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{126, 109, 97, 1.000})
 	op := &ebiten.DrawImageOptions{}
@@ -171,12 +176,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(450, 450)
 	screen.DrawImage(img1, op)
 
-	// --- NEW: Draw pedestrians (circles) ---
 	for _, p := range g.Pedestrians {
-		ebitenutil.DrawCircle(screen, p.X, p.Y, 5, color.RGBA{0, 255, 0, 255})
+		vector.FillCircle(screen, float32(p.X), float32(p.Y), 5, color.RGBA{0, 255, 0, 255}, false)
 	}
 
-	// --- NEW: Draw cars (rectangles) ---
 	for _, c := range g.Cars {
 		rect := ebiten.NewImage(int(50), int(50))
 		rect.Fill(color.RGBA{0, 0, 255, 255})
@@ -186,6 +189,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 }
 
+// sets the size of the game screen, automatically called by RunGame
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return 750, 750
 }
