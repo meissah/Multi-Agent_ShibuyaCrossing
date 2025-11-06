@@ -7,6 +7,7 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/game"
 )
 
+// test meissa
 // Start game loop
 func main() {
 	ebiten.SetWindowSize(750, 750)
