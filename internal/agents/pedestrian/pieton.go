@@ -1,4 +1,4 @@
-package Pieton
+package pedestrian
 
 import (
 	pieton_lights "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/pedestrian_lights"
@@ -14,7 +14,7 @@ type Pieton struct {
 
 // Method to be implemented by Game struct, gives the Pietons the necessary information for his movement
 type PietonEnvironment interface {
-	nearbyPietonLights(x, y float64) []pieton_lights.PietonLight
+	nearbyPietonLights(x, y float64) []pieton_lights.PedestrianLight
 }
 
 // Method where Pieton percepts the environment then acts accordingly

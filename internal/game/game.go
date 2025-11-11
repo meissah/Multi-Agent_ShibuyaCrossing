@@ -33,8 +33,8 @@ func init() {
 type Game struct {
 	Pieton       []*pieton.Pieton
 	Cars         []*cars.Car
-	CarLights    []*cars_lights.CarsLights
-	PietonLights []*pieton_lights.PietonLight
+	CarLights    []*cars_lights.VehiculeLight
+	PietonLights []*pieton_lights.PedestrianLight
 	carHandler   *cars.CarHandler
 }
 
@@ -43,8 +43,8 @@ func distance(x1, y1, x2, y2 float64) float64 {
 }
 
 // Implémentation de CarEnvironment
-func (g *Game) GetLights(x, y float64) []cars_lights.CarsLight {
-	var nearby []cars_lights.CarsLight
+func (g *Game) GetLights(x, y float64) []cars_lights.VehiculeLight {
+	var nearby []cars_lights.VehiculeLight
 	for _, light := range g.CarLights {
 		if distance(x, y, light.X, light.Y) < 100 {
 			nearby = append(nearby, *light)
@@ -56,8 +56,8 @@ func (g *Game) GetLights(x, y float64) []cars_lights.CarsLight {
 func (g *Game) IsIntersectionOccupied(x, y float64) bool {
 	// Zone d'intersection
 	const (
-		intersectionMinX = 245
-		intersectionMaxX = 495
+		intersectionMinX = 235
+		intersectionMaxX = 515
 		intersectionMinY = 300
 		intersectionMaxY = 450
 	)
@@ -79,30 +79,34 @@ func NewGame() *Game {
 
 	// Initialiser le gestionnaire de voitures
 	g.carHandler = cars.NewCarHandler(g, 10)
-	g.Cars = make([]*cars.Car, 0) // Ajouter cette ligne
+	g.Cars = make([]*cars.Car, 0)
 	g.carHandler.Start()
 	return g
 }
 
 // Function responsible for updating the game's state (but not the graphics), automatically called by RunGame in main 60 times/second
+
 func (g *Game) Update() error {
-	// Mise à jour des voitures
-	select {
-	case update := <-g.carHandler.GetUpdates():
-		cars := g.carHandler.GetCars()
-		if update.ID < len(cars) {
-			cars[update.ID].X = update.X
-			cars[update.ID].Y = update.Y
-			cars[update.ID].State = update.State
+	// Drainer toutes les mises à jour du CarHandler
+	for {
+		select {
+		case up := <-g.carHandler.GetUpdates():
+			cars := g.carHandler.GetCars()
+			if up.ID < len(cars) {
+				cars[up.ID].X = up.X
+				cars[up.ID].Y = up.Y
+				cars[up.ID].State = up.State
+			}
+		default:
+			goto done
 		}
-	default:
 	}
+done:
 
-	// Mise à jour des piétons
-	for _, p := range g.Pieton { // garder ce que ahmad a fait
-		p.Act(g)
+	// piétons (placeholder)
+	for _, p := range g.Pieton {
+		p.Act(nil)
 	}
-
 	return nil
 }
 
@@ -115,22 +119,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Translate(300, 0)
 	screen.DrawImage(img, op)
 
-	// rotated road
-
+	// horizontal road
 	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(.15075, .392465)
 	op.GeoM.Rotate(math.Pi / 2)
 	op.GeoM.Translate(750, 300)
 	screen.DrawImage(img, op)
 
-	// horizontal road
 	img1 := ebiten.NewImage(260, 150)
 	img1.Fill(color.RGBA{71, 71, 71, 255})
 	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(245, 300)
 	screen.DrawImage(img1, op)
-
-	// vertical road
 
 	img1 = ebiten.NewImage(150, 260)
 	img1.Fill(color.RGBA{71, 71, 71, 255})
@@ -151,6 +151,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(stripes, op)
 	}
 
+	// Bandes blanches diagonales
 	stripes = ebiten.NewImage(5, 55)
 	stripes.Fill(color.RGBA{255, 255, 255, 255})
 	for x := 300.0; x < 445; x += 7.5 {
@@ -164,6 +165,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(stripes, op)
 	}
 
+	// Bandes blanches diagonales inversées
 	stripes = ebiten.NewImage(5, 55)
 	stripes.Fill(color.RGBA{255, 255, 255, 255})
 	for x := 0.0; x < 22; x++ {
@@ -173,66 +175,66 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(stripes, op)
 	}
 
+	// Trottoirs
 	img1 = ebiten.NewImage(55, 300)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(245, 0)
-	screen.DrawImage(img1, op)
+	img1.Fill(color.RGBA{128, 128, 128, 255})
 
-	img1 = ebiten.NewImage(55, 300)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(245, 450)
-	screen.DrawImage(img1, op)
-
-	img1 = ebiten.NewImage(55, 300)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(450, 0)
-	screen.DrawImage(img1, op)
-
-	img1 = ebiten.NewImage(55, 300)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(450, 450)
-	screen.DrawImage(img1, op)
+	positions := [][2]float64{
+		{245, 0}, {245, 450}, {450, 0}, {450, 450},
+	}
+	for _, pos := range positions {
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(pos[0], pos[1])
+		screen.DrawImage(img1, op)
+	}
 
 	img1 = ebiten.NewImage(300, 55)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(0, 245)
-	screen.DrawImage(img1, op)
+	img1.Fill(color.RGBA{128, 128, 128, 255})
 
-	img1 = ebiten.NewImage(300, 55)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(450, 245)
-	screen.DrawImage(img1, op)
+	positions = [][2]float64{
+		{0, 245}, {450, 245}, {0, 450}, {450, 450},
+	}
+	for _, pos := range positions {
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(pos[0], pos[1])
+		screen.DrawImage(img1, op)
+	}
 
-	img1 = ebiten.NewImage(300, 55)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(0, 450)
-	screen.DrawImage(img1, op)
-
-	img1 = ebiten.NewImage(300, 55)
-	img1.Fill(color.RGBA{139, 26, 26, 255})
-	op = &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(450, 450)
-	screen.DrawImage(img1, op)
-
+	// Dessiner les piétons
 	for _, p := range g.Pieton {
 		vector.FillCircle(screen, float32(p.X), float32(p.Y), 5, color.RGBA{0, 255, 0, 255}, false)
 	}
 
-	// Dessin des voitures
-	for _, c := range g.Cars {
-		rect := ebiten.NewImage(int(50), int(50))
-		rect.Fill(color.RGBA{0, 0, 255, 255})
+	// Dessiner les voitures
+	for _, c := range g.carHandler.GetCars() {
+		// Dimensions selon la direction
+		var w, h int
+		switch c.Dir {
+		case cars.North, cars.South:
+			w, h = 23, 33 // verticales : étroites et hautes
+		case cars.East, cars.West:
+			w, h = 33, 23 // horizontales : larges et basses
+		}
+		rect := ebiten.NewImage(w, h)
+
+		// Couleur selon l'état
+		var carColor color.RGBA
+		switch c.State {
+		case "waiting", "stopped":
+			carColor = color.RGBA{255, 0, 0, 255} // Rouge si en attente
+		case "turning":
+			carColor = color.RGBA{255, 165, 0, 255} // Orange si tourne
+		default:
+			carColor = color.RGBA{0, 0, 255, 255} // Bleu si roule
+		}
+
+		rect.Fill(carColor)
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(c.X, c.Y)
+		// centrer le rectangle sur (c.X, c.Y)
+		op.GeoM.Translate(c.X-float64(w)/2, c.Y-float64(h)/2)
 		screen.DrawImage(rect, op)
 	}
+
 }
 
 // sets the size of the game screen, automatically called by RunGame

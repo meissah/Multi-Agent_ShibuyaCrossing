@@ -7,17 +7,17 @@ import (
 	cars_lights "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/vehicule_lights"
 )
 
-// Direction définit les directions possibles pour une voiture
+// Direction enum existante supposée
 type Direction int
 
 const (
-	North Direction = iota // Vers le haut de l'écran
-	South                  // Vers le bas de l'écran
-	East                   // Vers la droite de l'écran
-	West                   // Vers la gauche de l'écran
+	North Direction = iota // monte (y diminue)
+	South                  // descend (y augmente)
+	East                   // va à droite (x augmente)
+	West                   // va à gauche (x diminue)
 )
 
-// TurnDecision définit la décision de virage à l'intersection
+// Décision placeholder (non utilisée pour l’instant)
 type TurnDecision int
 
 const (
@@ -26,282 +26,162 @@ const (
 	TurnRight
 )
 
-// CarEnvironment définit l'interface que le jeu doit implémenter
-// pour fournir les informations nécessaires aux voitures
+// Interface environnement pour la voiture (inspiré simu3)
 type CarEnvironment interface {
-	// GetLights retourne les feux proches de la position donnée
-	GetLights(x, y float64) []cars_lights.CarsLight
-	// IsIntersectionOccupied vérifie si l'intersection est occupée
+	GetLights(x, y float64) []cars_lights.VehiculeLight
 	IsIntersectionOccupied(x, y float64) bool
 }
 
-// Car représente une voiture dans la simulation
-type Car struct {
-	ID        int              // Identifiant unique de la voiture
-	X, Y      float64          // Position actuelle
-	Speed     float64          // Vitesse en pixels par frame
-	Direction Direction        // Direction actuelle
-	State     string           // État : "driving", "waiting", "turning"
-	Lane      int              // Voie : 0 = voie de gauche, 1 = voie de droite
-	updates   chan<- CarUpdate // Canal pour envoyer les mises à jour de position
-}
-
-// CarUpdate structure pour les mises à jour de position
+// Update envoyé au handler
 type CarUpdate struct {
 	ID    int
 	X, Y  float64
-	State string
+	State string // "moving","stopped","done"
+	Dir   Direction
 }
 
-// NewCar crée une nouvelle voiture
-func NewCar(id int, x, y float64, dir Direction, lane int, updates chan<- CarUpdate) *Car {
+type Car struct {
+	ID           int
+	X, Y         float64
+	Dir          Direction
+	LaneIndex    int // 0 ou 1
+	Speed        float64
+	State        string
+	TurnDecision TurnDecision
+	stopDist     float64
+	updateCh     chan<- CarUpdate
+
+	// interne
+	lastStep time.Time
+	env      CarEnvironment
+	done     <-chan bool
+}
+
+// NewCar constructeur
+func NewCar(id int, x, y float64, dir Direction, lane int, ch chan<- CarUpdate) *Car {
 	return &Car{
-		ID:           id,
-		X:            x,
-		Y:            y,
-		Speed:        2.0,
-		Direction:    dir,
-		State:        "driving",
-		Lane:         lane,
-		TurnDecision: Straight, // Par défaut, tout droit
-		updates:      updates,
-		isTurning:    false,
+		ID:        id,
+		X:         x,
+		Y:         y,
+		Dir:       dir,
+		LaneIndex: lane,
+		Speed:     90, // px/sec
+		State:     "moving",
+		stopDist:  90,
+		updateCh:  ch,
+		lastStep:  time.Now(),
 	}
 }
 
-// Start lance la goroutine qui gère le comportement de la voiture
-func (c *Car) Start(env CarEnvironment, done chan bool) {
-	go func() {
-		// Ticker pour mettre à jour la position 60 fois par seconde
-		ticker := time.NewTicker(time.Second / 60)
-		defer ticker.Stop()
+func (c *Car) IDCar() int { return c.ID }
 
-		for {
-			select {
-			case <-done: // Signal d'arrêt
-				return
-			case <-ticker.C: // Mise à jour régulière
-				c.Act(env)
-				// Envoie la mise à jour de position
-				c.updates <- CarUpdate{
-					ID:    c.ID,
-					X:     c.X,
-					Y:     c.Y,
-					State: c.State,
-				}
+// Start lance la boucle agent
+func (c *Car) Start(env CarEnvironment, done <-chan bool) {
+	c.env = env
+	c.done = done
+	go c.loop()
+}
+
+func (c *Car) loop() {
+	ticker := time.NewTicker(40 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-c.done:
+			return
+		case <-ticker.C:
+			c.Percept()
+			c.Deliberate()
+			c.Act()
+			c.emit()
+			c.cleanupIfOut()
+		}
+	}
+}
+
+// Percept: récupère les feux proches
+func (c *Car) Percept() {
+	// rien stocké si pas besoin, on traite directement dans Deliberate
+}
+
+// Deliberate: décider arrêt ou mouvement
+func (c *Car) Deliberate() {
+	if c.env == nil {
+		return
+	}
+	lights := c.env.GetLights(c.X, c.Y)
+	shouldStop := false
+	for _, l := range lights {
+		if l.State == "red" {
+			// distance selon direction (projection simple)
+			d := math.Hypot(l.X-c.X, l.Y-c.Y)
+			if d < c.stopDist && c.approachingLight(l) {
+				shouldStop = true
+				break
 			}
 		}
-	}()
+	}
+	if shouldStop {
+		c.State = "stopped"
+	} else {
+		c.State = "moving"
+	}
 }
 
-// Act implémente le comportement de la voiture
-func (c *Car) Act(env CarEnvironment) {
-	// Vérification des feux
-	lights := env.GetLights(c.X, c.Y)
-	for _, light := range lights {
-		if light.IsRed() {
-			c.State = "waiting"
-			return
-		}
-	}
-
-	// Vérification de l'intersection
-	if env.IsIntersectionOccupied(c.X, c.Y) {
-		c.State = "waiting"
+// Act: avancer si moving
+func (c *Car) Act() {
+	if c.State != "moving" {
 		return
 	}
+	now := time.Now()
+	dt := now.Sub(c.lastStep).Seconds()
+	c.lastStep = now
+	dist := c.Speed * dt
 
-	// Si tout est clair, on avance
-	c.State = "driving"
-	c.move()
-}
-
-// isInIntersection vérifie si la voiture est dans l'intersection
-func (c *Car) isInIntersection() bool {
-	const (
-		intersectionMinX = 245.0
-		intersectionMaxX = 495.0
-		intersectionMinY = 300.0
-		intersectionMaxY = 450.0
-	)
-
-	return c.X >= intersectionMinX && c.X <= intersectionMaxX &&
-		c.Y >= intersectionMinY && c.Y <= intersectionMaxY
-}
-
-// move gère le déplacement de la voiture selon sa direction
-// move gère le déplacement de la voiture
-func (c *Car) move() {
-	const laneOffset = 27.5 // Demi-largeur de voie
-
-	// Si on est en train de tourner, gérer le virage
-	if c.isTurning {
-		c.executeTurn()
-		return
-	}
-
-	// Vérifier si on doit commencer un virage
-	if c.shouldStartTurn() {
-		c.startTurn()
-		return
-	}
-
-	// Déplacement normal selon la direction
-	switch c.Direction {
+	switch c.Dir {
 	case North:
-		c.Y -= c.Speed
-		c.X = 272.5 + float64(c.Lane)*laneOffset
+		c.Y -= dist
 	case South:
-		c.Y += c.Speed
-		c.X = 477.5 - float64(c.Lane)*laneOffset
+		c.Y += dist
 	case East:
-		c.X += c.Speed
-		c.Y = 327.5 + float64(c.Lane)*laneOffset
+		c.X += dist
 	case West:
-		c.X -= c.Speed
-		c.Y = 422.5 - float64(c.Lane)*laneOffset
+		c.X -= dist
 	}
-
-	// Gestion du bouclage de l'écran
-	c.wrapAroundScreen()
 }
 
-// shouldStartTurn détermine si la voiture doit commencer à tourner
-func (c *Car) shouldStartTurn() bool {
-	if c.TurnDecision == Straight {
-		return false
-	}
-
-	const intersectionCenter = 370.0
-	const turnThreshold = 20.0
-
-	switch c.Direction {
+// Approche du feu (projection directionnelle simplifiée)
+func (c *Car) approachingLight(l cars_lights.VehiculeLight) bool {
+	switch c.Dir {
 	case North:
-		return c.Y <= intersectionCenter+turnThreshold && c.Y >= intersectionCenter-turnThreshold
+		return l.Y < c.Y
 	case South:
-		return c.Y >= intersectionCenter-turnThreshold && c.Y <= intersectionCenter+turnThreshold
+		return l.Y > c.Y
 	case East:
-		return c.X >= intersectionCenter-turnThreshold && c.X <= intersectionCenter+turnThreshold
+		return l.X > c.X
 	case West:
-		return c.X <= intersectionCenter+turnThreshold && c.X >= intersectionCenter-turnThreshold
+		return l.X < c.X
 	}
-
 	return false
 }
 
-// startTurn initialise le virage
-func (c *Car) startTurn() {
-	c.isTurning = true
-	c.turnStartX = c.X
-	c.turnStartY = c.Y
-	c.turnProgress = 0.0
-	c.State = "turning"
-}
-
-// executeTurn exécute le virage progressivement
-func (c *Car) executeTurn() {
-	const turnSpeed = 0.05 // Vitesse de progression du virage
-	c.turnProgress += turnSpeed
-
-	if c.turnProgress >= 1.0 {
-		// Virage terminé
-		c.finishTurn()
-		return
-	}
-
-	// Calculer la nouvelle position sur l'arc de cercle
-	const turnRadius = 50.0
-	const intersectionCenter = 370.0
-
-	angle := c.turnProgress * 1.5708 // π/2 radians (90 degrés)
-
-	// Ajuster l'angle selon la direction et le type de virage
-	if c.TurnDecision == TurnLeft {
-		angle = -angle
-	}
-
-	// Calculer la position sur l'arc
-	switch c.Direction {
-	case North:
-		if c.TurnDecision == TurnLeft {
-			c.X = intersectionCenter - turnRadius + turnRadius*math.Cos(angle)
-			c.Y = intersectionCenter - turnRadius*math.Sin(angle)
-		} else {
-			c.X = intersectionCenter + turnRadius - turnRadius*math.Cos(angle)
-			c.Y = intersectionCenter - turnRadius*math.Sin(angle)
-		}
-	case South:
-		if c.TurnDecision == TurnLeft {
-			c.X = intersectionCenter + turnRadius - turnRadius*math.Cos(angle)
-			c.Y = intersectionCenter + turnRadius*math.Sin(angle)
-		} else {
-			c.X = intersectionCenter - turnRadius + turnRadius*math.Cos(angle)
-			c.Y = intersectionCenter + turnRadius*math.Sin(angle)
-		}
-	case East:
-		if c.TurnDecision == TurnLeft {
-			c.X = intersectionCenter + turnRadius*math.Sin(angle)
-			c.Y = intersectionCenter - turnRadius + turnRadius*math.Cos(angle)
-		} else {
-			c.X = intersectionCenter + turnRadius*math.Sin(angle)
-			c.Y = intersectionCenter + turnRadius - turnRadius*math.Cos(angle)
-		}
-	case West:
-		if c.TurnDecision == TurnLeft {
-			c.X = intersectionCenter - turnRadius*math.Sin(angle)
-			c.Y = intersectionCenter + turnRadius - turnRadius*math.Cos(angle)
-		} else {
-			c.X = intersectionCenter - turnRadius*math.Sin(angle)
-			c.Y = intersectionCenter - turnRadius + turnRadius*math.Cos(angle)
+// Envoi mise à jour
+func (c *Car) emit() {
+	if c.updateCh != nil {
+		c.updateCh <- CarUpdate{
+			ID:    c.ID,
+			X:     c.X,
+			Y:     c.Y,
+			State: c.State,
+			Dir:   c.Dir,
 		}
 	}
 }
 
-// finishTurn termine le virage et met à jour la direction
-func (c *Car) finishTurn() {
-	c.isTurning = false
-	c.State = "driving"
-
-	if c.TurnDecision == TurnLeft {
-		switch c.Direction {
-		case North:
-			c.Direction = West
-		case South:
-			c.Direction = East
-		case East:
-			c.Direction = North
-		case West:
-			c.Direction = South
-		}
-	} else if c.TurnDecision == TurnRight {
-		switch c.Direction {
-		case North:
-			c.Direction = East
-		case South:
-			c.Direction = West
-		case East:
-			c.Direction = South
-		case West:
-			c.Direction = North
-		}
-	}
-
-	// Réinitialiser la décision de virage pour le prochain carrefour
-	c.TurnDecision = Straight
-}
-
-// wrapAroundScreen gère le bouclage de l'écran
-func (c *Car) wrapAroundScreen() {
-	if c.Y < -50 {
-		c.Y = 800
-	}
-	if c.Y > 800 {
-		c.Y = -50
-	}
-	if c.X < -50 {
-		c.X = 800
-	}
-	if c.X > 800 {
-		c.X = -50
+// Retirer si hors écran
+func (c *Car) cleanupIfOut() {
+	if c.X < -50 || c.X > 800 || c.Y < -50 || c.Y > 800 {
+		c.State = "done"
+		c.emit()
 	}
 }

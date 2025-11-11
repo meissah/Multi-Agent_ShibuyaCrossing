@@ -1,22 +1,22 @@
 package vehicule_lights
 
 // Vehicule light struct
-type CarsLights struct {
+type VehiculeLight struct {
 	X, Y  float64 // world position
 	State string  // "red" or "green" or "Yellow"
 }
 
 // IsRed retourne vrai si le feu est rouge
-func (cl *CarsLight) IsRed() bool {
-	return cl.State == "red"
+func (carl *VehiculeLight) IsRed() bool {
+	return carl.State == "red"
 }
 
 // IsGreen retourne vrai si le feu est vert
-func (cl *CarsLight) IsGreen() bool {
-	return cl.State == "green"
+func (carl *VehiculeLight) IsGreen() bool {
+	return carl.State == "green"
 }
 
 // IsYellow retourne vrai si le feu est orange/jaune
-func (cl *CarsLight) IsYellow() bool {
-	return cl.State == "yellow"
+func (carl *VehiculeLight) IsYellow() bool {
+	return carl.State == "yellow"
 }
