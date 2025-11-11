@@ -4,7 +4,8 @@ import (
 	"image/color"
 	"log"
 	"math"
-	"math/rand/v2"
+	"math/rand"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -14,7 +15,6 @@ import (
 	cars "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
 
 	pieton_lights "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/pedestrian_lights"
-	cars_lights "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/vehicule_lights"
 )
 
 // allows for the import of an image from a file, in this case the road pavement image
@@ -31,45 +31,22 @@ func init() {
 
 // Structure of the environment.
 type Game struct {
+	// pas implementé pour l'instant
 	Pieton       []*pieton.Pieton
-	Cars         []*cars.Car
-	CarLights    []*cars_lights.VehiculeLight
 	PietonLights []*pieton_lights.PedestrianLight
-	carHandler   *cars.CarHandler
+
+	carHandler *cars.CarHandler
+	lastSpawn  time.Time // Un simple timer pour faire apparaître les voitures
 }
 
 func distance(x1, y1, x2, y2 float64) float64 {
 	return math.Hypot(x2-x1, y2-y1)
 }
 
-// Implémentation de CarEnvironment
-func (g *Game) GetLights(x, y float64) []cars_lights.VehiculeLight {
-	var nearby []cars_lights.VehiculeLight
-	for _, light := range g.CarLights {
-		if distance(x, y, light.X, light.Y) < 100 {
-			nearby = append(nearby, *light)
-		}
-	}
-	return nearby
-}
-
-func (g *Game) IsIntersectionOccupied(x, y float64) bool {
-	// Zone d'intersection
-	const (
-		intersectionMinX = 235
-		intersectionMaxX = 515
-		intersectionMinY = 300
-		intersectionMaxY = 450
-	)
-
-	return x >= intersectionMinX && x <= intersectionMaxX &&
-		y >= intersectionMinY && y <= intersectionMaxY
-}
-
 // initializes some agents, to be removed later as agents will have to continuously spawn.
 func NewGame() *Game {
 	g := &Game{}
-	// Initialiser les piétons
+	// Initialiser les piétons ( fait par ahmad pas touché )
 	for i := 0; i < 5; i++ {
 		g.Pieton = append(g.Pieton, &pieton.Pieton{
 			X: rand.Float64() * 700,
@@ -78,32 +55,96 @@ func NewGame() *Game {
 	}
 
 	// Initialiser le gestionnaire de voitures
-	g.carHandler = cars.NewCarHandler(g, 10)
-	g.Cars = make([]*cars.Car, 0)
-	g.carHandler.Start()
+	g.carHandler = cars.NewCarHandler()
+	g.lastSpawn = time.Now()
 	return g
 }
 
-// Function responsible for updating the game's state (but not the graphics), automatically called by RunGame in main 60 times/second
+// spawnCars est la fonction qui crée les voitures en respectant les voies de circulation.
+func (g *Game) spawnCars() {
+	// On fait apparaître une voiture toutes les 1.5 secondes
+	if time.Since(g.lastSpawn) < 1500*time.Millisecond {
+		return
+	}
 
-func (g *Game) Update() error {
-	// Drainer toutes les mises à jour du CarHandler
-	for {
-		select {
-		case up := <-g.carHandler.GetUpdates():
-			cars := g.carHandler.GetCars()
-			if up.ID < len(cars) {
-				cars[up.ID].X = up.X
-				cars[up.ID].Y = up.Y
-				cars[up.ID].State = up.State
-			}
-		default:
-			goto done
+	g.lastSpawn = time.Now()
+
+	// Définition des coordonnées de spawn pour chaque voie.
+	const (
+		// SPAWN au SUD (en bas)
+		xSpawnSudLaneGauche = 323.0
+		xSpawnSudLaneDroite = 355.0
+
+		// SPAWN au NORD (en haut)
+		xSpawnNordLaneGauche = 395.0
+		xSpawnNordLaneDroite = 424.0
+
+		// SPAWN à l'OUEST (à gauche)
+		ySpawnOuestLaneHaute = 323.0
+		ySpawnOuestLaneBasse = 355.0
+
+		// SPAWN à l'EST (à droite)
+		ySpawnEstLaneHaute = 395.0
+		ySpawnEstLaneBasse = 424.0
+	)
+
+	// Choisir un point de SPAWN aléatoire
+	spawnPoint := cars.Direction(rand.Intn(4))
+	var x, y float64
+	var lane int
+	var dir cars.Direction // La direction de déplacement sera déterminée par le point de spawn ( par default la voiture va tout droit (donc la direction est opposée au spawn) )
+	switch spawnPoint {
+	case cars.North: // SPAWN en HAUT (Nord)
+		dir = cars.South // La voiture ira donc vers le BAS (Sud)
+		lane = rand.Intn(2)
+		if lane == 0 {
+			x = xSpawnNordLaneGauche
+		} else {
+			x = xSpawnNordLaneDroite
+		}
+		y = 0 // Point de spawn en haut de l'écran
+
+	case cars.South: // SPAWN en BAS (Sud)
+		dir = cars.North // La voiture ira donc vers le HAUT (Nord)
+		lane = rand.Intn(2)
+		if lane == 0 {
+			x = xSpawnSudLaneGauche
+		} else {
+			x = xSpawnSudLaneDroite
+		}
+		y = 750 // Point de spawn en bas de l'écran ( car l'écran fait 750px de haut )
+
+	case cars.East: // SPAWN à DROITE (Est)
+		dir = cars.West // La voiture ira donc vers la GAUCHE (Ouest)
+		lane = rand.Intn(2)
+		x = 750 // Point de spawn à droite de l'écran
+		if lane == 0 {
+			y = ySpawnEstLaneHaute
+		} else {
+			y = ySpawnEstLaneBasse
+		}
+
+	case cars.West: // SPAWN à GAUCHE (Ouest)
+		dir = cars.East // La voiture ira donc vers la DROITE (Est)
+		lane = rand.Intn(2)
+		x = 0 // Point de spawn à gauche de l'écran
+		if lane == 0 {
+			y = ySpawnOuestLaneHaute
+		} else {
+			y = ySpawnOuestLaneBasse
 		}
 	}
-done:
 
-	// piétons (placeholder)
+	// Ajoute la voiture avec les bonnes coordonnées et la bonne direction
+	g.carHandler.AddCar(x, y, dir, lane)
+}
+
+// Est responsable de la mise à jour de l'état du jeu, automatiquement appelé par RunGame dans main 60 fois/seconde
+func (g *Game) Update() error {
+	//Declenche l'apparition des voitures
+	g.spawnCars() // ps les voitures sont gérées par le car handler et se mettent à jour toutes seules
+
+	// piétons ( pas fait par moi )
 	for _, p := range g.Pieton {
 		p.Act(nil)
 	}
@@ -217,20 +258,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		rect := ebiten.NewImage(w, h)
 
-		// Couleur selon l'état
-		var carColor color.RGBA
-		switch c.State {
-		case "waiting", "stopped":
-			carColor = color.RGBA{255, 0, 0, 255} // Rouge si en attente
-		case "turning":
-			carColor = color.RGBA{255, 165, 0, 255} // Orange si tourne
-		default:
-			carColor = color.RGBA{0, 0, 255, 255} // Bleu si roule
-		}
+		// Utiliser une couleur fixe pour toutes les voitures
+		rect.Fill(color.RGBA{0, 0, 255, 255}) // Bleu
 
-		rect.Fill(carColor)
 		op := &ebiten.DrawImageOptions{}
-		// centrer le rectangle sur (c.X, c.Y)
+		// centrer le rectangle sur la position de la voiture
 		op.GeoM.Translate(c.X-float64(w)/2, c.Y-float64(h)/2)
 		screen.DrawImage(rect, op)
 	}
