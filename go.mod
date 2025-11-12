@@ -2,7 +2,10 @@ module gitlab.utc.fr/amisselm/shibuyacrossing_ai30
 
 go 1.25.0
 
-require github.com/hajimehoshi/ebiten/v2 v2.9.3
+require (
+	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
+	github.com/hajimehoshi/ebiten/v2 v2.9.3
+)
 
 require (
 	github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1 // indirect
