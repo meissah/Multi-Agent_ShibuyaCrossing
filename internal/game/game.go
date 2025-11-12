@@ -54,12 +54,24 @@ func NewGame() *Game {
 		})
 	}
 
+	// COTE VOITURES
 	// Initialiser le gestionnaire de voitures
 	g.carHandler = cars.NewCarHandler()
 	g.lastSpawn = time.Now()
 	return g
 }
 
+/*
+Rappel pour les resolution des spawn points des voitures  ( sachant qu'on travaille ici avec un écran de 750x750px )
+ A savoir que le systeme de coordonnée est comme suit :
+	   (0,0) -----------------> X augmente (vers 750)
+	     |
+	     |
+	     |
+	     |
+	     v
+	   Y augmente (vers 750)
+*/
 // spawnCars est la fonction qui crée les voitures en respectant les voies de circulation.
 func (g *Game) spawnCars() {
 	// On fait apparaître une voiture toutes les 1.5 secondes
@@ -69,7 +81,7 @@ func (g *Game) spawnCars() {
 
 	g.lastSpawn = time.Now()
 
-	// Définition des coordonnées de spawn pour chaque voie.
+	// Définition des coordonnées de spawn pour chaque voie. (. que j'ai trouvé en mesurant sur l'image + par tâtonnement)
 	const (
 		// SPAWN au SUD (en bas)
 		xSpawnSudLaneGauche = 323.0
@@ -141,6 +153,7 @@ func (g *Game) spawnCars() {
 
 // Est responsable de la mise à jour de l'état du jeu, automatiquement appelé par RunGame dans main 60 fois/seconde
 func (g *Game) Update() error {
+	//COTE VOITURES
 	//Declenche l'apparition des voitures
 	g.spawnCars() // ps les voitures sont gérées par le car handler et se mettent à jour toutes seules
 
@@ -252,9 +265,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		var w, h int
 		switch c.Dir {
 		case cars.North, cars.South:
-			w, h = 23, 33 // verticales : étroites et hautes
+			w, h = 23, 33 // pour que les voitures ont la bonne forme suivant leur apparition
 		case cars.East, cars.West:
-			w, h = 33, 23 // horizontales : larges et basses
+			w, h = 33, 23 //
 		}
 		rect := ebiten.NewImage(w, h)
 

@@ -19,7 +19,7 @@ ca permet justement d'avoir un car handler qui s'occupe de la gestion globale de
 // donc quand on va faire un
 type CarHandler struct {
 	cars     map[int]*Car
-	updateCh chan CarUpdate
+	updateCh chan CarUpdate // canal pour recevoir les mises à jour des voitures, récupérer les positions et savoir quand elles doivent être supprimées
 	done     chan bool
 	nextID   int
 }
@@ -37,19 +37,20 @@ func NewCarHandler() *CarHandler {
 	return ch
 }
 
-// GetCars implémente la méthode de l'interface CarEnvironment.
+// GetCars implémente la méthode de l'interface  v ( dans car.go).
 // Elle retourne une slice de toutes les voitures gérées par le handler.
 // Cette fonction est sûre car elle ne modifie pas la map.
 func (ch *CarHandler) GetCars() []*Car {
 	// On crée une nouvelle slice pour ne pas retourner un pointeur vers la map interne
 	carSlice := make([]*Car, 0, len(ch.cars))
-	for _, car := range ch.cars {
+	for _, car := range ch.cars { // parcourt la map et ajoute chaque voiture à la slice ( de façon non déterministe car ch.cars est une map )
 		carSlice = append(carSlice, car)
 	}
 	return carSlice
 }
 
 /* A implementer quand les feux seront faits
+// pas oublier de le mettre dans  CarEnvironment aussi
 func (ch *CarHandler) GetTrafficLights() []*cars_lights.VehiculeLight {
 	// A faire
 	return nil
@@ -68,7 +69,7 @@ func (ch *CarHandler) AddCar(x, y float64, dir Direction, lane int) {
 // handleUpdates est la goroutine qui traite les messages des voitures.
 // C'est le seul endroit où la map `ch.cars` est modifiée.
 func (ch *CarHandler) handleUpdates() {
-	for update := range ch.updateCh {
+	for update := range ch.updateCh { // écoute les mises à jour des voitures ( lecture du channel )
 		if update.Remove {
 			// La voiture doit être supprimée
 			delete(ch.cars, update.ID)
@@ -88,15 +89,7 @@ func (ch *CarHandler) Stop() {
 	close(ch.done)
 }
 
-// GetAllCarPositions retourne les positions actuelles pour le rendu graphique.
-func (ch *CarHandler) GetAllCarPositions() map[int]*Car {
-	// On retourne une copie pour la sécurité, bien qu'ici on ne retourne que des données simples.
-	// Le thread de rendu pourra lire cette map sans risque.
-	return ch.cars
-}
-
 /*
-
 
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -175,14 +168,6 @@ func (ch *CarHandler) spawnCars() {
 		yRouteDLane1 = 395.0 // la plus a haut
 		yRouteDLane2 = 424.0 // la plus a bas
 	)
-	 A savoir que le systeme de coordonnée est comme suit :
-	   (0,0) -----------------> X augmente (vers 750)
-	     |
-	     |
-	     |
-	     |
-	     v
-	   Y augmente (vers 750)
 
 	for {
 		select {

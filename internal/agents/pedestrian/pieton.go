@@ -13,6 +13,7 @@ type Pieton struct {
 }
 
 // Method to be implemented by Game struct, gives the Pietons the necessary information for his movement
+// pas implementé pour l'instant
 type PietonEnvironment interface {
 	nearbyPietonLights(x, y float64) []pieton_lights.PedestrianLight
 }
