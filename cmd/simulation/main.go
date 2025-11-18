@@ -7,7 +7,7 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/game"
 )
 
-// Start game loop
+// Initialise quelques paramètres de la boucle du jeu, puis la lance
 func main() {
 
 	//Taille fenetre du jeu
@@ -16,7 +16,8 @@ func main() {
 	//Titre de la fenetre du jeu
 	ebiten.SetWindowTitle("Shibuya Crossing")
 
-	ebiten.SetTPS(60) // 30 updates/draws per second
+	// 30 updates/draws par second
+	ebiten.SetTPS(30)
 
 	//Initialisation de l'environnement du jeu
 	game := game.NewGame()

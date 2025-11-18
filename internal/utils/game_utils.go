@@ -3,12 +3,13 @@ package utils
 // Declaration du type AgentID
 type AgentID uint
 
+// Declaration du type de la requête pour ajouter un object dans l'environnement
 type ObjectAddRequest struct {
 	Object   Object
 	RespChan chan int
 }
 
-// Direction enum pour la voiture
+// Direction enum pour voiture/pietons
 type Direction int
 
 const (
@@ -18,7 +19,7 @@ const (
 	West                   // va à gauche (x diminue)
 )
 
-// Interface standard d'un agent, peu importe lequel
+// Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
 type Agent interface {
 	Start(*[]Object, chan<- ObjectAddRequest)
 	Percept(*[]Object)
@@ -28,6 +29,7 @@ type Agent interface {
 	Alive() bool
 }
 
+// Interface standard d'un objet, permettant de dessiner l'objet en question par Draw() de ubiten
 type Object interface {
 	Position() (float64, float64) // world position
 	Direction() Direction

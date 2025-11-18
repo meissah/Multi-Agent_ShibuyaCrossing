@@ -11,8 +11,8 @@ func (ag Car) AgtID() AgentID {
 	return ag.ID
 }
 
+// lance la goroutine de l'agent car
 func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
-	//fmt.Println(ag.AgtID())
 
 	go func() {
 		var step int
@@ -127,30 +127,6 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, syncChan chan int
 func (c *Car) GetID() AgentID {
 	return c.ID
 }
-
-// // Start lance la goroutine de la voiture
-// func (c *Car) Start(env CarEnvironment) {
-// 	c.env = env
-// 	// fmt.Printf("[CAR %d] start : Position(%.1f, %.1f), Direction: %s, Voie: %d\n",
-// 	//c.ID, c.X, c.Y, c.Dir, c.LaneIndex)
-
-// 	ticker := time.NewTicker(40 * time.Millisecond) // permet une mise à jour toutes les 40ms (~25 FPS) (permet simu fluide et ne pas surcharger le CPU)
-// 	go func() {
-// 		defer ticker.Stop()
-// 		for {
-// 			select {
-// 			case <-done:
-// 				// fmt.Printf("[CAR %d] supp \n", c.ID) // Arrêt de la goroutine -> voiture supprimée ( c-a-d hors écran et c'est le handler qui le fait )
-// 				return
-// 			case <-ticker.C:
-// 				c.Percept()
-// 				c.Deliberate()
-// 				c.Act()
-// 				c.emit()
-// 			}
-// 		}
-// 	}()
-// }
 
 // Percept: perçoit l'environnement (autres voitures et feux ( pas encore fait ))
 // La voiture regarde autour d'elle et détecte naturellement les dangers

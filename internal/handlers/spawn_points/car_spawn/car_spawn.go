@@ -9,10 +9,12 @@ import (
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
+// on a besoin d'une durée pour connaitre la frequence d'introduction d'une voiture
 type CarSpawn struct {
 	SpawnInterval time.Duration
 }
 
+// fonction permettant de creer une seule nouvelle voiture
 func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.Request, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
 
 	// Définition des coordonnées de spawn pour chaque voie. (. que j'ai trouvé en mesurant sur l'image + par tâtonnement)
@@ -81,13 +83,21 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 		}
 	}
 
+	//creation de la channel de synchronisation de l'agent voiture
 	syncChan := make(chan int)
+
+	//cree une structure voiture
 	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, syncChan)
+
+	//lancement de la goroutine voiture
 	car.Start(env, ObjtsSliceCh)
+
+	//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
 	AgtsSliceCh <- agentslicehandler.Request{Agent: car, SyncChan: syncChan}
 
 }
 
+// commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
 func (g *CarSpawn) Start(
 	AgentCountCh <-chan AgentID,
 	AgtsSliceCh chan<- agentslicehandler.Request,

@@ -11,27 +11,18 @@ type Request struct {
 	SyncChan chan int
 }
 
-// seul goroutine pouvant ajouter des agents au slice agents de l'environement (microservice)
+// microservice pour l'ajout d'un agent dans le slice du jeu, evite des ecritures concurrentes entre spawn cars et spawn pietons
 func LancerAgentSliceHandler(AgentSlice *[]Agent, syncChans *sync.Map) chan<- Request {
 	requestCh := make(chan Request)
 
 	go func() {
 
 		for req := range requestCh {
-			//fmt.Println("Adding new Agent")
+			//stocke le channel de synchronisation de l'agent dans l'environnement game
 			syncChans.Store(req.Agent.AgtID(), req.SyncChan)
-			*AgentSlice = append(*AgentSlice, req.Agent)
-			//fmt.Println("Added new Agent")
 
-			// go func(agt Agent) {
-			// 	step := 0
-			// 	for {
-			// 		step++
-			// 		c, _ := syncChans.Load(agt.AgtID())
-			// 		c.(chan int) <- step
-			// 		<-c.(chan int)
-			// 	}
-			// }(req.Agent)
+			//ajoute l'agent au slice agents de l'envrionnement
+			*AgentSlice = append(*AgentSlice, req.Agent)
 
 		}
 	}()
