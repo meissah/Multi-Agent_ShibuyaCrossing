@@ -1,7 +1,7 @@
 package pedestrian
 
 import (
-	pieton_lights "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/pedestrian_lights"
+	pieton_lights "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/lights/pedestrian_lights"
 )
 
 // Pieton agent struct
