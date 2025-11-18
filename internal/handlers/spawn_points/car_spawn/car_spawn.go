@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	cars "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/mobiles/vehicule"
+	cars "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
