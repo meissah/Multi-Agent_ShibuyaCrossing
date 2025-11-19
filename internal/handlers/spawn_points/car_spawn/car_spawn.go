@@ -84,7 +84,7 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 	}
 
 	//creation de la channel de synchronisation de l'agent voiture
-	syncChan := make(chan int)
+	syncChan := make(chan int) // propre a l'agent
 
 	//cree une structure voiture
 	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, syncChan)

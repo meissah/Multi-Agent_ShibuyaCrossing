@@ -35,20 +35,20 @@ type Game struct {
 	//slice contenant l'ensemble des agents
 	Agts []Agent
 	//slice contenant une copy des objets visuels, pour eviter la triche sur le next step par les agents
-	ObjtsCopy []Object
+	ObjtsCopy []Object // "present state" objects to be drawn
 	//slice contenant les objets visuels, c'est la que le prochain step est ecrit
-	Objts []Object
+	Objts []Object // "future" objects to be drawn ( se rinitialise a chaque Update )
 
-	//Point de synchronisation agents
+	//Point de synchronisation agents ( stcoker tous les channels de chaque agents )
 	syncChansAgt sync.Map
 
 	//Agents counter, assure des agentID valables
-	AgentCount AgentID
+	AgentCount AgentID // compteur d'agent pour donner des ID uniques
 
 	//Channels des differents microservices
-	AgentCountCh <-chan AgentID
+	AgentCountCh <-chan AgentID // recevoir le prochain ID d'agent disponible
 	AgtsSliceCh  chan<- agentslicehandler.Request
-	ObjtsSliceCh chan<- ObjectAddRequest
+	ObjtsSliceCh chan<- ObjectAddRequest // channel pour ajouter des objets visuels ( seul qui a acces a Objts )
 
 	//savoir combien de fois on est passé par la boucle du jeu
 	step int
@@ -88,7 +88,7 @@ func (g *Game) Update() error {
 				defer wg.Done()
 
 				c, _ := g.syncChansAgt.Load(agt.AgtID())
-				c.(chan int) <- g.step
+				c.(chan int) <- g.step // on dit a l'agent de faire son next step grc a uprade
 				<-c.(chan int)
 
 			}(agt)

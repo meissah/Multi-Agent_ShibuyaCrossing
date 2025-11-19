@@ -19,7 +19,7 @@ func LancerAgentSliceHandler(AgentSlice *[]Agent, syncChans *sync.Map) chan<- Re
 
 		for req := range requestCh {
 			//stocke le channel de synchronisation de l'agent dans l'environnement game
-			syncChans.Store(req.Agent.AgtID(), req.SyncChan)
+			syncChans.Store(req.Agent.AgtID(), req.SyncChan) // je stock le channel de sync de l'agent avec son ID comme clef
 
 			//ajoute l'agent au slice agents de l'envrionnement
 			*AgentSlice = append(*AgentSlice, req.Agent)
