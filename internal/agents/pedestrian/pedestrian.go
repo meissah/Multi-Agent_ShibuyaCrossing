@@ -7,30 +7,80 @@ import (
 
 	// "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/pedestrian_lights"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
+	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
-// Pedestrian représente un piéton dans le monde de simulation.
-//
-// X,Y : position actuelle en pixels.
-// TargetX,TargetY : position de destination (en pixels). Après calcul A*,
-//
-//	ces coordonnées sont alignées sur le centre de la case finale.
-//
-// Speed : vitesse en pixels par frame.
-// State : "waiting" ou "walking".
-// Path : slice de waypoints (centres de cases) calculés par A*.
-// PathIndex : index dans Path du prochain waypoint à atteindre.
-// WaitUntil : moment (time.Time) jusqu'auquel le piéton attend immobile après être arrivé.
 type Pedestrian struct {
+	ID               AgentID
 	X, Y             float64 // world position
 	TargetX, TargetY float64 // destination point
 	Speed            float64 // magnitude of speed (pixels per frame)
-	State            string  // "waiting", "walking"
+	PState           string  // "waiting", "walking"
 	Path             []pathfinding.Vec2
 	PathIndex        int
 	WaitUntil        time.Time
 	Done             bool // true après avoir atteint la destination, prêt à être retiré après WaitUntil
+
+	AmIAlive bool
+	syncChan chan int
 }
+
+func NewPieton(id AgentID, x, y float64, syncChan chan int) *Pedestrian {
+	return &Pedestrian{
+		X:        x,
+		Y:        y,
+		ID:       id,
+		syncChan: syncChan,
+		AmIAlive: true,
+	}
+}
+
+func (ag Pedestrian) AgtID() AgentID {
+	return ag.ID
+}
+
+// lance la goroutine de l'agent car
+func (ag *Pedestrian) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
+
+	go func() {
+		var step int
+		for {
+			step = <-ag.syncChan
+
+			ag.Percept(env)
+			ag.Deliberate()
+			ag.Act(ObjectCh)
+			//fmt.Println("J'ai avancé ", ag.ID)
+			step++
+			ag.syncChan <- step
+		}
+	}()
+
+}
+
+func (c *Pedestrian) Position() (float64, float64) {
+	return c.X, c.Y
+}
+
+func (c *Pedestrian) Type() string {
+	return "pieton"
+}
+
+func (c *Pedestrian) State() string {
+	return c.PState
+}
+
+func (c *Pedestrian) Direction() Direction {
+	return North
+}
+
+func (c *Pedestrian) Alive() bool {
+	return c.AmIAlive
+}
+
+func (c *Pedestrian) Percept(env *[]Object) {}
+
+func (c *Pedestrian) Deliberate() {}
 
 // Method to be implemented by Game struct, gives the pedestrians the necessary information for his movement
 // type PedestrianEnvironment interface {
@@ -47,7 +97,7 @@ type Pedestrian struct {
 //     on choisit immédiatement une nouvelle cible aléatoire et on calcule son chemin
 //     pour pouvoir afficher la croix à l'endroit exact (mais le piéton n'avance
 //     qu'après l'expiration de WaitUntil).
-func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
+func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvironment*/ // ) {
 	if p.Speed == 0 {
 		p.Speed = 2.0
 	}
@@ -119,7 +169,6 @@ func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
 			p.Y += rand.Float64()*0.2 - 0.1
 		}
 		// pas d'autre comportement (la suppression est gérée par Game.Update)
-		return
 	}
 
 	// compute a path if none (but if a path was already computed earlier, keep it)
@@ -133,7 +182,7 @@ func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
 			if path, found := pathfinding.FindPath(p.X, p.Y, p.TargetX, p.TargetY); found && len(path) > 0 {
 				p.Path = path
 				p.PathIndex = 0
-				p.State = "walking"
+				p.PState = "walking"
 				last := path[len(path)-1]
 				p.TargetX = last.X
 				p.TargetY = last.Y
@@ -160,7 +209,7 @@ func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
 					if path, found := pathfinding.FindPath(p.X, p.Y, rx, ry); found && len(path) > 0 {
 						p.Path = path
 						p.PathIndex = 0
-						p.State = "walking"
+						p.PState = "walking"
 						last := path[len(path)-1]
 						p.TargetX = last.X
 						p.TargetY = last.Y
@@ -178,7 +227,7 @@ func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
 						if path, found := pathfinding.FindPath(p.X, p.Y, rx, ry); found && len(path) > 0 {
 							p.Path = path
 							p.PathIndex = 0
-							p.State = "walking"
+							p.PState = "walking"
 							last := path[len(path)-1]
 							p.TargetX = last.X
 							p.TargetY = last.Y
@@ -195,7 +244,7 @@ func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
 						if path, found := pathfinding.FindPath(p.X, p.Y, rx, ry); found && len(path) > 0 {
 							p.Path = path
 							p.PathIndex = 0
-							p.State = "walking"
+							p.PState = "walking"
 							last := path[len(path)-1]
 							p.TargetX = last.X
 							p.TargetY = last.Y
@@ -216,27 +265,31 @@ func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
 				p.PathIndex = 1
 			}
 		}
-		next := p.Path[p.PathIndex]
-		dx := next.X - p.X
-		dy := next.Y - p.Y
-		dist := math.Hypot(dx, dy)
-		step := p.Speed
-		if dist <= step || dist == 0 {
-			p.X = next.X
-			p.Y = next.Y
-			p.PathIndex++
-			if p.PathIndex >= len(p.Path) {
-				// reached destination: marquer comme Done, attendre 3s avant suppression
-				p.Path = nil
-				p.PathIndex = 0
-				p.WaitUntil = time.Now().Add(3 * time.Second)
-				p.State = "waiting"
-				p.Done = true
-				// conserver TargetX/TargetY sur le dernier waypoint pour l'affichage de la croix
+
+		// Add safety check before accessing
+		if p.PathIndex < len(p.Path) {
+			next := p.Path[p.PathIndex]
+			dx := next.X - p.X
+			dy := next.Y - p.Y
+			dist := math.Hypot(dx, dy)
+			step := p.Speed
+			if dist <= step || dist == 0 {
+				p.X = next.X
+				p.Y = next.Y
+				p.PathIndex++
+				if p.PathIndex >= len(p.Path) {
+					// reached destination: marquer comme Done, attendre 3s avant suppression
+					p.Path = nil
+					p.PathIndex = 0
+					p.WaitUntil = time.Now().Add(3 * time.Second)
+					p.PState = "waiting"
+					p.Done = true
+					// conserver TargetX/TargetY sur le dernier waypoint pour l'affichage de la croix
+				}
+			} else {
+				p.X += dx / dist * step
+				p.Y += dy / dist * step
 			}
-		} else {
-			p.X += dx / dist * step
-			p.Y += dy / dist * step
 		}
 	} else {
 		// small jitter to avoid being completely static
@@ -257,4 +310,11 @@ func (p *Pedestrian) Act( /*env PedestrianEnvironment*/ ) {
 	if p.Y > 750 {
 		p.Y = 750
 	}
+
+	RespChan := make(chan int)
+	ActChn <- ObjectAddRequest{
+		Object:   p,
+		RespChan: RespChan,
+	}
+	<-RespChan
 }

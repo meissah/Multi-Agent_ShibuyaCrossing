@@ -10,11 +10,13 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	objectslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/object_slice_handler"
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
+	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
 
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 
@@ -87,51 +89,9 @@ func NewGame() *Game {
 	carspawner := carspawn.CarSpawn{SpawnInterval: 50 * time.Millisecond}
 	carspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
 
-	////Pietons pierrick part
-	// définir les zones autorisées et de spawn basées sur le dessin (rectangles rouges + carré central)
-	allowed := []pathfinding.Rect{
-		// rectangles rouges verticaux (55x300) placés à 245 et 450
-		{X: 245, Y: 0, W: 55, H: 300},
-		{X: 245, Y: 450, W: 55, H: 300},
-		{X: 450, Y: 0, W: 55, H: 300},
-		{X: 450, Y: 450, W: 55, H: 300},
-		// rectangles rouges horizontaux (300x55) à 0 et 450
-		{X: 0, Y: 245, W: 300, H: 55},
-		{X: 450, Y: 245, W: 300, H: 55},
-		{X: 0, Y: 450, W: 300, H: 55},
-		{X: 450, Y: 450, W: 300, H: 55},
-		// carré central (approx.)
-		{X: 245, Y: 245, W: 205, H: 205},
-		// passages piétons (bandes blanches) reliant le carré central aux trottoirs
-		// étendre les passages pour couvrir entièrement les bords du carré central
-		// afin que les quatre trottoirs soient connectés sans trou
-		{X: 245, Y: 245, W: 55, H: 205}, // zone de passage verticale gauche
-		{X: 450, Y: 245, W: 55, H: 205}, // zone de passage verticale droite
-		{X: 245, Y: 245, W: 205, H: 55}, // zone de passage horizontale supérieure
-		{X: 245, Y: 450, W: 205, H: 55}, // zone de passage horizontale inférieure
-	}
-	spawns := []pathfinding.Rect{
-		// spawn / destination uniquement à l'intérieur des rectangles rouges (pas le carré central)
-		{X: 245, Y: 0, W: 55, H: 300},
-		{X: 245, Y: 450, W: 55, H: 300},
-		{X: 450, Y: 0, W: 55, H: 300},
-		{X: 450, Y: 450, W: 55, H: 300},
-		{X: 0, Y: 245, W: 300, H: 55},
-		{X: 450, Y: 245, W: 300, H: 55},
-		{X: 0, Y: 450, W: 300, H: 55},
-		{X: 450, Y: 450, W: 300, H: 55},
-	}
-	pathfinding.SetAllowedRects(allowed)
-	pathfinding.SetSpawnRects(spawns)
-
-	for i := 0; i < 5; i++ {
-		// spawn initial dans les rectangles de spawn
-		if x, y, ok := pathfinding.RandomPointInRects(spawns, rand.Float64); ok {
-			g.Pedestrians = append(g.Pedestrians, pedestrian.Pedestrian{X: x, Y: y})
-		} else {
-			g.Pedestrians = append(g.Pedestrians, pedestrian.Pedestrian{X: rand.Float64() * 700, Y: rand.Float64() * 700})
-		}
-	}
+	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
+	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: 50 * time.Millisecond}
+	pietonspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	return g
 }
@@ -295,16 +255,14 @@ func (g *Game) Update() error {
 
 // Affiche les éléments du slice Objts contenant le next step de tout les agents
 func (g *Game) Draw(screen *ebiten.Image) {
-	////affichage du background habituel
-	// background
 	screen.Fill(color.RGBA{126, 109, 97, 1.000})
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(.15075, .392465)
 	op.GeoM.Translate(300, 0)
 	screen.DrawImage(imgRoad, op)
 
-	// horizontal road
 	op = &ebiten.DrawImageOptions{}
+
 	op.GeoM.Scale(.15075, .392465)
 	op.GeoM.Rotate(math.Pi / 2)
 	op.GeoM.Translate(750, 300)
@@ -335,7 +293,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(stripes, op)
 	}
 
-	// Bandes blanches diagonales
 	stripes = ebiten.NewImage(5, 55)
 	stripes.Fill(color.RGBA{255, 255, 255, 255})
 	for x := 300.0; x < 445; x += 7.5 {
@@ -349,17 +306,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(stripes, op)
 	}
 
-	// Bandes blanches diagonales inversées
-	// stripes = ebiten.NewImage(5, 55)
-	// stripes.Fill(color.RGBA{255, 255, 255, 255})
-	// for x := 0.0; x < 22; x++ {
-	// 	op = &ebiten.DrawImageOptions{}
-	// 	op.GeoM.Rotate(math.Pi / 4)
-	// 	op.GeoM.Translate(340.0+x*5.0, 300.0+x*5.0)
-	// 	screen.DrawImage(stripes, op)
-	// }
+	stripes = ebiten.NewImage(5, 55)
+	stripes.Fill(color.RGBA{255, 255, 255, 255})
+	for x := 0.0; x < 22; x++ {
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Rotate(math.Pi / 4)
+		op.GeoM.Translate(340.0+x*5.0, 300.0+x*5.0)
+		screen.DrawImage(stripes, op)
+	}
 
-	//trotoires
+	img1 = ebiten.NewImage(55, 300)
+	img1.Fill(color.RGBA{139, 26, 26, 255})
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(245, 0)
+	screen.DrawImage(img1, op)
+
 	img1 = ebiten.NewImage(55, 300)
 	img1.Fill(color.RGBA{139, 26, 26, 255})
 	op = &ebiten.DrawImageOptions{}
@@ -462,7 +423,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	////Dessine les objets dans le slice Objts
 	for _, c := range g.Objts {
 		//dessine les voitures, a remplacer par select/case plutard pour prendre en compte l'ensemble des types d'objets
-		if c.Type() == "car" {
+		switch c.Type() {
+		case "car":
 			// Dimensions selon la direction
 			var w, h int
 			switch c.Direction() {
@@ -481,6 +443,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			X, Y := c.Position()
 			op.GeoM.Translate(X-float64(w)/2, Y-float64(h)/2)
 			screen.DrawImage(rect, op)
+		case "pieton":
+			X, Y := c.Position()
+			vector.FillCircle(screen, float32(X), float32(Y), 5, color.RGBA{0, 255, 0, 255}, false)
 		}
 	}
 

@@ -123,11 +123,6 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, syncChan chan int
 	}
 }
 
-// GetID getter ID de la voiture
-func (c *Car) GetID() AgentID {
-	return c.ID
-}
-
 // Percept: perçoit l'environnement (autres voitures et feux ( pas encore fait ))
 // La voiture regarde autour d'elle et détecte naturellement les dangers
 func (c *Car) Percept(env *[]Object) {
