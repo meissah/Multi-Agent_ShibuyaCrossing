@@ -6,7 +6,7 @@ import (
 
 // microservice pour ajouter des objets à l'environnement (evite ecritures concurrent sur un meme slice par les agents)
 func LancerObjectSliceHandler(ObjectSlice *[]Object) chan<- ObjectAddRequest {
-	requestCh := make(chan ObjectAddRequest)
+	requestCh := make(chan ObjectAddRequest, 10000)
 
 	go func() {
 

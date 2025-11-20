@@ -30,6 +30,8 @@ func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 				step++
 				ag.syncChan <- step
 			case <-ag.endChan:
+				close(ag.endChan)
+				close(ag.syncChan)
 				return
 			}
 		}
@@ -493,6 +495,7 @@ func (c *Car) emit(ActChn chan<- ObjectAddRequest) {
 		RespChan: RespChan,
 	}
 	<-RespChan
+	close(RespChan)
 }
 
 func (c *Car) Position() (float64, float64) {

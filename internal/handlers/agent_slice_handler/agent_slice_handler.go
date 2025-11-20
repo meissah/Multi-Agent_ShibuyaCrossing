@@ -13,9 +13,9 @@ type AddAgtRequest struct {
 
 // microservice pour l'ajout d'un agent dans le slice du jeu, evite des ecritures concurrentes entre spawn cars et spawn pietons
 func LancerAgentSliceHandler(AgentSlice *[]Agent, syncChans *sync.Map) (chan<- AddAgtRequest, chan []Agent, chan Agent) {
-	AddRequestCh := make(chan AddAgtRequest)
+	AddRequestCh := make(chan AddAgtRequest, 10000)
 	ReceiveAgtsCh := make(chan []Agent)
-	DeleteAgtsCh := make(chan Agent)
+	DeleteAgtsCh := make(chan Agent, 10000)
 
 	go func() {
 		for {
@@ -36,10 +36,11 @@ func LancerAgentSliceHandler(AgentSlice *[]Agent, syncChans *sync.Map) (chan<- A
 				for i, v := range *AgentSlice {
 					if v.AgtID() == Agt.AgtID() {
 						*AgentSlice = append((*AgentSlice)[:i], (*AgentSlice)[i+1:]...)
+						v.EndChan() <- 1
 						break
 					}
 				}
-				Agt.EndChan() <- 1
+
 			}
 		}
 	}()

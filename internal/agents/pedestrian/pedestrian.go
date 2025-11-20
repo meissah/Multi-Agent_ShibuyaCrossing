@@ -19,6 +19,8 @@ type Pedestrian struct {
 	Path             []pathfinding.Vec2
 	PathIndex        int
 	WaitUntil        time.Time
+	MaxAliveDuration time.Duration
+	MaxAliveTime     time.Time
 	Done             bool // true après avoir atteint la destination, prêt à être retiré après WaitUntil
 
 	AmIAlive bool
@@ -28,12 +30,13 @@ type Pedestrian struct {
 
 func NewPieton(id AgentID, x, y float64, syncChan chan int) *Pedestrian {
 	return &Pedestrian{
-		X:        x,
-		Y:        y,
-		ID:       id,
-		syncChan: syncChan,
-		AmIAlive: true,
-		endChan:  make(chan int),
+		X:                x,
+		Y:                y,
+		ID:               id,
+		syncChan:         syncChan,
+		AmIAlive:         true,
+		endChan:          make(chan int),
+		MaxAliveDuration: 1 * time.Minute,
 	}
 }
 
@@ -46,7 +49,7 @@ func (ag Pedestrian) EndChan() chan int {
 
 // lance la goroutine de l'agent car
 func (ag *Pedestrian) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
-
+	ag.MaxAliveTime = time.Now().Add(ag.MaxAliveDuration)
 	go func() {
 		var step int
 		for {
@@ -59,6 +62,8 @@ func (ag *Pedestrian) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 				step++
 				ag.syncChan <- step
 			case <-ag.endChan:
+				close(ag.endChan)
+				close(ag.syncChan)
 				return
 			}
 		}
@@ -106,6 +111,10 @@ func (c *Pedestrian) Deliberate() {}
 //     pour pouvoir afficher la croix à l'endroit exact (mais le piéton n'avance
 //     qu'après l'expiration de WaitUntil).
 func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvironment*/ // ) {
+	now := time.Now()
+	if now.After(p.MaxAliveTime) {
+		p.AmIAlive = false
+	}
 	if p.Speed == 0 {
 		p.Speed = 2.0
 	}
@@ -334,4 +343,5 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 		RespChan: RespChan,
 	}
 	<-RespChan
+	close(RespChan)
 }
