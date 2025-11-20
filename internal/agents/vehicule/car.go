@@ -11,19 +11,27 @@ func (ag Car) AgtID() AgentID {
 	return ag.ID
 }
 
+func (ag Car) EndChan() chan int {
+	return ag.endChan
+}
+
 // lance la goroutine de l'agent car
 func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 
 	go func() {
 		var step int
 		for {
-			step = <-ag.syncChan
+			select {
+			case step = <-ag.syncChan:
 
-			ag.Percept(env)
-			ag.Deliberate()
-			ag.Act(ObjectCh)
-			step++
-			ag.syncChan <- step
+				ag.Percept(env)
+				ag.Deliberate()
+				ag.Act(ObjectCh)
+				step++
+				ag.syncChan <- step
+			case <-ag.endChan:
+				return
+			}
 		}
 	}()
 
@@ -68,6 +76,7 @@ type Car struct {
 	// Référence à l'environnement pour les perceptions
 	//env      CarEnvironment
 	syncChan chan int
+	endChan  chan int
 }
 
 // Update envoyé au handler pour mise à jour de l'état de la voiture
@@ -119,6 +128,7 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, syncChan chan int
 		distanceToCrossingCar: math.MaxFloat64,
 		mustYield:             false, // par défaut pas besoin de céder le passage
 		syncChan:              syncChan,
+		endChan:               make(chan int),
 	}
 }
 

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"image/color"
 	"log"
 	"math"
@@ -64,9 +63,11 @@ type Game struct {
 	AgentCount AgentID
 
 	//Channels des differents microservices
-	AgentCountCh <-chan AgentID
-	AddAgtSlice  chan<- agentslicehandler.Request
-	ObjtsSliceCh chan<- ObjectAddRequest
+	AgentCountCh    <-chan AgentID
+	AddAgtSlice     chan<- agentslicehandler.AddAgtRequest
+	ReceiveAgtSlice chan []Agent
+	DelAgtSlice     chan<- Agent
+	ObjtsSliceCh    chan<- ObjectAddRequest
 
 	//savoir combien de fois on est passé par la boucle du jeu
 	step int
@@ -81,7 +82,7 @@ func NewGame() *Game {
 
 	//initialisation des différents channel des microservices, lancent ainsi leurs goroutines respectives
 	g.AgentCountCh = agentcounthandler.LancerAgentCountHandler(&g.AgentCount)
-	g.AddAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agts, &g.syncChansAgt)
+	g.AddAgtSlice, g.ReceiveAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agts, &g.syncChansAgt)
 	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
@@ -99,14 +100,14 @@ func NewGame() *Game {
 func (g *Game) Update() error {
 	//on copie l'etat précédent des objets visuels
 	g.ObjtsCopy = append([]Object(nil), g.Objts...)
-	fmt.Println(g.ObjtsCopy)
+
 	//on vide l'état courant des objets visuels pour permettre les agents d'actualiser leur future step
 	g.Objts = g.Objts[:0]
 
 	//goroutines qui appellent les agents pour qu'ils fassent leur next step
 	var wg sync.WaitGroup
 	g.step++
-	for _, agt := range g.Agts {
+	for _, agt := range <-g.ReceiveAgtSlice {
 		//ne cree pas de goroutine si agt mort
 		if agt.Alive() {
 			wg.Add(1)
@@ -120,14 +121,11 @@ func (g *Game) Update() error {
 			}(agt)
 		} else {
 			//demande suppression de l'agent
+			g.DelAgtSlice <- agt
 		}
 	}
 	//on attend a ce que toutes les goroutines vivantes donnent leur next step
 	wg.Wait()
-
-	fmt.Println(g.Objts)
-
-	time.Sleep(1 * time.Second)
 
 	return nil
 }

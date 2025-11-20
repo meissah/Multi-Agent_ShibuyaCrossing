@@ -23,6 +23,7 @@ type Pedestrian struct {
 
 	AmIAlive bool
 	syncChan chan int
+	endChan  chan int
 }
 
 func NewPieton(id AgentID, x, y float64, syncChan chan int) *Pedestrian {
@@ -32,11 +33,15 @@ func NewPieton(id AgentID, x, y float64, syncChan chan int) *Pedestrian {
 		ID:       id,
 		syncChan: syncChan,
 		AmIAlive: true,
+		endChan:  make(chan int),
 	}
 }
 
 func (ag Pedestrian) AgtID() AgentID {
 	return ag.ID
+}
+func (ag Pedestrian) EndChan() chan int {
+	return ag.endChan
 }
 
 // lance la goroutine de l'agent car
@@ -45,14 +50,17 @@ func (ag *Pedestrian) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 	go func() {
 		var step int
 		for {
-			step = <-ag.syncChan
+			select {
+			case step = <-ag.syncChan:
 
-			ag.Percept(env)
-			ag.Deliberate()
-			ag.Act(ObjectCh)
-			//fmt.Println("J'ai avancé ", ag.ID)
-			step++
-			ag.syncChan <- step
+				ag.Percept(env)
+				ag.Deliberate()
+				ag.Act(ObjectCh)
+				step++
+				ag.syncChan <- step
+			case <-ag.endChan:
+				return
+			}
 		}
 	}()
 
@@ -169,6 +177,7 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 			p.Y += rand.Float64()*0.2 - 0.1
 		}
 		// pas d'autre comportement (la suppression est gérée par Game.Update)
+		p.AmIAlive = false
 	}
 
 	// compute a path if none (but if a path was already computed earlier, keep it)

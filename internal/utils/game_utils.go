@@ -27,6 +27,7 @@ type Agent interface {
 	Act(chan<- ObjectAddRequest)
 	AgtID() AgentID
 	Alive() bool
+	EndChan() chan int
 }
 
 // Interface standard d'un objet, permettant de dessiner l'objet en question par Draw() de ubiten

@@ -16,7 +16,7 @@ func main() {
 	//Titre de la fenetre du jeu
 	ebiten.SetWindowTitle("Shibuya Crossing")
 
-	// 30 updates/draws par second
+	// 60 updates/draws par second
 	ebiten.SetTPS(30)
 
 	//Initialisation de l'environnement du jeu

@@ -16,7 +16,7 @@ type PietonSpawn struct {
 }
 
 // fonction permettant de creer une seule nouvelle voiture
-func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.Request, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
+func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
 
 	////Pietons pierrick part
 	// définir les zones autorisées et de spawn basées sur le dessin (rectangles rouges + carré central)
@@ -70,14 +70,14 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan AgentID, AgtsSliceCh chan<
 		npieton.Start(env, ObjtsSliceCh)
 
 		//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
-		AgtsSliceCh <- agentslicehandler.Request{Agent: npieton, SyncChan: syncChan}
+		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: npieton, SyncChan: syncChan}
 	} else {
 		npieton := pieton.NewPieton(<-AgentCountCh, rand.Float64()*700, rand.Float64()*700, syncChan)
 		//lancement de la goroutine voiture
 		npieton.Start(env, ObjtsSliceCh)
 
 		//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
-		AgtsSliceCh <- agentslicehandler.Request{Agent: npieton, SyncChan: syncChan}
+		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: npieton, SyncChan: syncChan}
 	}
 
 }
@@ -85,7 +85,7 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan AgentID, AgtsSliceCh chan<
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
 func (g *PietonSpawn) Start(
 	AgentCountCh <-chan AgentID,
-	AgtsSliceCh chan<- agentslicehandler.Request,
+	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
 	ObjtsSliceCh chan<- ObjectAddRequest,
 	env *[]Object,
 ) {

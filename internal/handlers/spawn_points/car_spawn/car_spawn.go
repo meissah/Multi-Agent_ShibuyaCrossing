@@ -15,7 +15,7 @@ type CarSpawn struct {
 }
 
 // fonction permettant de creer une seule nouvelle voiture
-func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.Request, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
+func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
 
 	// Définition des coordonnées de spawn pour chaque voie. (. que j'ai trouvé en mesurant sur l'image + par tâtonnement)
 	const (
@@ -93,14 +93,14 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 	car.Start(env, ObjtsSliceCh)
 
 	//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
-	AgtsSliceCh <- agentslicehandler.Request{Agent: car, SyncChan: syncChan}
+	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
 
 }
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
 func (g *CarSpawn) Start(
 	AgentCountCh <-chan AgentID,
-	AgtsSliceCh chan<- agentslicehandler.Request,
+	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
 	ObjtsSliceCh chan<- ObjectAddRequest,
 	env *[]Object,
 ) {
