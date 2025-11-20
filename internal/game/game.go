@@ -76,6 +76,10 @@ type Game struct {
 
 	//pedestrians
 	Pedestrians []pedestrian.Pedestrian
+
+	updateCount int
+	drawCount   int
+	perSec      time.Time
 }
 
 // Init de l'environnement du jeu
@@ -130,7 +134,17 @@ func (g *Game) Update() error {
 	wg.Wait()
 
 	fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
+	now := time.Now()
+	g.updateCount++
 
+	// Debug print per sec
+	if now.Sub(g.perSec) >= time.Second {
+		log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
+
+		g.updateCount = 0
+		g.drawCount = 0
+		g.perSec = now
+	}
 	return nil
 }
 
@@ -329,7 +343,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			vector.FillCircle(screen, float32(X), float32(Y), 5, color.RGBA{0, 255, 0, 255}, false)
 		}
 	}
-
+	g.drawCount++
 }
 
 // définit la taille de l'écran du jeu, appelée automatiquement par RunGame
