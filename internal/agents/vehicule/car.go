@@ -22,7 +22,6 @@ func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 			ag.Percept(env)
 			ag.Deliberate()
 			ag.Act(ObjectCh)
-			//fmt.Println("J'ai avancé ", ag.ID)
 			step++
 			ag.syncChan <- step
 		}

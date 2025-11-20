@@ -1,10 +1,10 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"math"
-	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -21,7 +21,6 @@ import (
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
 )
 
 // ShowPaths est un toggle global (package-level) pour activer/désactiver
@@ -66,7 +65,7 @@ type Game struct {
 
 	//Channels des differents microservices
 	AgentCountCh <-chan AgentID
-	AgtsSliceCh  chan<- agentslicehandler.Request
+	AddAgtSlice  chan<- agentslicehandler.Request
 	ObjtsSliceCh chan<- ObjectAddRequest
 
 	//savoir combien de fois on est passé par la boucle du jeu
@@ -82,16 +81,16 @@ func NewGame() *Game {
 
 	//initialisation des différents channel des microservices, lancent ainsi leurs goroutines respectives
 	g.AgentCountCh = agentcounthandler.LancerAgentCountHandler(&g.AgentCount)
-	g.AgtsSliceCh = agentslicehandler.LancerAgentSliceHandler(&g.Agts, &g.syncChansAgt)
+	g.AddAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agts, &g.syncChansAgt)
 	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
 	carspawner := carspawn.CarSpawn{SpawnInterval: 50 * time.Millisecond}
-	carspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
+	carspawner.Start(g.AgentCountCh, g.AddAgtSlice, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: 50 * time.Millisecond}
-	pietonspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
+	pietonspawner.Start(g.AgentCountCh, g.AddAgtSlice, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	return g
 }
@@ -100,6 +99,7 @@ func NewGame() *Game {
 func (g *Game) Update() error {
 	//on copie l'etat précédent des objets visuels
 	g.ObjtsCopy = append([]Object(nil), g.Objts...)
+	fmt.Println(g.ObjtsCopy)
 	//on vide l'état courant des objets visuels pour permettre les agents d'actualiser leur future step
 	g.Objts = g.Objts[:0]
 
@@ -118,137 +118,16 @@ func (g *Game) Update() error {
 				<-c.(chan int)
 
 			}(agt)
+		} else {
+			//demande suppression de l'agent
 		}
 	}
 	//on attend a ce que toutes les goroutines vivantes donnent leur next step
 	wg.Wait()
 
-	// retirer les piétons terminés dont l'attente est expirée ; créer de nouveaux piétons pour maintenir le nombre
-	now := time.Now()
-	var remaining []pedestrian.Pedestrian
-	removed := 0
-	for _, p := range g.Pedestrians {
-		if p.Done && now.After(p.WaitUntil) {
-			removed++
-			continue
-		}
-		remaining = append(remaining, p)
-	}
-	g.Pedestrians = remaining
-	// ré-apparitions pour maintenir la population (garder 5 au total)
-	for i := 0; i < removed; i++ {
-		// faire apparaître un piéton dans SpawnRects si possible, sinon repli sur la stratégie précédente
-		var sx, sy float64
-		spawnPlaced := false
-		if len(pathfinding.SpawnRects) > 0 {
-			for attempt := 0; attempt < 50; attempt++ {
-				rx, ry, ok := pathfinding.RandomPointInRects(pathfinding.SpawnRects, rand.Float64)
-				if !ok {
-					break
-				}
-				// éviter d'apparaitre trop proche des autres agents / de leurs cibles
-				ok2 := true
-				for _, q := range g.Pedestrians {
-					dx := rx - q.TargetX
-					dy := ry - q.TargetY
-					if q.TargetX != 0 || q.TargetY != 0 {
-						if math.Hypot(dx, dy) < 30 {
-							ok2 = false
-							break
-						}
-					}
-					dx = rx - q.X
-					dy = ry - q.Y
-					if math.Hypot(dx, dy) < 25 {
-						ok2 = false
-						break
-					}
-				}
-				if ok2 {
-					sx = rx
-					sy = ry
-					spawnPlaced = true
-					break
-				}
-			}
-			// si après les tentatives le spawn n'a pas été placé, utiliser le centre du premier rectangle de spawn
-			if !spawnPlaced {
-				r := pathfinding.SpawnRects[0]
-				sx = float64(r.X + r.W/2)
-				sy = float64(r.Y + r.H/2)
-				spawnPlaced = true
-			}
-		}
-		if !spawnPlaced {
-			// repli : placement aléatoire avec logique d'évitement
-			placed := false
-			for attempt := 0; attempt < 30; attempt++ {
-				sx = rand.Float64() * 700
-				sy = rand.Float64() * 700
-				ok := true
-				for _, q := range g.Pedestrians {
-					dx := sx - q.TargetX
-					dy := sy - q.TargetY
-					if q.TargetX != 0 || q.TargetY != 0 {
-						if math.Hypot(dx, dy) < 30 {
-							ok = false
-							break
-						}
-					}
-					dx = sx - q.X
-					dy = sy - q.Y
-					if math.Hypot(dx, dy) < 25 {
-						ok = false
-						break
-					}
-				}
-				if ok {
-					placed = true
-					break
-				}
-			}
-			if !placed {
-				sx = rand.Float64() * 700
-				sy = rand.Float64() * 700
-			}
-		}
-		// ajouter un léger jitter pour que le point d'apparition ne soit pas
-		// exactement centré sur une case de la grille (évite des artefacts visuels)
-		offset := float64(pathfinding.DefaultCellSize) * 0.25
-		sx += (rand.Float64() - 0.5) * offset
-		sy += (rand.Float64() - 0.5) * offset
-		// s'assurer que la cellule de spawn est franchissable ; si ce n'est pas
-		// le cas, tenter quelques ajustements aléatoires autour du point choisi
-		// pour éviter d'apparaitre sur une zone interdite.
-		if !pathfinding.IsWorldPointWalkable(sx, sy) {
-			placed := false
-			for attempt := 0; attempt < 20; attempt++ {
-				tx := sx + (rand.Float64()-0.5)*float64(pathfinding.DefaultCellSize)
-				ty := sy + (rand.Float64()-0.5)*float64(pathfinding.DefaultCellSize)
-				if pathfinding.IsWorldPointWalkable(tx, ty) {
-					sx = tx
-					sy = ty
-					placed = true
-					break
-				}
-			}
-			if !placed {
-				// en dernier recours, utiliser le centre du premier rectangle de
-				// spawn (ce point devrait être franchissable car défini par
-				// l'auteur de la carte)
-				if len(pathfinding.SpawnRects) > 0 {
-					r := pathfinding.SpawnRects[0]
-					sx = float64(r.X + r.W/2)
-					sy = float64(r.Y + r.H/2)
-				}
-			}
-		}
+	fmt.Println(g.Objts)
 
-		g.Pedestrians = append(g.Pedestrians, pedestrian.Pedestrian{
-			X: sx,
-			Y: sy,
-		})
-	}
+	time.Sleep(1 * time.Second)
 
 	return nil
 }
