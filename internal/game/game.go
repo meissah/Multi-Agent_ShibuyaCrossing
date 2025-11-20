@@ -1,9 +1,11 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"math"
+	"runtime"
 	"sync"
 	"time"
 
@@ -126,6 +128,8 @@ func (g *Game) Update() error {
 	}
 	//on attend a ce que toutes les goroutines vivantes donnent leur next step
 	wg.Wait()
+
+	fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
 
 	return nil
 }
