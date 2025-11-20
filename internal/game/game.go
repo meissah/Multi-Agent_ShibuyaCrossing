@@ -86,11 +86,11 @@ func NewGame() *Game {
 	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
-	carspawner := carspawn.CarSpawn{SpawnInterval: 10000000 * time.Millisecond}
+	carspawner := carspawn.CarSpawn{SpawnInterval: 50 * time.Millisecond}
 	carspawner.Start(g.AgentCountCh, g.AddAgtSlice, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
-	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: 100 * time.Millisecond}
+	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: 10 * time.Millisecond}
 	pietonspawner.Start(g.AgentCountCh, g.AddAgtSlice, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	return g
