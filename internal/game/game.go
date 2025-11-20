@@ -104,9 +104,6 @@ func NewGame() *Game {
 
 // appelle les agents pour qu'ils fassent leur prochain mouvement, lancé automatiquement par boucle du jeu
 func (g *Game) Update() error {
-	//on copie l'etat précédent des objets visuels
-	g.ObjtsCopy = append([]Object(nil), g.Objts...)
-
 	//on vide l'état courant des objets visuels pour permettre les agents d'actualiser leur future step
 	g.Objts = g.Objts[:0]
 
@@ -145,6 +142,9 @@ func (g *Game) Update() error {
 		g.drawCount = 0
 		g.perSec = now
 	}
+
+	//on copie l'etat précédent des objets visuels
+	g.ObjtsCopy = append([]Object(nil), g.Objts...)
 	return nil
 }
 
@@ -316,7 +316,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// }
 
 	////Dessine les objets dans le slice Objts
-	for _, c := range g.Objts {
+	for _, c := range g.ObjtsCopy { //potentiellemtn probleme de concurrence avec update(), nouveau microservice a faire?
 		//dessine les voitures, a remplacer par select/case plutard pour prendre en compte l'ensemble des types d'objets
 		switch c.Type() {
 		case "car":
