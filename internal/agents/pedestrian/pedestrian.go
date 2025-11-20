@@ -169,14 +169,14 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 	}
 
 	// si le piéton est marqué Done, il attend jusqu'à WaitUntil avant d'être retiré
-	now := time.Now()
+	//now := time.Now()
 	if p.Done {
-		if p.WaitUntil.After(now) {
-			// petit jitter visuel pendant l'attente
-			p.X += rand.Float64()*0.2 - 0.1
-			p.Y += rand.Float64()*0.2 - 0.1
-		}
-		// pas d'autre comportement (la suppression est gérée par Game.Update)
+		// if p.WaitUntil.After(now) {
+		//  // petit jitter visuel pendant l'attente
+		//  p.X += rand.Float64()*0.2 - 0.1
+		//  p.Y += rand.Float64()*0.2 - 0.1
+		// }
+		// // pas d'autre comportement (la suppression est gérée par Game.Update)
 		p.AmIAlive = false
 	}
 
@@ -192,6 +192,9 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 				p.Path = path
 				p.PathIndex = 0
 				p.PState = "walking"
+				// FIX: Force p.X, p.Y to the path start point to correct initial placement
+				p.X = path[0].X
+				p.Y = path[0].Y
 				last := path[len(path)-1]
 				p.TargetX = last.X
 				p.TargetY = last.Y
@@ -219,6 +222,9 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 						p.Path = path
 						p.PathIndex = 0
 						p.PState = "walking"
+						// FIX: Force p.X, p.Y to the path start point to correct initial placement
+						p.X = path[0].X
+						p.Y = path[0].Y
 						last := path[len(path)-1]
 						p.TargetX = last.X
 						p.TargetY = last.Y
@@ -237,6 +243,9 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 							p.Path = path
 							p.PathIndex = 0
 							p.PState = "walking"
+							// FIX: Force p.X, p.Y to the path start point to correct initial placement
+							p.X = path[0].X
+							p.Y = path[0].Y
 							last := path[len(path)-1]
 							p.TargetX = last.X
 							p.TargetY = last.Y
@@ -254,6 +263,9 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 							p.Path = path
 							p.PathIndex = 0
 							p.PState = "walking"
+							// FIX: Force p.X, p.Y to the path start point to correct initial placement
+							p.X = path[0].X
+							p.Y = path[0].Y
 							last := path[len(path)-1]
 							p.TargetX = last.X
 							p.TargetY = last.Y
@@ -267,13 +279,9 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 
 	// follow path
 	if len(p.Path) > 0 && p.PathIndex < len(p.Path) {
-		// if first waypoint equals current position (within epsilon), skip it
-		if p.PathIndex == 0 && len(p.Path) > 0 {
-			first := p.Path[0]
-			if math.Hypot(first.X-p.X, first.Y-p.Y) < 0.5 {
-				p.PathIndex = 1
-			}
-		}
+		// REMOVED: Initial waypoint skip logic is now redundant as we explicitly set
+		// p.X/p.Y to path[0] upon finding the path. The movement loop handles the
+		// immediate advance to path[1] by setting dist=0.
 
 		// Add safety check before accessing
 		if p.PathIndex < len(p.Path) {
