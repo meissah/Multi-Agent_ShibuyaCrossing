@@ -17,7 +17,7 @@ func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 	go func() {
 		var step int
 		for {
-			step = <-ag.syncChan // update met valeur sans le synchan ( bloquant tant que le update n'a pas fait son step )
+			step = <-ag.syncChan // update met valeur dans le synchan ( bloquant tant que le update n'a pas fait son step )
 
 			ag.Percept(env)
 			ag.Deliberate()
