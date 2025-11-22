@@ -87,7 +87,7 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 	syncChan := make(chan int) // propre a l'agent
 
 	//cree une structure voiture
-	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, syncChan)
+	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, syncChan) // permettre a update d'envoyer a la goroutine voiture un signal de mise a jour
 
 	//lancement de la goroutine voiture
 	car.Start(env, ObjtsSliceCh)

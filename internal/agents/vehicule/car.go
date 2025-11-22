@@ -17,7 +17,7 @@ func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 	go func() {
 		var step int
 		for {
-			step = <-ag.syncChan
+			step = <-ag.syncChan // update met valeur sans le synchan ( bloquant tant que le update n'a pas fait son step )
 
 			ag.Percept(env)
 			ag.Deliberate()
@@ -484,11 +484,11 @@ func (c *Car) emit(ActChn chan<- ObjectAddRequest) {
 	// 	return
 	// }
 	RespChan := make(chan int)
-	ActChn <- ObjectAddRequest{
+	ActChn <- ObjectAddRequest{ // ajouter next step d'un agent donné
 		Object:   c,
 		RespChan: RespChan,
 	}
-	<-RespChan
+	<-RespChan // voir ligne l19 (Start) pour explication ( attend le append dan l'object slice handler )
 }
 
 func (c *Car) Position() (float64, float64) {

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"math"
@@ -64,7 +65,7 @@ func NewGame() *Game {
 	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
-	carspawner := carspawn.CarSpawn{SpawnInterval: 50 * time.Millisecond}
+	carspawner := carspawn.CarSpawn{SpawnInterval: 3 * time.Second} // initialise la structure de spawn de voiture
 	carspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	return g
@@ -72,6 +73,7 @@ func NewGame() *Game {
 
 // appelle les agents pour qu'ils fassent leur prochain mouvement, lancé automatiquement par boucle du jeu
 func (g *Game) Update() error {
+	fmt.Println("Je viens update :", g.step)
 	//on copie l'etat précédent des objets visuels
 	g.ObjtsCopy = append([]Object(nil), g.Objts...)
 	//on vide l'état courant des objets visuels pour permettre les agents d'actualiser leur future step
@@ -86,7 +88,7 @@ func (g *Game) Update() error {
 			wg.Add(1)
 			go func(agt Agent) {
 				defer wg.Done()
-
+				// dire a l'agent de faire son next step grc a uprade + bloquer tant que l'agent n'a pas fini son step
 				c, _ := g.syncChansAgt.Load(agt.AgtID())
 				c.(chan int) <- g.step // on dit a l'agent de faire son next step grc a uprade
 				<-c.(chan int)
