@@ -39,28 +39,18 @@ type Car struct {
 	ID           AgentID
 	X, Y         float64
 	Dir          Direction
-	TurnLeft     bool    // indique si la voiture envisage de tourner à gauche
 	LaneIndex    int     // 0 ou 1 pour la voie utilisée (deux voies par direction)
 	Speed        float64 // vitesse actuelle en px/sec
 	MaxSpeed     float64 // Vitesse maximale souhaitée en px/sec
 	DrivingState string  // "moving","stopped"
-	stopDist     float64 // distance pour s'arrêter avant le feu
-	//updateCh  chan<- CarUpdate
+
 	lastStep time.Time
 
 	// Personnalité du conducteur
 	Profile             DriverProfile
 	DesiredStopDistance float64
 
-	// Perceptions de l'environnement (mises à jour par Percept)
-	carInFront           *Car // Voiture devant dans ma voie
-	distanceToCarInFront float64
-
-	crossingCar           *Car // Voiture sur trajectoire perpendiculaire à proximité
-	distanceToCrossingCar float64
-
-	mustYield     bool      // Savoir si ceder le passage ou pas (ici priorité à droite implementée)
-	waitStartTime time.Time // Temps depuis lequel je suis à l'arrêt
+	TurnLeft bool // indique si la voiture envisage de tourner à gauche
 
 	// Intention (décidé par Deliberate)
 	intention string // "accelerate", "stop", "slow_down"
@@ -98,14 +88,11 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, sy
 		DrivingState: "moving", // par défaut en mouvement mais a voir parce que si trop de voiture tecnhiquemment elle devrait s'arreter
 		AmIAlive:     true,
 		//updateCh:              updateCh,
-		lastStep:              time.Now(),
-		Profile:               DriverProfile{Aggressiveness: 0.5}, // profil normale par défaut
-		DesiredStopDistance:   50.0,
-		intention:             "accelerate",    // pareil que pour le State moving à voir plus tard
-		distanceToCarInFront:  math.MaxFloat64, // initialisé à l'infini
-		distanceToCrossingCar: math.MaxFloat64,
-		mustYield:             false, // par défaut pas besoin de céder le passage
-		syncChan:              syncChan,
+		lastStep:            time.Now(),
+		Profile:             DriverProfile{Aggressiveness: 0.5}, // profil normale par défaut
+		DesiredStopDistance: 50.0,
+		intention:           "accelerate", // pareil que pour le State moving à voir plus tard
+		syncChan:            syncChan,
 	}
 }
 
