@@ -33,6 +33,8 @@ type Agent interface {
 type Object interface {
 	Position() (float64, float64) // world position
 	Direction() Direction
-	Type() string  //to know what item to draw
-	State() string //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
+	Angle() float64    // angle de rotation en radians (0 = Est, π/2 = Sud, π = Ouest, 3π/2 = Nord)
+	Type() string      //to know what item to draw
+	State() string     //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
+	TurningLeft() bool // indique si la voiture est en train de tourner à gauche ( Dans notre simulation, les voitures peuvent tourner uniquement à gauche )
 }

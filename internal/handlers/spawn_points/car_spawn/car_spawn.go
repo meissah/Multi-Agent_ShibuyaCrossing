@@ -14,8 +14,8 @@ type CarSpawn struct {
 	SpawnInterval time.Duration
 }
 
-// fonction permettant de creer une seule nouvelle voiture
-func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.Request, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
+// ChoisirPointSpawn choisit aléatoirement un point de spawn
+func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 
 	// Définition des coordonnées de spawn pour chaque voie. (. que j'ai trouvé en mesurant sur l'image + par tâtonnement)
 	const (
@@ -38,9 +38,6 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 
 	// Choisir un point de SPAWN aléatoire
 	spawnPoint := Direction(rand.Intn(4))
-	var x, y float64
-	var lane int
-	var dir Direction // La direction de déplacement sera déterminée par le point de spawn ( par default la voiture va tout droit (donc la direction est opposée au spawn) )
 	switch spawnPoint {
 	case North: // SPAWN en HAUT (Nord)
 		dir = South // La voiture ira donc vers le BAS (Sud)
@@ -82,12 +79,30 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 			y = ySpawnOuestLaneBasse
 		}
 	}
+	return x, y, dir, lane
+}
+
+// ChoisirVirage décide si la voiture doit tourner à gauche (30% de chances)
+func ChooseToTurn() bool {
+	// 30% de chances de tourner à gauche
+	if rand.Float64() < 0.3 {
+		return true
+	}
+	return false
+}
+
+// fonction permettant de creer une seule nouvelle voiture
+func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.Request, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
+
+	//choix aléatoire du point de spawn
+	x, y, dir, lane := ChoisirPointSpawn()
+	turnleft := ChooseToTurn()
 
 	//creation de la channel de synchronisation de l'agent voiture
 	syncChan := make(chan int) // propre a l'agent
 
 	//cree une structure voiture
-	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, syncChan) // permettre a update d'envoyer a la goroutine voiture un signal de mise a jour
+	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan) // permettre a update d'envoyer a la goroutine voiture un signal de mise a jour
 
 	//lancement de la goroutine voiture
 	car.Start(env, ObjtsSliceCh)
