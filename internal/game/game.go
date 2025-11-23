@@ -199,12 +199,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if c.Type() == "car" {
 			// Dimensions selon la direction
 			var w, h int
+
 			switch c.Direction() {
 			case North, South:
 				w, h = 23, 33 // pour que les voitures ont la bonne forme suivant leur apparition
 			case East, West:
 				w, h = 33, 23 //
 			}
+			// Crée un rectangle pour représenter la voiture
 			rect := ebiten.NewImage(w, h)
 
 			// Utiliser une couleur fixe pour toutes les voitures
@@ -214,10 +216,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			x, y := c.Position()
 			angle := c.Angle() // ← RECUPERER L'ANGLE !
 
-			// 1. Centrer à l'origine
+			// Centrer à l'origine
 			op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
 
-			// 2. Appliquer la rotation
+			// Appliquer la rotation
 			op.GeoM.Rotate(angle)
 			op.GeoM.Translate(x, y)
 
