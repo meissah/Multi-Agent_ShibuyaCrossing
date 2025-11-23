@@ -65,7 +65,7 @@ func NewGame() *Game {
 	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
-	carspawner := carspawn.CarSpawn{SpawnInterval: 3 * time.Second} // initialise la structure de spawn de voiture
+	carspawner := carspawn.CarSpawn{SpawnInterval: 4 * time.Second} // initialise la structure de spawn de voiture
 	carspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	return g
@@ -211,9 +211,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			rect.Fill(color.RGBA{0, 0, 255, 255}) // Bleu
 
 			op := &ebiten.DrawImageOptions{}
-			// centrer le rectangle sur la position de la voiture
-			X, Y := c.Position()
-			op.GeoM.Translate(X-float64(w)/2, Y-float64(h)/2)
+			x, y := c.Position()
+			angle := c.Angle() // ← RECUPERER L'ANGLE !
+
+			// 1. Centrer à l'origine
+			op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
+
+			// 2. Appliquer la rotation
+			op.GeoM.Rotate(angle)
+			op.GeoM.Translate(x, y)
+
 			screen.DrawImage(rect, op)
 		}
 	}

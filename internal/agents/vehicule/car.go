@@ -36,10 +36,17 @@ type DriverProfile struct {
 }
 
 type Car struct {
-	ID           AgentID
-	X, Y         float64
-	Dir          Direction
-	LaneIndex    int     // 0 ou 1 pour la voie utilisée (deux voies par direction)
+	ID        AgentID
+	X, Y      float64
+	Dir       Direction
+	LaneIndex int // 0 ou 1 pour la voie utilisée (deux voies par direction)
+
+	// Pour le virage
+	TurnLeft     bool    // indique si la voiture envisage de tourner à gauche
+	IsTurning    bool    // en train de tourner (logique interne)
+	CurrentAngle float64 // angle de rotation actuel pendant le virage
+	// en gros va permettre de modifier X et Y en utilisant cos et sin pour faire une belle courbe
+
 	Speed        float64 // vitesse actuelle en px/sec
 	MaxSpeed     float64 // Vitesse maximale souhaitée en px/sec
 	DrivingState string  // "moving","stopped"
@@ -49,8 +56,6 @@ type Car struct {
 	// Personnalité du conducteur
 	Profile             DriverProfile
 	DesiredStopDistance float64
-
-	TurnLeft bool // indique si la voiture envisage de tourner à gauche
 
 	// Intention (décidé par Deliberate)
 	intention string // "accelerate", "stop", "slow_down"
@@ -69,6 +74,16 @@ type CarUpdate struct {
 	Remove bool // true si la voiture doit être supprimée ( hors écran par exemple )
 }
 
+// Constantes pour le virage
+// pour l'instant on ne gère que le virage à gauche en venant du sud
+const (
+	SOUTH_LEFT_TURN_X = 325.0
+	SOUTH_LEFT_TURN_Y = 440.0
+	TURN_RADIUS       = 20.0         // rayon du cercle de virage ( à modif selon la lane utilisée (a faire a plus tard ))
+	TURN_SPEED        = math.Pi / 48 // π/24 radians par step ( en gros on veut tourner de 90 degre et donc on tourne de π/24 a chaque step donc en 24 steps on a fait un quart de tour 90 degres -> permet d'avoir un virage fluide)
+	// virage normale 24, lent 48
+)
+
 // Interface environnement pour la voiture ( on mettra plus tard les feux )
 type CarEnvironment interface {
 	GetCars() []*Car // Retourne toutes les voitures dans l'environnement
@@ -77,22 +92,28 @@ type CarEnvironment interface {
 // NewCar constructeur
 func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, syncChan chan int) *Car {
 	return &Car{
-		ID:           id,
-		X:            x,
-		Y:            y,
-		Dir:          dir,
-		LaneIndex:    lane,
-		TurnLeft:     turnleft,
+		ID:        id,
+		X:         x,
+		Y:         y,
+		Dir:       dir,
+		LaneIndex: lane,
+
+		// pour le virage à gauche
+		TurnLeft:            turnleft,
+		DesiredStopDistance: 50.0,
+		IsTurning:           false, // reste false si turnleft est false
+		CurrentAngle:        0.0,
+
 		Speed:        0,
 		MaxSpeed:     100.0,    // pixels/sec j'ai mis au hasard a ajuster selon les tests
 		DrivingState: "moving", // par défaut en mouvement mais a voir parce que si trop de voiture tecnhiquemment elle devrait s'arreter
 		AmIAlive:     true,
 		//updateCh:              updateCh,
-		lastStep:            time.Now(),
-		Profile:             DriverProfile{Aggressiveness: 0.5}, // profil normale par défaut
-		DesiredStopDistance: 50.0,
-		intention:           "accelerate", // pareil que pour le State moving à voir plus tard
-		syncChan:            syncChan,
+		lastStep: time.Now(),
+		Profile:  DriverProfile{Aggressiveness: 0.5}, // profil normale par défaut
+
+		intention: "accelerate", // pareil que pour le State moving à voir plus tard
+		syncChan:  syncChan,
 	}
 }
 
@@ -107,68 +128,78 @@ func (c *Car) Percept(env *[]Object) {
 
 }
 
-// Deliberate: la voiture prend des décisions basées sur ses perceptions
+// / Deliberate: la voiture prend des décisions basées sur ses perceptions
 func (c *Car) Deliberate() {
+	// Décider de commencer à tourner si on atteint le point de virage
+	if c.TurnLeft && !c.IsTurning && c.Dir == North && c.LaneIndex == 0 {
+		// La voiture MONTE (y diminue de 750 vers 0)
+		// On vérifie si elle ATTEINT le point de virage
+		if c.Y <= SOUTH_LEFT_TURN_Y && c.Y >= SOUTH_LEFT_TURN_Y-10 {
+			c.IsTurning = true
+			c.CurrentAngle = 3 * math.Pi / 2 // angle Nord
+		}
+	}
 
 }
 
-// Act: agit en fonction de l'intention (ajuste la vitesse et bouge)
+// Act: exécute le mouvement
 func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
-	dt := time.Since(c.lastStep).Seconds() // temps écoulé depuis le dernier step en secondes ( chaque step fait toutes les 40ms defini dans Start par le ticker)
-	c.lastStep = time.Now()                // met à jour le temps du dernier step
+	// Exécuter le virage si IsTurning == true
+	if c.IsTurning {
+		// Tourner
+		c.CurrentAngle -= TURN_SPEED // Diminue l'angle à chaque step
 
-	// Ajuster la vitesse
-	switch c.intention {
-	case "stop":
-		c.Speed = 0
-		c.DrivingState = "stopped"
-	case "slow_down":
-		c.Speed *= 0.90
-		if c.Speed < 25 {
-			c.Speed = 25
-		}
-		c.DrivingState = "moving"
-	case "accelerate":
-		if c.Speed < c.MaxSpeed {
-			c.Speed += 120.0 * dt
-		}
-		if c.Speed > c.MaxSpeed {
-			c.Speed = c.MaxSpeed
-		}
-		c.DrivingState = "moving"
-	}
+		// Centre du cercle de virage
+		centerX := SOUTH_LEFT_TURN_X - TURN_RADIUS
+		centerY := SOUTH_LEFT_TURN_Y
 
-	// Mettre à jour la position suite au changement de vitesse
-	if c.Speed > 0 {
+		// Calculer nouvelle position sur le cercle
+		c.X = centerX + TURN_RADIUS*math.Cos(c.CurrentAngle)
+		c.Y = centerY + TURN_RADIUS*math.Sin(c.CurrentAngle)
+
+		// Fin du virage
+		if c.CurrentAngle <= math.Pi {
+			c.IsTurning = false
+			c.Dir = West
+			c.CurrentAngle = 0.0 // Remettre l'angle à 0 après le virage
+		}
+
+	} else {
+		// Mouvement normal en ligne droite
 		switch c.Dir {
 		case North:
-			c.Y -= c.Speed * dt
+			c.Y -= 2.0 // LA VOITURE MONTE
 		case South:
-			c.Y += c.Speed * dt
+			c.Y += 2.0 // pour le test
 		case East:
-			c.X += c.Speed * dt
+			c.X += 5.0
 		case West:
-			c.X -= c.Speed * dt
+			c.X -= 2.0
 		}
 	}
 
+	// Envoyer la position
 	RespChan := make(chan int)
-	ActChn <- ObjectAddRequest{ // ajouter next step d'un agent donné
+	ActChn <- ObjectAddRequest{
 		Object:   c,
 		RespChan: RespChan,
 	}
-	<-RespChan // voir ligne l19 (Start) dans carspawn pour explication ( attend le append dans l'object slice handler )
+	<-RespChan
 }
 
 func (c *Car) Position() (float64, float64) {
 	return c.X, c.Y
 }
+
 func (c *Car) TurningLeft() bool {
-	return c.TurnLeft
+	return c.IsTurning
 }
 
 func (c *Car) Angle() float64 {
-	return float64(c.Dir) * (math.Pi / 2)
+	if c.IsTurning {
+		return c.CurrentAngle // pendant le virage l'angle change progressivement
+	}
+	return 0.0 // pas de rotation en ligne droite
 }
 
 func (c *Car) Type() string {

@@ -36,5 +36,5 @@ type Object interface {
 	Angle() float64    // angle de rotation en radians (0 = Est, π/2 = Sud, π = Ouest, 3π/2 = Nord)
 	Type() string      //to know what item to draw
 	State() string     //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
-	TurningLeft() bool // indique si la voiture envisage de tourner à gauche ( Dans notre simulation, les voitures peuvent tourner uniquement à gauche )
+	TurningLeft() bool // pour savoir si l'objet est en train de tourner à gauche (utile pour les voitures)
 }

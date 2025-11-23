@@ -40,7 +40,7 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 	spawnPoint := Direction(rand.Intn(4))
 	switch spawnPoint {
 	case North: // SPAWN en HAUT (Nord)
-		dir = South // La voiture ira donc vers le BAS (Sud)
+		dir = South // La voiture ira donc vers le BAS (Sud) sinon
 		lane = rand.Intn(2)
 		if lane == 0 {
 			x = xSpawnNordLaneGauche
@@ -85,7 +85,7 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 // ChoisirVirage décide si la voiture doit tourner à gauche (30% de chances)
 func ChooseToTurn() bool {
 	// 30% de chances de tourner à gauche
-	if rand.Float64() < 0.3 {
+	if rand.Float64() < 0.99 { // a modif juste la pour tester
 		return true
 	}
 	return false
@@ -95,8 +95,12 @@ func ChooseToTurn() bool {
 func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.Request, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
 
 	//choix aléatoire du point de spawn
-	x, y, dir, lane := ChoisirPointSpawn()
+	//x, y, dir, lane := ChoisirPointSpawn()
+	x, y, dir, lane := 323.0, 750.0, North, 0 // juste pour tester
+
+	//choix aléatoire de si la voiture va tourner à gauche ou pas
 	turnleft := ChooseToTurn()
+	//turnleft := true // juste pour tester
 
 	//creation de la channel de synchronisation de l'agent voiture
 	syncChan := make(chan int) // propre a l'agent
