@@ -123,14 +123,6 @@ func (c *Car) Percept(env *[]Object) {
 // Deliberate: la voiture prend des décisions basées sur ses perceptions
 func (c *Car) Deliberate() {
 
-	shouldRemove := false // indique si la voiture doit être supprimée
-	if shouldRemove {
-		c.AmIAlive = false
-		//fmt.Println("AM DEAD!")
-		return
-	}
-
-	c.intention = "accelerate"
 }
 
 // Act: agit en fonction de l'intention (ajuste la vitesse et bouge)
@@ -173,39 +165,6 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		}
 	}
 
-	c.emit(ActChn)
-}
-
-// emit envoie la mise à jour au handler
-func (c *Car) emit(ActChn chan<- ObjectAddRequest) {
-	// const screenSize = 750.0
-	// const margin = 50.0
-
-	// shouldRemove := false // indique si la voiture doit être supprimée
-
-	// // Vérifie si la voiture est hors écran avec une marge
-	// switch c.Dir {
-	// case North:
-	// 	shouldRemove = c.Y < -margin
-	// case South:
-	// 	shouldRemove = c.Y > screenSize+margin
-	// case East:
-	// 	shouldRemove = c.X > screenSize+margin
-	// case West:
-	// 	shouldRemove = c.X < -margin
-	// }
-
-	// if shouldRemove {
-	// 	// fmt.Printf("[CAR %d] SORTIE DE L'ÉCRAN - Position finale: (%.1f, %.1f)\n",
-	// 	//c.ID, c.X, c.Y)
-	// 	// c.updateCh <- CarUpdate{
-	// 	// 	ID:     c.ID,
-	// 	// 	X:      c.X,
-	// 	// 	Y:      c.Y,
-	// 	// 	Remove: true, // indique au handler de supprimer la voiture
-	// 	// }
-	// 	return
-	// }
 	RespChan := make(chan int)
 	ActChn <- ObjectAddRequest{ // ajouter next step d'un agent donné
 		Object:   c,
@@ -222,18 +181,7 @@ func (c *Car) TurningLeft() bool {
 }
 
 func (c *Car) Angle() float64 {
-	switch c.Dir {
-	case East:
-		return 0.0
-	case South:
-		return math.Pi / 2
-	case West:
-		return math.Pi
-	case North:
-		return 3 * math.Pi / 2
-	default:
-		return 0.0
-	}
+	return float64(c.Dir) * (math.Pi / 2)
 }
 
 func (c *Car) Type() string {

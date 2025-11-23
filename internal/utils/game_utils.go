@@ -13,10 +13,10 @@ type ObjectAddRequest struct {
 type Direction int
 
 const (
-	North Direction = iota // monte (y diminue)
-	South                  // descend (y augmente)
-	East                   // va à droite (x augmente)
-	West                   // va à gauche (x diminue)
+	North Direction = iota
+	South
+	East
+	West
 )
 
 // Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
@@ -36,5 +36,5 @@ type Object interface {
 	Angle() float64    // angle de rotation en radians (0 = Est, π/2 = Sud, π = Ouest, 3π/2 = Nord)
 	Type() string      //to know what item to draw
 	State() string     //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
-	TurningLeft() bool // indique si la voiture est en train de tourner à gauche ( Dans notre simulation, les voitures peuvent tourner uniquement à gauche )
+	TurningLeft() bool // indique si la voiture envisage de tourner à gauche ( Dans notre simulation, les voitures peuvent tourner uniquement à gauche )
 }
