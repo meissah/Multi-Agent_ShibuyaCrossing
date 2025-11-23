@@ -214,7 +214,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 			op := &ebiten.DrawImageOptions{}
 			x, y := c.Position()
-			angle := c.Angle() // ← RECUPERER L'ANGLE !
+			angle := c.Angle() // on recupere l'angle de la voiture
 
 			// Centrer à l'origine
 			op.GeoM.Translate(-float64(w)/2, -float64(h)/2)

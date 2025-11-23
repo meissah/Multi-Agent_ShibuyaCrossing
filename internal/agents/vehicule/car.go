@@ -78,8 +78,8 @@ type CarUpdate struct {
 // pour l'instant on ne gère que le virage à gauche en venant du sud
 const (
 	SOUTH_LEFT_TURN_X = 325.0
-	SOUTH_LEFT_TURN_Y = 442.0
-	TURN_RADIUS       = 20.0         // rayon du cercle de virage ( à modif selon la lane utilisée (a faire a plus tard ))
+	SOUTH_LEFT_TURN_Y = 440.0
+	TURN_RADIUS       = 15.0         // rayon du cercle de virage ( à modif selon la lane utilisée (a faire a plus tard ))
 	TURN_SPEED        = math.Pi / 24 // π/24 radians par step ( en gros on veut tourner de 90 degre et donc on tourne de π/24 a chaque step donc en 24 steps on a fait un quart de tour 90 degres -> permet d'avoir un virage fluide)
 	// virage normale 24, lent 48
 )
@@ -133,9 +133,11 @@ func (c *Car) Deliberate() {
 	// Décider de commencer à tourner si on atteint le point de virage
 	if c.TurnLeft && !c.IsTurning && c.Dir == North && c.LaneIndex == 0 {
 		// On vérifie si elle ATTEINT le point de virage
-		if c.Y <= SOUTH_LEFT_TURN_Y+20 && c.Y >= SOUTH_LEFT_TURN_Y+20 {
+		if c.Y <= SOUTH_LEFT_TURN_Y+0.1 && c.Y >= SOUTH_LEFT_TURN_Y-0.1 {
 			c.IsTurning = true
-			c.CurrentAngle = 3 * math.Pi / 2 // angle Nord
+			c.CurrentAngle = 3 * math.Pi / 2 // objectif c'est d'arriver a cette angle en tournant a gauche
+
+			// Initialiser la position sur le cercle de virage
 
 			centerX := SOUTH_LEFT_TURN_X - TURN_RADIUS
 			centerY := SOUTH_LEFT_TURN_Y - TURN_RADIUS
@@ -176,7 +178,7 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		case South:
 			c.Y += 2.0 // pour le test
 		case East:
-			c.X += 5.0
+			c.X += 2.0
 		case West:
 			c.X -= 2.0
 		}
@@ -204,7 +206,8 @@ func (c *Car) Angle() float64 {
 	if c.IsTurning {
 		// L'angle visuel est perpendiculaire au rayon (tangent au cercle)
 		// On ajoute -π/2 pour que la voiture pointe dans la direction du mouvement
-		return c.CurrentAngle - math.Pi/2
+		println("Angle during turn:", c.CurrentAngle-math.Pi/2)
+		return c.CurrentAngle - math.Pi/2 // Tangente au cercle
 	}
 	return 0.0
 }
