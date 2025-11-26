@@ -42,10 +42,11 @@ type Car struct {
 	LaneIndex int // 0 ou 1 pour la voie utilisée (deux voies par direction)
 
 	// Pour le virage
-	TurnLeft     bool    // indique si la voiture envisage de tourner à gauche
-	IsTurning    bool    // en train de tourner (logique interne)
-	CurrentAngle float64 // angle de rotation actuel pendant le virage
-	// en gros va permettre de modifier X et Y en utilisant cos et sin pour faire une belle courbe
+	TurnLeft   bool
+	IsTurning  bool
+	TurnStep   float64 // compteur de 0 à TURN_DURATION
+	TurnStartX float64 // position de départ du virage
+	TurnStartY float64
 
 	Speed        float64 // vitesse actuelle en px/sec
 	MaxSpeed     float64 // Vitesse maximale souhaitée en px/sec
@@ -75,13 +76,10 @@ type CarUpdate struct {
 }
 
 // Constantes pour le virage
-// pour l'instant on ne gère que le virage à gauche en venant du sud
 const (
 	SOUTH_LEFT_TURN_X = 325.0
 	SOUTH_LEFT_TURN_Y = 440.0
-	TURN_RADIUS       = 15.0         // rayon du cercle de virage ( à modif selon la lane utilisée (a faire a plus tard ))
-	TURN_SPEED        = math.Pi / 24 // π/24 radians par step ( en gros on veut tourner de 90 degre et donc on tourne de π/24 a chaque step donc en 24 steps on a fait un quart de tour 90 degres -> permet d'avoir un virage fluide)
-	// virage normale 24, lent 48
+	TURN_DURATION     = 30.0 // nombre de steps pour faire le virage
 )
 
 // Interface environnement pour la voiture ( on mettra plus tard les feux )
@@ -98,11 +96,14 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, sy
 		Dir:       dir,
 		LaneIndex: lane,
 
-		// pour le virage à gauche
-		TurnLeft:            turnleft,
+		// virage
+		TurnLeft:   turnleft,
+		IsTurning:  false,
+		TurnStep:   0.0, // compteur de 0 à TURN_DURATION
+		TurnStartX: 0.0, // position de départ du virage
+		TurnStartY: 0.0,
+
 		DesiredStopDistance: 50.0,
-		IsTurning:           false, // reste false si turnleft est false
-		CurrentAngle:        0.0,
 
 		Speed:        0,
 		MaxSpeed:     100.0,    // pixels/sec j'ai mis au hasard a ajuster selon les tests
@@ -128,46 +129,48 @@ func (c *Car) Percept(env *[]Object) {
 
 }
 
-// / Deliberate: la voiture prend des décisions basées sur ses perceptions
 func (c *Car) Deliberate() {
-	// Décider de commencer à tourner si on atteint le point de virage
 	if c.TurnLeft && !c.IsTurning && c.Dir == North && c.LaneIndex == 0 {
-		// On vérifie si elle ATTEINT le point de virage
-		if c.Y <= SOUTH_LEFT_TURN_Y+0.1 && c.Y >= SOUTH_LEFT_TURN_Y-0.1 {
+		if c.Y <= SOUTH_LEFT_TURN_Y+5 && c.Y >= SOUTH_LEFT_TURN_Y-5 {
 			c.IsTurning = true
-			c.CurrentAngle = 3 * math.Pi / 2 // objectif c'est d'arriver a cette angle en tournant a gauche
-
-			// Initialiser la position sur le cercle de virage
-
-			centerX := SOUTH_LEFT_TURN_X - TURN_RADIUS
-			centerY := SOUTH_LEFT_TURN_Y - TURN_RADIUS
-			c.X = centerX + TURN_RADIUS*math.Cos(c.CurrentAngle)
-			c.Y = centerY + TURN_RADIUS*math.Sin(c.CurrentAngle)
+			c.TurnStep = 0
+			c.TurnStartX = c.X // Sauvegarde position actuelle
+			c.TurnStartY = c.Y
 		}
 	}
-
 }
 
 // Act: exécute le mouvement
 func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
-	// Exécuter le virage si IsTurning == true
 	if c.IsTurning {
-		// Tourner
-		c.CurrentAngle -= TURN_SPEED // Diminue l'angle à chaque step
+		c.TurnStep++
+		t := c.TurnStep / TURN_DURATION // progression 0→1
 
-		// Centre du cercle de virage
-		centerX := SOUTH_LEFT_TURN_X - TURN_RADIUS
-		centerY := SOUTH_LEFT_TURN_Y - TURN_RADIUS
+		// Calcul de la position selon une courbe de Bézier cubique ( sur 4 points )
+		// Points de contrôle de la courbe
+		p0x, p0y := c.TurnStartX, c.TurnStartY       // point de départ virage
+		p1x, p1y := c.TurnStartX, c.TurnStartY-25    // direction depart
+		p2x, p2y := c.TurnStartX-25, c.TurnStartY-40 // direction arrivée
+		p3x, p3y := c.TurnStartX-50, c.TurnStartY-50 // point d'arrivée virage
 
-		// Calculer nouvelle position sur le cercle
-		c.X = centerX + TURN_RADIUS*math.Cos(c.CurrentAngle)
-		c.Y = centerY + TURN_RADIUS*math.Sin(c.CurrentAngle)
+		// Formule de Bézier cubique
+		u := 1 - t
+		c.X = u*u*u*p0x + 3*u*u*t*p1x + 3*u*t*t*p2x + t*t*t*p3x
+		c.Y = u*u*u*p0y + 3*u*u*t*p1y + 3*u*t*t*p2y + t*t*t*p3y
 
-		// Fin du virage
-		if c.CurrentAngle <= math.Pi {
+		/*
+		   B(t) = (1-t)³·P0 + 3(1-t)²t·P1 + 3(1-t)t²·P2 + t³·P3 // formule bézier cubique
+		   c.X = u*u*u*p0x + 3*u*u*t*p1x + 3*u*t*t*p2x + t*t*t*p3x
+		         └─────┘     └───────┘     └───────┘     └─────┘
+		         (1-t)³·P0   3(1-t)²t·P1   3(1-t)t²·P2   t³·P3
+
+		   // Position Y sur la courbe (même formule)
+		   c.Y = u*u*u*p0y + 3*u*u*t*p1y + 3*u*t*t*p2y + t*t*t*p3y
+		*/
+
+		if c.TurnStep >= TURN_DURATION {
 			c.IsTurning = false
 			c.Dir = West
-			c.CurrentAngle = 0.0 // Remettre l'angle à 0 après le virage
 		}
 
 	} else {
@@ -202,14 +205,14 @@ func (c *Car) TurningLeft() bool {
 }
 
 // Angle pour l'affichage
+
 func (c *Car) Angle() float64 {
 	if c.IsTurning {
-		// L'angle visuel est perpendiculaire au rayon (tangent au cercle)
-		// On ajoute -π/2 pour que la voiture pointe dans la direction du mouvement
-		println("Angle during turn:", c.CurrentAngle-math.Pi/2)
-		return c.CurrentAngle - math.Pi/2 // Tangente au cercle
+		// Angle = arctangente de la direction (dy/dx)
+		return math.Atan2(c.Y, c.X)
 	}
-	return 0.0
+
+	return 0
 }
 
 func (c *Car) Type() string {
