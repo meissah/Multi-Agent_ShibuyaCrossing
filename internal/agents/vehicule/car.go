@@ -47,6 +47,7 @@ type Car struct {
 	TurnStep   float64 // compteur de 0 à TURN_DURATION
 	TurnStartX float64 // position de départ du virage
 	TurnStartY float64
+	AngleRad   float64
 
 	Speed        float64 // vitesse actuelle en px/sec
 	MaxSpeed     float64 // Vitesse maximale souhaitée en px/sec
@@ -102,6 +103,7 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, sy
 		TurnStep:   0.0, // compteur de 0 à TURN_DURATION
 		TurnStartX: 0.0, // position de départ du virage
 		TurnStartY: 0.0,
+		AngleRad:   0.0,
 
 		DesiredStopDistance: 50.0,
 
@@ -168,9 +170,13 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		   c.Y = u*u*u*p0y + 3*u*u*t*p1y + 3*u*t*t*p2y + t*t*t*p3y
 		*/
 
+		angle := math.Atan2(c.Y, c.X)
+		c.AngleRad = angle
+
 		if c.TurnStep >= TURN_DURATION {
 			c.IsTurning = false
 			c.Dir = West
+			c.AngleRad = 0.0
 		}
 
 	} else {
@@ -207,12 +213,7 @@ func (c *Car) TurningLeft() bool {
 // Angle pour l'affichage
 
 func (c *Car) Angle() float64 {
-	if c.IsTurning {
-		// Angle = arctangente de la direction (dy/dx)
-		return math.Atan2(c.Y, c.X)
-	}
-
-	return 0
+	return c.AngleRad
 }
 
 func (c *Car) Type() string {
