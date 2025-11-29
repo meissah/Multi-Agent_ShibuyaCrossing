@@ -144,7 +144,7 @@ func (c *Car) Deliberate() {
 func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 	if c.IsTurning {
 		c.TurnStep++
-		t := c.TurnStep / TURN_DURATION // progression 0→1
+		t := c.TurnStep / TURN_DURATION // progression 0→1 (depend de TURN_DURATION)
 
 		// Calcul de la position selon une courbe de Bézier cubique ( sur 4 points )
 		// Points de contrôle de la courbe
@@ -168,6 +168,7 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		   c.Y = u*u*u*p0y + 3*u*u*t*p1y + 3*u*t*t*p2y + t*t*t*p3y
 		*/
 
+		// Fin du virage
 		if c.TurnStep >= TURN_DURATION {
 			c.IsTurning = false
 			c.Dir = West
@@ -207,9 +208,14 @@ func (c *Car) TurningLeft() bool {
 // Angle pour l'affichage
 
 func (c *Car) Angle() float64 {
-	if c.IsTurning {
+	if c.IsTurning { // verifier si en train de tourner
+		// Calcul de l'angle en fonction de la progression du virage
+		t := c.TurnStep / TURN_DURATION // progression 0→1
+		// Angle de départ (Nord = 0 rad) à angle d'arrivée (Ouest = -π/2 rad)
+		return -t * (math.Pi / 2)
+
 		// Angle = arctangente de la direction (dy/dx)
-		return math.Atan2(c.Y, c.X)
+		//return math.Atan2(c.Y, c.X)
 	}
 
 	return 0
