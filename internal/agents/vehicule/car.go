@@ -130,7 +130,7 @@ func (c *Car) Percept(env *[]Object) {
 }
 
 func (c *Car) Deliberate() {
-	if c.TurnLeft && !c.IsTurning && c.Dir == North && c.LaneIndex == 0 {
+	if c.TurnLeft && !c.IsTurning && c.Dir == North {
 		if c.Y <= SOUTH_LEFT_TURN_Y+5 && c.Y >= SOUTH_LEFT_TURN_Y-5 {
 			c.IsTurning = true
 			c.TurnStep = 0
@@ -148,11 +148,22 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 
 		// Calcul de la position selon une courbe de Bézier cubique ( sur 4 points )
 		// Points de contrôle de la courbe
-		p0x, p0y := c.TurnStartX, c.TurnStartY       // point de départ virage
-		p1x, p1y := c.TurnStartX, c.TurnStartY-25    // direction depart
-		p2x, p2y := c.TurnStartX-25, c.TurnStartY-40 // direction arrivée
-		p3x, p3y := c.TurnStartX-50, c.TurnStartY-50 // point d'arrivée virage
 
+		var p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y float64
+		if c.LaneIndex == 0 {
+			//Cordonnees pour la lane de gauche (lane =0)
+			p0x, p0y = c.TurnStartX, c.TurnStartY       // point de départ virage
+			p1x, p1y = c.TurnStartX, c.TurnStartY-5     // direction depart
+			p2x, p2y = c.TurnStartX-15, c.TurnStartY-12 // direction arrivée
+			p3x, p3y = c.TurnStartX-25, c.TurnStartY-22 // point d'arrivée virage
+		} else {
+
+			//Cordonnees pour la lane de droite (lane =1)
+			p0x, p0y = c.TurnStartX, c.TurnStartY       // point de départ virage
+			p1x, p1y = c.TurnStartX, c.TurnStartY-30    // direction depart
+			p2x, p2y = c.TurnStartX-25, c.TurnStartY-40 // direction arrivée
+			p3x, p3y = c.TurnStartX-45, c.TurnStartY-50 // point d'arrivée virage
+		}
 		// Formule de Bézier cubique
 		u := 1 - t
 		c.X = u*u*u*p0x + 3*u*u*t*p1x + 3*u*t*t*p2x + t*t*t*p3x
@@ -178,13 +189,13 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		// Mouvement normal en ligne droite
 		switch c.Dir {
 		case North:
-			c.Y -= 2.0 // LA VOITURE MONTE
+			c.Y -= 3.0 // LA VOITURE MONTE
 		case South:
-			c.Y += 2.0 // pour le test
+			c.Y += 3.0 // pour le test
 		case East:
-			c.X += 2.0
+			c.X += 3.0
 		case West:
-			c.X -= 2.0
+			c.X -= 3.0
 		}
 	}
 
@@ -215,7 +226,7 @@ func (c *Car) Angle() float64 {
 		return -t * (math.Pi / 2)
 
 		// Angle = arctangente de la direction (dy/dx)
-		//return math.Atan2(c.Y, c.X)
+		//return math.Atan2(c.Y, c.X) quand ca driftait
 	}
 
 	return 0

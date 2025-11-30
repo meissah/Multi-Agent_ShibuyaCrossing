@@ -96,7 +96,18 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 
 	//choix aléatoire du point de spawn
 	//x, y, dir, lane := ChoisirPointSpawn()
-	x, y, dir, lane := 323.0, 750.0, North, 0 // juste pour tester
+	//x, y, dir, lane := 323.0, 750.0, North, 0 // juste pour tester sur lane gauche
+	//x, y, dir, lane := 355.0, 750.0, North, 0 // juste pour tester sur lane droite
+
+	var x, y float64
+	var dir Direction
+	var lane int
+
+	if rand.Float64() < 0.5 { // a modif juste la pour tester
+		x, y, dir, lane = 323.0, 750.0, North, 0
+	} else {
+		x, y, dir, lane = 355.0, 750.0, North, 1
+	}
 
 	//choix aléatoire de si la voiture va tourner à gauche ou pas
 	turnleft := ChooseToTurn()
