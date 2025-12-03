@@ -85,7 +85,7 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 // ChoisirVirage décide si la voiture doit tourner à gauche (30% de chances)
 func ChooseToTurn() bool {
 	// 30% de chances de tourner à gauche
-	if rand.Float64() < 0.99 { // a modif juste la pour tester
+	if rand.Float64() < 0.99 { // a modif juste la pour tester on fait en sorte que quasi toute les voitures tournent
 		return true
 	}
 	return false
@@ -95,19 +95,50 @@ func ChooseToTurn() bool {
 func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.Request, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
 
 	//choix aléatoire du point de spawn
-	//x, y, dir, lane := ChoisirPointSpawn()
-	//x, y, dir, lane := 323.0, 750.0, North, 0 // juste pour tester sur lane gauche
-	//x, y, dir, lane := 355.0, 750.0, North, 0 // juste pour tester sur lane droite
 
 	var x, y float64
 	var dir Direction
 	var lane int
 
-	if rand.Float64() < 0.5 { // a modif juste la pour tester
-		x, y, dir, lane = 323.0, 750.0, North, 0
-	} else {
-		x, y, dir, lane = 355.0, 750.0, North, 1
-	}
+	x, y, dir, lane = ChoisirPointSpawn()
+
+	// test spawn sud
+	/*
+		if rand.Float64() < 0.5 { // a modif juste la pour tester
+			x, y, dir, lane = 323.0, 750.0, North, 0
+		} else {
+			x, y, dir, lane = 355.0, 750.0, North, 1
+		}
+	*/
+
+	// test spawn nord
+	/*
+		if rand.Float64() < 0.5 { // a modif juste la pour tester
+			x, y, dir, lane = 395.0, 0, South, 0
+		} else {
+			x, y, dir, lane = 424.0, 0, South, 1
+		}
+	*/
+
+	// test spawn ouest
+
+	/*
+		if rand.Float64() < 0.5 { // a modif juste la pour tester
+			x, y, dir, lane = 0.0, 323.0, East, 0
+		} else {
+			x, y, dir, lane = 0.0, 355.0, East, 1
+		}
+	*/
+
+	// test spawn est
+
+	/*
+		if rand.Float64() < 0.5 { // a modif juste la pour tester
+			x, y, dir, lane = 750, 395.0, West, 0
+		} else {
+			x, y, dir, lane = 750, 424.0, West, 1
+		}
+	*/
 
 	//choix aléatoire de si la voiture va tourner à gauche ou pas
 	turnleft := ChooseToTurn()

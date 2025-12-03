@@ -80,7 +80,17 @@ type CarUpdate struct {
 const (
 	SOUTH_LEFT_TURN_X = 325.0
 	SOUTH_LEFT_TURN_Y = 440.0
-	TURN_DURATION     = 30.0 // nombre de steps pour faire le virage
+
+	NORTH_LEFT_TURN_X = 420.0
+	NORTH_LEFT_TURN_Y = 307.0
+
+	EAST_LEFT_TURN_X = 440.0
+	EAST_LEFT_TURN_Y = 325.0
+
+	WEST_LEFT_TURN_X = 307.0
+	WEST_LEFT_TURN_Y = 420.0
+
+	TURN_DURATION = 30.0 // nombre de steps pour faire le virage
 )
 
 // Interface environnement pour la voiture ( on mettra plus tard les feux )
@@ -131,41 +141,127 @@ func (c *Car) Percept(env *[]Object) {
 
 }
 
+/*
+	func (c *Car) Deliberate() {
+		if c.TurnLeft && !c.IsTurning && c.Dir == North {
+			if c.Y <= SOUTH_LEFT_TURN_Y+5 && c.Y >= SOUTH_LEFT_TURN_Y-5 {
+				c.IsTurning = true
+				c.TurnStep = 0
+				c.TurnStartX = c.X // Sauvegarde position actuelle
+				c.TurnStartY = c.Y
+			}
+		}
+	}
+*/
+
 func (c *Car) Deliberate() {
-	if c.TurnLeft && !c.IsTurning && c.Dir == North {
-		if c.Y <= SOUTH_LEFT_TURN_Y+5 && c.Y >= SOUTH_LEFT_TURN_Y-5 {
-			c.IsTurning = true
-			c.TurnStep = 0
-			c.TurnStartX = c.X // Sauvegarde position actuelle
-			c.TurnStartY = c.Y
+	if c.TurnLeft && !c.IsTurning {
+		// Virage pour les voitures venant du Sud (direction North)
+		if c.Dir == North {
+			if c.Y <= SOUTH_LEFT_TURN_Y+5 && c.Y >= SOUTH_LEFT_TURN_Y-5 {
+				c.IsTurning = true
+				c.TurnStep = 0
+				c.TurnStartX = c.X
+				c.TurnStartY = c.Y
+			}
+		}
+		// Virage pour les voitures venant du Nord (direction South)
+		if c.Dir == South {
+			if c.Y >= NORTH_LEFT_TURN_Y-5 && c.Y <= NORTH_LEFT_TURN_Y+5 {
+				c.IsTurning = true
+				c.TurnStep = 0
+				c.TurnStartX = c.X
+				c.TurnStartY = c.Y
+			}
+		}
+		// Virage pour les voitures venant de l'Est (direction West)
+		if c.Dir == West {
+			if c.X <= EAST_LEFT_TURN_X+5 && c.X >= EAST_LEFT_TURN_X-5 {
+				c.IsTurning = true
+				c.TurnStep = 0
+				c.TurnStartX = c.X
+				c.TurnStartY = c.Y
+			}
+		}
+		// Virage pour les voitures venant de l'Ouest (direction East)
+		if c.Dir == East {
+			if c.X >= WEST_LEFT_TURN_X-5 && c.X <= WEST_LEFT_TURN_X+5 {
+				c.IsTurning = true
+				c.TurnStep = 0
+				c.TurnStartX = c.X
+				c.TurnStartY = c.Y
+			}
 		}
 	}
 }
 
-// Act: exécute le mouvement
 func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 	if c.IsTurning {
 		c.TurnStep++
-		t := c.TurnStep / TURN_DURATION // progression 0→1 (depend de TURN_DURATION)
-
-		// Calcul de la position selon une courbe de Bézier cubique ( sur 4 points )
-		// Points de contrôle de la courbe
+		t := c.TurnStep / TURN_DURATION
 
 		var p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y float64
-		if c.LaneIndex == 0 {
-			//Cordonnees pour la lane de gauche (lane =0)
-			p0x, p0y = c.TurnStartX, c.TurnStartY       // point de départ virage
-			p1x, p1y = c.TurnStartX, c.TurnStartY-5     // direction depart
-			p2x, p2y = c.TurnStartX-15, c.TurnStartY-12 // direction arrivée
-			p3x, p3y = c.TurnStartX-25, c.TurnStartY-22 // point d'arrivée virage
-		} else {
+		// Ajustement des points de contrôle selon la direction initiale
+		if c.Dir == North { // spawn depuis le sud et tourne a gauche vers l'ouest
+			if c.LaneIndex == 0 {
+				// Lane de gauche
+				p0x, p0y = c.TurnStartX, c.TurnStartY       // point de départ virage
+				p1x, p1y = c.TurnStartX, c.TurnStartY-5     // direction depart
+				p2x, p2y = c.TurnStartX-15, c.TurnStartY-12 // direction arrivée
+				p3x, p3y = c.TurnStartX-25, c.TurnStartY-22 // point d'arrivée virage
+			} else {
+				// Lane de droite
+				p0x, p0y = c.TurnStartX, c.TurnStartY
+				p1x, p1y = c.TurnStartX, c.TurnStartY-30
+				p2x, p2y = c.TurnStartX-25, c.TurnStartY-40
+				p3x, p3y = c.TurnStartX-45, c.TurnStartY-50
+			}
+		} else if c.Dir == South { // spawn depuis le nord et tourne a gauche vers l'est
+			if c.LaneIndex == 0 {
+				// Lane de gauche
+				p0x, p0y = c.TurnStartX, c.TurnStartY
+				p1x, p1y = c.TurnStartX, c.TurnStartY+30
+				p2x, p2y = c.TurnStartX+25, c.TurnStartY+40
+				p3x, p3y = c.TurnStartX+45, c.TurnStartY+53
 
-			//Cordonnees pour la lane de droite (lane =1)
-			p0x, p0y = c.TurnStartX, c.TurnStartY       // point de départ virage
-			p1x, p1y = c.TurnStartX, c.TurnStartY-30    // direction depart
-			p2x, p2y = c.TurnStartX-25, c.TurnStartY-40 // direction arrivée
-			p3x, p3y = c.TurnStartX-45, c.TurnStartY-50 // point d'arrivée virage
+			} else {
+				// Lane de droite
+				p0x, p0y = c.TurnStartX, c.TurnStartY
+				p1x, p1y = c.TurnStartX, c.TurnStartY+5
+				p2x, p2y = c.TurnStartX+15, c.TurnStartY+12
+				p3x, p3y = c.TurnStartX+25, c.TurnStartY+22
+
+			}
+		} else if c.Dir == West { // spawn depuis l'est et tourne a gauche vers le sud
+			if c.LaneIndex == 0 {
+				// Lane de gauche
+				p0x, p0y = c.TurnStartX, c.TurnStartY
+				p1x, p1y = c.TurnStartX-30, c.TurnStartY
+				p2x, p2y = c.TurnStartX-40, c.TurnStartY+25
+				p3x, p3y = c.TurnStartX-50, c.TurnStartY+45
+			} else {
+				// Lane de droite
+				p0x, p0y = c.TurnStartX, c.TurnStartY
+				p1x, p1y = c.TurnStartX-5, c.TurnStartY
+				p2x, p2y = c.TurnStartX-12, c.TurnStartY+15
+				p3x, p3y = c.TurnStartX-22, c.TurnStartY+25
+			}
+		} else if c.Dir == East { // spawn depuis l'ouest et tourne a gauche vers le nord
+			if c.LaneIndex == 0 {
+				// Lane de gauche
+				p0x, p0y = c.TurnStartX, c.TurnStartY
+				p1x, p1y = c.TurnStartX+5, c.TurnStartY
+				p2x, p2y = c.TurnStartX+12, c.TurnStartY-15
+				p3x, p3y = c.TurnStartX+22, c.TurnStartY-25
+			} else {
+				// Lane de droite
+				p0x, p0y = c.TurnStartX, c.TurnStartY
+				p1x, p1y = c.TurnStartX+30, c.TurnStartY
+				p2x, p2y = c.TurnStartX+40, c.TurnStartY-25
+				p3x, p3y = c.TurnStartX+53, c.TurnStartY-45
+			}
 		}
+
 		// Formule de Bézier cubique
 		u := 1 - t
 		c.X = u*u*u*p0x + 3*u*u*t*p1x + 3*u*t*t*p2x + t*t*t*p3x
@@ -184,7 +280,15 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		// Fin du virage
 		if c.TurnStep >= TURN_DURATION {
 			c.IsTurning = false
-			c.Dir = West
+			if c.Dir == North {
+				c.Dir = West
+			} else if c.Dir == South {
+				c.Dir = East
+			} else if c.Dir == West {
+				c.Dir = South
+			} else if c.Dir == East {
+				c.Dir = North
+			}
 			c.AngleRad = 0.0
 		}
 
@@ -201,7 +305,6 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 			c.X -= 3.0
 		}
 	}
-
 	// Envoyer la position
 	RespChan := make(chan int)
 	ActChn <- ObjectAddRequest{
@@ -209,6 +312,7 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		RespChan: RespChan,
 	}
 	<-RespChan
+
 }
 
 func (c *Car) Position() (float64, float64) {
@@ -219,19 +323,42 @@ func (c *Car) TurningLeft() bool {
 	return c.IsTurning
 }
 
-// Angle pour l'affichage
+// Angle pour l'affichage, quand je faisais que tourner en partant du sud
+/*
+func (c *Car) Angle() float64 {
+	if c.IsTurning {
+		t := c.TurnStep / TURN_DURATION
+
+		if c.Dir == North {
+			// Sud vers Ouest : rotation de 0 à -π/2
+			return -t * (math.Pi / 2)
+		} else if c.Dir == South {
+			// Nord vers Est : rotation de π à π/2
+			return math.Pi - t*(math.Pi/2)
+		}
+	}
+	return 0
+}
+*/
 
 func (c *Car) Angle() float64 {
-	if c.IsTurning { // verifier si en train de tourner
-		// Calcul de l'angle en fonction de la progression du virage
-		t := c.TurnStep / TURN_DURATION // progression 0→1
-		// Angle de départ (Nord = 0 rad) à angle d'arrivée (Ouest = -π/2 rad)
-		return -t * (math.Pi / 2)
+	if c.IsTurning {
+		t := c.TurnStep / TURN_DURATION
 
-		// Angle = arctangente de la direction (dy/dx)
-		//return math.Atan2(c.Y, c.X) quand ca driftait
+		if c.Dir == North {
+			// Sud vers Ouest : rotation de 0 à -π/2
+			return -t * (math.Pi / 2)
+		} else if c.Dir == South {
+			// Nord vers Est : rotation de π à π/2
+			return math.Pi - t*(math.Pi/2)
+		} else if c.Dir == West {
+			// Est vers Sud : rotation de -π/2 à -π
+			return -math.Pi - t*(math.Pi/2)
+		} else if c.Dir == East {
+			// Ouest vers Nord : rotation de π/2 à 0
+			return -t * (math.Pi / 2)
+		}
 	}
-
 	return 0
 }
 
