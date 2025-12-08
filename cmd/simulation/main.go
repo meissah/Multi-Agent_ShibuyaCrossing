@@ -17,10 +17,12 @@ func main() {
 	ebiten.SetWindowTitle("Shibuya Crossing")
 
 	// 24 updates par second
-	ebiten.SetTPS(24)
+	ebiten.SetTPS(60)
 
 	//Initialisation de l'environnement du jeu
 	game := game.NewGame()
+
+	ebiten.SetRunnableOnUnfocused(true)
 
 	//lancement de la Boucle du jeu
 	if err := ebiten.RunGame(game); err != nil {
