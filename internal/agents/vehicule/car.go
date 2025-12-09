@@ -2,14 +2,11 @@ package vehicule
 
 import (
 	"math"
+	"math/rand"
 	"time"
 
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
-
-func (ag Car) AgtID() AgentID {
-	return ag.ID
-}
 
 // lance la goroutine de l'agent car
 func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
@@ -63,6 +60,10 @@ type Car struct {
 	intention string // "accelerate", "stop", "slow_down"
 
 	AmIAlive bool
+
+	// Couleur de la voiture (index dans le tableau d'images)
+	// 0=blue, 1=red, 2=green, 3=lightblue, 4=yellow ...
+	carColorIndex int
 
 	// Référence à l'environnement pour les perceptions
 	//env      CarEnvironment
@@ -127,12 +128,11 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, sy
 
 		intention: "accelerate", // pareil que pour le State moving à voir plus tard
 		syncChan:  syncChan,
-	}
-}
 
-// GetID getter ID de la voiture
-func (c *Car) GetID() AgentID {
-	return c.ID
+		// Choisir une couleur aléatoire à la création de la voiture
+		// 5 couleurs disponibles : blue(0), red(1), green(2), lightblue(3), yellow(4)
+		carColorIndex: rand.Intn(5),
+	}
 }
 
 // Percept: perçoit l'environnement (autres voitures et feux ( pas encore fait ))
@@ -296,9 +296,9 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		// Mouvement normal en ligne droite
 		switch c.Dir {
 		case North:
-			c.Y -= 3.0 // LA VOITURE MONTE
+			c.Y -= 3.0 // la voiture monte
 		case South:
-			c.Y += 3.0 // pour le test
+			c.Y += 3.0
 		case East:
 			c.X += 3.0
 		case West:
@@ -323,24 +323,6 @@ func (c *Car) TurningLeft() bool {
 	return c.IsTurning
 }
 
-// Angle pour l'affichage, quand je faisais que tourner en partant du sud
-/*
-func (c *Car) Angle() float64 {
-	if c.IsTurning {
-		t := c.TurnStep / TURN_DURATION
-
-		if c.Dir == North {
-			// Sud vers Ouest : rotation de 0 à -π/2
-			return -t * (math.Pi / 2)
-		} else if c.Dir == South {
-			// Nord vers Est : rotation de π à π/2
-			return math.Pi - t*(math.Pi/2)
-		}
-	}
-	return 0
-}
-*/
-
 func (c *Car) Angle() float64 {
 	if c.IsTurning {
 		t := c.TurnStep / TURN_DURATION
@@ -360,6 +342,16 @@ func (c *Car) Angle() float64 {
 		}
 	}
 	return 0
+}
+
+// AgtID getter ID de la voiture
+func (c *Car) AgtID() AgentID {
+	return c.ID
+}
+
+// CarColorIndex retourne l'index de la couleur de la voiture (pour l'affichage)
+func (c *Car) CarColorIndex() int {
+	return c.carColorIndex
 }
 
 func (c *Car) Type() string {

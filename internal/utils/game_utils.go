@@ -36,5 +36,4 @@ type Object interface {
 	Angle() float64 // angle de rotation
 	Type() string   //to know what item to draw
 	State() string  //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
-
 }

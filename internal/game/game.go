@@ -11,6 +11,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	objectslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/object_slice_handler"
@@ -22,6 +23,12 @@ import (
 // variable pour stocker l'image road.png
 var imgRoad *ebiten.Image
 
+// Liste des images de voitures (une par couleur)
+var carImages []*ebiten.Image
+
+// Liste des noms de couleurs disponibles
+var carColorNames []string
+
 // import de road.png
 func init() {
 	var err error
@@ -29,6 +36,23 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Liste des couleurs de voitures disponibles
+	carColorNames = []string{"blue", "red", "green", "purple", "lightblue", "yellow"}
+
+	// On charge chaque image de voiture
+	for _, color := range carColorNames {
+		filename := fmt.Sprintf("internal/assets/cars/car_%s.png", color)
+		img, _, err := ebitenutil.NewImageFromFile(filename)
+		if err != nil {
+			// Si une image ne charge pas, on arrête le programme
+			log.Fatalf("erreur: Impossible de charger %s: %v", filename, err)
+		}
+		// On ajoute l'image chargée à notre liste
+		carImages = append(carImages, img)
+		log.Printf("Image chargée: %s", filename)
+	}
+
 }
 
 // Structure de l'environment du jeu
@@ -193,7 +217,61 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(img1, op)
 	}
 
-	////Dessine les objets dans le slice Objts
+	////Dessine les voitures avec leurs images
+	for _, obj := range g.Objts {
+		if obj.Type() == "car" {
+			// Type assertion : convertir Object en *vehicule.Car
+			car, ok := obj.(*vehicule.Car)
+			if !ok {
+				continue
+			}
+
+			// Récupérer l'index de couleur de la voiture
+			colorIndex := car.CarColorIndex()
+			carImg := carImages[colorIndex]
+
+			// Dimensions EXACTEMENT comme les rectangles (23x33 ou 33x23)
+			var w, h float64
+			switch car.Direction() {
+			case North, South:
+				w, h = 35, 50 // Vertical
+			case East, West:
+				w, h = 50, 35 // Horizontal
+			}
+
+			// Préparer le dessin - MÊME LOGIQUE que les rectangles
+			op := &ebiten.DrawImageOptions{}
+			x, y := car.Position()
+			angle := car.Angle()
+
+			// Récupérer les dimensions réelles de l'image
+			bounds := carImg.Bounds()
+			imgW, imgH := float64(bounds.Dx()), float64(bounds.Dy())
+
+			// Calculer le scale pour avoir EXACTEMENT w x h pixels
+			scaleX := w / imgW
+			scaleY := h / imgH
+
+			// Centrer l'image à l'origine (comme pour le rectangle)
+			op.GeoM.Translate(-imgW/2, -imgH/2)
+
+			// Scale pour obtenir EXACTEMENT les dimensions w x h
+			op.GeoM.Scale(scaleX, scaleY)
+
+			// Appliquer la rotation (comme pour le rectangle)
+			op.GeoM.Rotate(angle)
+
+			// Déplacer à la position finale (comme pour le rectangle)
+			op.GeoM.Translate(x, y)
+
+			// Dessiner l'image de la voiture
+			screen.DrawImage(carImg, op)
+		}
+	}
+}
+
+////Dessine les objets dans le slice Objts ( ancienne version avec rectangles basiques pour les voitures )
+/*
 	for _, c := range g.Objts {
 		//dessine les voitures, a remplacer par select/case plutard pour prendre en compte l'ensemble des types d'objets
 		if c.Type() == "car" {
@@ -226,8 +304,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(rect, op)
 		}
 	}
-
-}
+*/
 
 // sets the size of the game screen, automatically called by RunGame
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
