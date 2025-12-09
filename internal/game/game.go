@@ -306,10 +306,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			switch c.Direction() {
 			case South:
 				w, h = 35, 50 // pour que les voitures ont la bonne forme suivant leur apparition
-				if angle == 0 {
-					op.GeoM.Rotate((math.Pi))
-					op.GeoM.Translate(imgW, imgH)
-				}
+				// if angle == 0 {
+				op.GeoM.Rotate((math.Pi))
+				op.GeoM.Translate(imgW, imgH)
+				// }
 				//Calculer le scale pour avoir EXACTEMENT w x h pixels
 				scaleX = float64(w) / imgW
 				scaleY = float64(h) / imgH
@@ -321,13 +321,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 			case West:
 				w, h = 50, 35
-				if angle != 0 {
-					op.GeoM.Rotate((math.Pi) / 2)
-					op.GeoM.Translate(imgH, 0)
-				} else {
-					op.GeoM.Rotate((3 * math.Pi) / 2)
-					op.GeoM.Translate(0, imgW)
-				}
+				// if angle != 0 {
+				// 	op.GeoM.Rotate((math.Pi) / 2)
+				// 	op.GeoM.Translate(imgH, 0)
+				// } else {
+				op.GeoM.Rotate((3 * math.Pi) / 2)
+				op.GeoM.Translate(0, imgW)
+				//}
 				// //Calculer le scale pour avoir EXACTEMENT w x h pixels
 				scaleY = float64(h) / imgW
 				scaleX = float64(w) / imgH
@@ -361,11 +361,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			x, y := c.Position()
 
 			//Appliquer la rotation
-			op.GeoM.Rotate(angle)
+			if angle != 0 && c.Direction() == West {
+				op.GeoM.Rotate(angle + math.Pi)
+			} else if angle != 0 && c.Direction() == South {
+				op.GeoM.Rotate(angle + math.Pi)
+			} else {
+				op.GeoM.Rotate(angle)
+			}
+
 			op.GeoM.Translate(x, y)
 
 			screen.DrawImage(carImg, op)
-			screen.DrawImage(rect, op)
+			//screen.DrawImage(rect, op)
 		}
 	}
 }
