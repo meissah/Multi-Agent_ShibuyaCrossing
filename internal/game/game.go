@@ -89,7 +89,7 @@ func NewGame() *Game {
 	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
 
 	//lance la goroutine autonome de creation de voitures, on peut choisir la frequence ici
-	carspawner := carspawn.CarSpawn{SpawnInterval: 4 * time.Second} // initialise la structure de spawn de voiture
+	carspawner := carspawn.CarSpawn{SpawnInterval: 1 * time.Second} // initialise la structure de spawn de voiture
 	carspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	return g
@@ -97,7 +97,7 @@ func NewGame() *Game {
 
 // appelle les agents pour qu'ils fassent leur prochain mouvement, lancé automatiquement par boucle du jeu
 func (g *Game) Update() error {
-	fmt.Println("Je viens update :", g.step)
+	//fmt.Println("Je viens update :", g.step)
 	//on copie l'etat précédent des objets visuels
 	g.ObjtsCopy = append([]Object(nil), g.Objts...)
 	//on vide l'état courant des objets visuels pour permettre les agents d'actualiser leur future step
@@ -217,11 +217,71 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(img1, op)
 	}
 
-	////Dessine les voitures avec leurs images
-	for _, obj := range g.Objts {
-		if obj.Type() == "car" {
+	// ////Dessine les voitures avec leurs images
+	// for _, obj := range g.Objts {
+	// 	if obj.Type() == "car" {
+	// 		// Type assertion : convertir Object en *vehicule.Car
+	// 		car, ok := obj.(*vehicule.Car)
+	// 		if !ok {
+	// 			continue
+	// 		}
+
+	// 		// Récupérer l'index de couleur de la voiture
+	// 		colorIndex := car.CarColorIndex()
+	// 		carImg := carImages[colorIndex]
+
+	// 		// Récupérer les dimensions réelles de l'image
+	// 		bounds := carImg.Bounds()
+	// 		imgW, imgH := float64(bounds.Dx()), float64(bounds.Dy())
+
+	// 		op := &ebiten.DrawImageOptions{}
+	// 		var w, h float64 = 35, 50
+
+	// 		// Calculer le scale pour avoir EXACTEMENT w x h pixels
+	// 		scaleX := w / imgW
+	// 		scaleY := h / imgH
+
+	// 		// Scale pour obtenir EXACTEMENT les dimensions w x h
+	// 		op.GeoM.Scale(scaleX, scaleY)
+
+	// 		// Centrer à l'origine
+	// 		op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
+
+	// 		// Centrer l'image à l'origine (comme pour le rectangle)
+	// 		//op.GeoM.Translate(-imgW/2, -imgH/2)
+
+	// 		// // // Dimensions EXACTEMENT comme les rectangles (23x33 ou 33x23)
+	// 		// // var w, h float64
+	// 		// // switch car.Direction() {
+	// 		// // case North, South:
+	// 		// // 	w, h = 35, 50 // Vertical
+	// 		// // case East, West:
+	// 		// // 	w, h = 50, 35 // Horizontal
+	// 		// // }
+
+	// 		// // Préparer le dessin - MÊME LOGIQUE que les rectangles
+
+	// 		// x, y := car.Position()
+	// 		angle := car.Angle()
+
+	// 		// // Appliquer la rotation (comme pour le rectangle)
+	// 		op.GeoM.Rotate(angle)
+
+	// 		// // Déplacer à la position finale (comme pour le rectangle)
+	// 		// op.GeoM.Translate(x, y)
+
+	// 		// Dessiner l'image de la voiture
+	// 		screen.DrawImage(carImg, op)
+	// 	}
+	// }
+
+	////Dessine les objets dans le slice Objts ( ancienne version avec rectangles basiques pour les voitures )
+
+	for _, c := range g.Objts {
+		//dessine les voitures, a remplacer par select/case plutard pour prendre en compte l'ensemble des types d'objets
+		if c.Type() == "car" {
 			// Type assertion : convertir Object en *vehicule.Car
-			car, ok := obj.(*vehicule.Car)
+			car, ok := c.(*vehicule.Car)
 			if !ok {
 				continue
 			}
@@ -230,81 +290,85 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			colorIndex := car.CarColorIndex()
 			carImg := carImages[colorIndex]
 
-			// Dimensions EXACTEMENT comme les rectangles (23x33 ou 33x23)
-			var w, h float64
-			switch car.Direction() {
-			case North, South:
-				w, h = 35, 50 // Vertical
-			case East, West:
-				w, h = 50, 35 // Horizontal
-			}
-
-			// Préparer le dessin - MÊME LOGIQUE que les rectangles
-			op := &ebiten.DrawImageOptions{}
-			x, y := car.Position()
-			angle := car.Angle()
-
 			// Récupérer les dimensions réelles de l'image
 			bounds := carImg.Bounds()
 			imgW, imgH := float64(bounds.Dx()), float64(bounds.Dy())
+			//fmt.Println(imgW, imgH)
 
-			// Calculer le scale pour avoir EXACTEMENT w x h pixels
-			scaleX := w / imgW
-			scaleY := h / imgH
-
-			// Centrer l'image à l'origine (comme pour le rectangle)
-			op.GeoM.Translate(-imgW/2, -imgH/2)
-
-			// Scale pour obtenir EXACTEMENT les dimensions w x h
-			op.GeoM.Scale(scaleX, scaleY)
-
-			// Appliquer la rotation (comme pour le rectangle)
-			op.GeoM.Rotate(angle)
-
-			// Déplacer à la position finale (comme pour le rectangle)
-			op.GeoM.Translate(x, y)
-
-			// Dessiner l'image de la voiture
-			screen.DrawImage(carImg, op)
-		}
-	}
-}
-
-////Dessine les objets dans le slice Objts ( ancienne version avec rectangles basiques pour les voitures )
-/*
-	for _, c := range g.Objts {
-		//dessine les voitures, a remplacer par select/case plutard pour prendre en compte l'ensemble des types d'objets
-		if c.Type() == "car" {
+			op := &ebiten.DrawImageOptions{}
 			// Dimensions selon la direction
 			var w, h int
+			var scaleX, scaleY float64
+			fmt.Println(w, h, scaleX, scaleY, imgH)
+
+			angle := c.Angle() // on recupere l'angle de la voiture
 
 			switch c.Direction() {
-			case North, South:
-				w, h = 23, 33 // pour que les voitures ont la bonne forme suivant leur apparition
-			case East, West:
-				w, h = 33, 23 //
+			case South:
+				w, h = 35, 50 // pour que les voitures ont la bonne forme suivant leur apparition
+				if angle == 0 {
+					op.GeoM.Rotate((math.Pi))
+					op.GeoM.Translate(imgW, imgH)
+				}
+				//Calculer le scale pour avoir EXACTEMENT w x h pixels
+				scaleX = float64(w) / imgW
+				scaleY = float64(h) / imgH
+			case North:
+				w, h = 35, 50 // pour que les voitures ont la bonne forme suivant leur apparition
+				//Calculer le scale pour avoir EXACTEMENT w x h pixels
+				scaleX = float64(w) / imgW
+				scaleY = float64(h) / imgH
+
+			case West:
+				w, h = 50, 35
+				if angle != 0 {
+					op.GeoM.Rotate((math.Pi) / 2)
+					op.GeoM.Translate(imgH, 0)
+				} else {
+					op.GeoM.Rotate((3 * math.Pi) / 2)
+					op.GeoM.Translate(0, imgW)
+				}
+				// //Calculer le scale pour avoir EXACTEMENT w x h pixels
+				scaleY = float64(h) / imgW
+				scaleX = float64(w) / imgH
+
+			case East:
+				w, h = 50, 35
+				op.GeoM.Rotate((math.Pi) / 2)
+				op.GeoM.Translate(imgH, 0)
+				// //Calculer le scale pour avoir EXACTEMENT w x h pixels
+				scaleY = float64(h) / imgW
+				scaleX = float64(w) / imgH
 			}
+
+			// // Scale pour obtenir EXACTEMENT les dimensions w x h
+			op.GeoM.Scale(scaleX, scaleY)
+			// Centrer à l'origine
+			op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
+
+			//op.GeoM.Translate(50, 50)
+
 			// Crée un rectangle pour représenter la voiture
-			rect := ebiten.NewImage(w, h)
+			rect := ebiten.NewImage(10, 10)
 
 			// Utiliser une couleur fixe pour toutes les voitures
 			rect.Fill(color.RGBA{0, 0, 255, 255}) // Bleu
 
-			op := &ebiten.DrawImageOptions{}
+			//Calculer le scale pour avoir EXACTEMENT w x h pixels
+			// scaleX := float64(w) / imgW
+			// scaleY := float64(h) / imgH
+
 			x, y := c.Position()
-			angle := c.Angle() // on recupere l'angle de la voiture
 
-			// Centrer à l'origine
-			op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
-
-			// Appliquer la rotation
+			//Appliquer la rotation
 			op.GeoM.Rotate(angle)
 			op.GeoM.Translate(x, y)
 
+			screen.DrawImage(carImg, op)
 			screen.DrawImage(rect, op)
 		}
 	}
-*/
+}
 
 // sets the size of the game screen, automatically called by RunGame
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
