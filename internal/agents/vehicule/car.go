@@ -296,13 +296,13 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 		// Mouvement normal en ligne droite
 		switch c.Dir {
 		case North:
-			c.Y -= 3.0 // la voiture monte
+			c.Y -= 2.0 // la voiture monte
 		case South:
-			c.Y += 3.0
+			c.Y += 2.0
 		case East:
-			c.X += 3.0
+			c.X += 2.0
 		case West:
-			c.X -= 3.0
+			c.X -= 2.0
 		}
 	}
 	// Envoyer la position

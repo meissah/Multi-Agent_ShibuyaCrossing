@@ -14,16 +14,16 @@ func main() {
 	ebiten.SetWindowSize(750, 750)
 
 	//Titre de la fenetre du jeu
-	ebiten.SetWindowTitle("Shibuya Crossing")
+	ebiten.SetWindowTitle("Crossing Simulator")
 
 	// 60 updates par second
 	ebiten.SetTPS(60)
 
 	//Initialisation de l'environnement du jeu
-	game := game.NewGame()
+	game := game.NewGame() // création de l'objet Game qui gère l'état du jeu
 
 	//lancement de la Boucle du jeu
-	if err := ebiten.RunGame(game); err != nil {
+	if err := ebiten.RunGame(game); err != nil { // Boucle principale du jeu qui lance Update() et Draw() 60 fois par seconde
 		log.Fatal(err)
 	}
 }

@@ -1,3 +1,104 @@
+// Ce fichier définit la structure Game et son initialisation.
+// Il gère les états du jeu (menu/simulation) et la boucle principale.
+package game
+
+import (
+	"fmt"
+	"sync"
+
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
+	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
+	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
+	objectslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/object_slice_handler"
+	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
+	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+)
+
+// Game représente l'état complet de l'application
+type Game struct {
+	// État actuel (menu ou simulation)
+	State  config.GameState        // État actuel du jeu si menu ou simulation
+	Config config.SimulationConfig // Configuration de la simulation choisie dans le menu par l'utilisateur
+
+	// Éléments du menu de configuration
+	selectedCrossing string // "shibuya" ou "french"
+	carSpawnInput    float64
+	pedSpawnInput    float64
+	// mettre plus tard: durée des feux de circulation
+
+	// Composants UI du menu
+	validateButton ui.Button
+	shibuyaRect    ui.Rectangle
+	frenchRect     ui.Rectangle
+	carSpawnSlider ui.Slider
+	pedSpawnSlider ui.Slider
+
+	// Agents et objets de la simulation
+	Agts         []Agent
+	ObjtsCopy    []Object
+	Objts        []Object
+	syncChansAgt sync.Map
+	AgentCount   AgentID
+
+	// Channels des microservices
+	AgentCountCh <-chan AgentID
+	AgtsSliceCh  chan<- agentslicehandler.Request
+	ObjtsSliceCh chan<- ObjectAddRequest
+
+	step       int
+	carspawner *carspawn.CarSpawn
+}
+
+// NewGame crée et initialise une nouvelle instance du jeu en mode menu
+
+func NewGame() *Game {
+	g := &Game{
+		State:          config.StateMenu,       // commencer dans le menu
+		Config:         config.DefaultConfig(), // configuration par défaut si l'utilisateur ne choisit rien
+		carSpawnInput:  1.0,
+		pedSpawnInput:  0.5,
+		shibuyaRect:    ui.Rectangle{X: 200, Y: 300, W: 150, H: 150},
+		frenchRect:     ui.Rectangle{X: 400, Y: 300, W: 150, H: 150},
+		carSpawnSlider: ui.NewSlider(200, 120, 300, 20, 1.0, 50.0, 1.0), // Min=1, Max=50
+		pedSpawnSlider: ui.NewSlider(200, 160, 300, 20, 1.0, 50.0, 5.0), // Min=1, Max=50
+	}
+
+	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
+
+	fmt.Printf("Slider voitures: W=%.1f, H=%.1f\n", g.carSpawnSlider.Width, g.carSpawnSlider.Height)
+	fmt.Printf("Slider piétons: W=%.1f, H=%.1f\n", g.pedSpawnSlider.Width, g.pedSpawnSlider.Height)
+
+	return g
+}
+
+// InitSimulation initialise tous les handlers et spawners pour démarrer la simulation
+func (g *Game) InitSimulation() {
+	// Initialiser les channels des microservices
+	g.AgentCountCh = agentcounthandler.LancerAgentCountHandler(&g.AgentCount)
+	g.AgtsSliceCh = agentslicehandler.LancerAgentSliceHandler(&g.Agts, &g.syncChansAgt)
+	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
+
+	// Lancer le spawner de voitures avec la configuration choisie
+	g.carspawner = &carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate}
+	g.carspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
+
+	// A faire -> Lancer le spawner de piétons quand implémenté
+	// pedestrianspawner := &pedestrianspawn.PedestrianSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
+	// pedestrianspawner.Start(...)
+
+	fmt.Printf("Simulation démarrée:\n  - Type: %s\n  - Voitures: %.1f/s\n  - Piétons: %.1f/s\n",
+		g.Config.CrossingType,
+		1.0/g.Config.CarSpawnRate.Seconds(),
+		1.0/g.Config.PedestrianSpawnRate.Seconds())
+}
+
+// Layout définit la taille de la fenêtre du jeu (appelé automatiquement par Ebiten)
+func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
+	return 750, 750
+}
+
+/*
 package game
 
 import (
@@ -381,3 +482,5 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return 750, 750
 }
+
+*/
