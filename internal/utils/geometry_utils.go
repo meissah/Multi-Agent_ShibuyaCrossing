@@ -140,8 +140,64 @@ func NewPoint(x, y float64) *Point {
 func (p Point) X() float64 { return p.x }
 func (p Point) Y() float64 { return p.y }
 
+// Translation du point par un vecteur.
+//
+// Retourne un nouveau point résultant du déplacement du point courant selon
+// le vecteur donné.
 func (p Point) Translate(v Vector) Point {
 	newX := p.x + v.x
 	newY := p.y + v.y
 	return Point{newX, newY}
+}
+
+// Projection orthogonale du point sur une ligne.
+//
+// Retourne le point projeté sur la ligne donnée.
+func (p Point) ProjectOntoLine(l Line) Point {
+	lineVector := l.Vector()
+	pointToStartVector := NewVectorFromPoints(l.StartPoint(), p)
+
+	t := pointToStartVector.Dot(lineVector)
+	newX := l.x1 + t*lineVector.x
+	newY := l.y1 + t*lineVector.y
+	return Point{newX, newY}
+}
+
+// Représente une ligne droite définie par deux points (x1, y1) et (x2, y2).
+type Line struct {
+	x1, y1 float64
+	x2, y2 float64
+}
+
+// Constructeur pour créer une nouvelle ligne à partir de deux points.
+// Retourne nil si les deux points sont identiques.
+func NewLineFromPoints(p1, p2 Point) *Line {
+	if p1.X() == p2.X() && p1.Y() == p2.Y() {
+		return nil
+	}
+
+	return &Line{p1.X(), p1.Y(), p2.X(), p2.Y()}
+}
+
+// Constructeur pour créer une nouvelle ligne à partir d'un point et d'un
+// vecteur directionnel.
+func NewLineFromPointAndVector(p Point, v Vector) *Line {
+	p2 := p.Translate(v)
+	return &Line{p.X(), p.Y(), p2.X(), p2.Y()}
+}
+
+// Vecteur directionnel de la ligne.
+func (l Line) Vector() Vector {
+	vector := Vector{l.x2 - l.x1, l.y2 - l.y1}
+	return vector.Normalize()
+}
+
+// Point de départ de la ligne.
+func (l Line) StartPoint() Point {
+	return Point{l.x1, l.y1}
+}
+
+// Point d'arrivée de la ligne.
+func (l Line) EndPoint() Point {
+	return Point{l.x2, l.y2}
 }
