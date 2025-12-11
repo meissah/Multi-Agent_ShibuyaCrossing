@@ -39,31 +39,10 @@ func (g *Game) UpdateMenu() error {
 	// Mettre à jour l'état hover du bouton
 	g.validateButton.UpdateHover(mouseX, mouseY)
 
-	// Mettre à jour les sliders
+	// Mettre à jour les sliders (récupère la position du curseur)
 	mousePressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
 	g.carSpawnSlider.Update(mouseX, mouseY, mousePressed)
 	g.pedSpawnSlider.Update(mouseX, mouseY, mousePressed)
-
-	if g.validateButton.IsMouseOver && g.selectedCrossing != "" {
-		g.Config.CrossingType = g.selectedCrossing
-
-		// Convertir en nombre entier d'agents/seconde
-		carRate := int(g.carSpawnSlider.Value)
-		pedRate := int(g.pedSpawnSlider.Value)
-
-		// Calculer l'intervalle entre chaque spawn
-		// Ex: 5 voitures/s → 1 voiture toutes les 0.2s
-		g.Config.CarSpawnRate = time.Duration(float64(time.Second) / float64(carRate))
-		g.Config.PedestrianSpawnRate = time.Duration(float64(time.Second) / float64(pedRate))
-
-		fmt.Printf("Configuration :\n")
-		fmt.Printf("  - Crossing: %s\n", g.Config.CrossingType)
-		fmt.Printf("  - Voitures: %d/s (spawn toutes les %v)\n", carRate, g.Config.CarSpawnRate)
-		fmt.Printf("  - Piétons: %d/s (spawn toutes les %v)\n", pedRate, g.Config.PedestrianSpawnRate)
-
-		g.State = config.StateSimulation
-		g.InitSimulation()
-	}
 
 	// Détection des clics de souris
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -81,15 +60,19 @@ func (g *Game) UpdateMenu() error {
 
 		// Clic sur le bouton Valider
 		if g.validateButton.IsMouseOver && g.selectedCrossing != "" {
+			// Convertir en nombre entier d'agents/seconde
+			carRate := int(g.carSpawnSlider.Value)
+			pedRate := int(g.pedSpawnSlider.Value)
+
 			// Appliquer la configuration choisie
 			g.Config.CrossingType = g.selectedCrossing
-			g.Config.CarSpawnRate = time.Duration(g.carSpawnInput * float64(time.Second))
-			g.Config.PedestrianSpawnRate = time.Duration(g.pedSpawnInput * float64(time.Second))
+			g.Config.CarSpawnRate = time.Duration(float64(time.Second) / float64(carRate))
+			g.Config.PedestrianSpawnRate = time.Duration(float64(time.Second) / float64(pedRate))
 
-			fmt.Printf("Configuration :\n")
-			fmt.Printf("Crossing: %s\n", g.Config.CrossingType)
-			fmt.Printf("Voitures: %.1f/s\n", g.carSpawnInput)
-			fmt.Printf("Piétons: %.1f/s\n", g.pedSpawnInput)
+			fmt.Printf("✓ Configuration validée:\n")
+			fmt.Printf("  - Crossing: %s\n", g.Config.CrossingType)
+			fmt.Printf("  - Voitures: %d/s (spawn toutes les %v)\n", carRate, g.Config.CarSpawnRate)
+			fmt.Printf("  - Piétons: %d/s (spawn toutes les %v)\n", pedRate, g.Config.PedestrianSpawnRate)
 
 			// Passer en mode simulation
 			g.State = config.StateSimulation

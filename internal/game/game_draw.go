@@ -78,65 +78,166 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 // DrawMenu affiche l'écran de menu avec les options de configuration
 func (g *Game) DrawMenu(screen *ebiten.Image) {
-	// Fond sombre
-	screen.Fill(color.RGBA{40, 40, 50, 255})
+	// Fond dégradé  (bleu-gris foncé)
+	screen.Fill(color.RGBA{25, 30, 40, 255})
 
-	// Titre principal
-	text.Draw(screen, "Shibuya Crossing Simulator", basicfont.Face7x13, 250, 50, color.White)
-	text.Draw(screen, "Parametres de simulation", basicfont.Face7x13, 50, 100, color.White)
+	// ═══════════════════════════════════════════════════════════
+	// TITRE PRINCIPAL centré
+	// ═══════════════════════════════════════════════════════════
 
-	/// Slider voitures
-	text.Draw(screen, "Voitures par seconde:", basicfont.Face7x13, 50, 130, color.RGBA{255, 255, 255, 255})
+	titleText := "CROSSING SIMULATOR"
+	titleWidth := len(titleText) * 7
+	titleX := (750 - titleWidth) / 2
+
+	// Dessiner l'ombre du titre (effet de profondeur)
+	for i := 0; i < 3; i++ {
+		text.Draw(screen, titleText, basicfont.Face7x13,
+			titleX+i, 48+i, color.RGBA{0, 0, 0, 100})
+	}
+	// Dessiner le titre principal en blanc
+	text.Draw(screen, titleText, basicfont.Face7x13,
+		titleX, 48, color.RGBA{255, 255, 255, 255})
+
+	// Sous-titre centré
+	subtitleText := "Comparaison Shibuya vs French Crossing"
+	subtitleWidth := len(subtitleText) * 7
+	subtitleX := (750 - subtitleWidth) / 2
+	text.Draw(screen, subtitleText, basicfont.Face7x13,
+		subtitleX, 70, color.RGBA{150, 160, 180, 255})
+
+	// Ligne de séparation centrée
+	separatorLine := ebiten.NewImage(600, 2)
+	separatorLine.Fill(color.RGBA{50, 140, 200, 255})
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(75, 85)
+	screen.DrawImage(separatorLine, op)
+
+	// ═══════════════════════════════════════════════════════════
+	// SECTION PARAMÈTRES
+	// ═══════════════════════════════════════════════════════════
+
+	// Titre de section avec fond coloré
+	sectionBg := ebiten.NewImage(650, 35)
+	sectionBg.Fill(color.RGBA{40, 50, 65, 255})
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(50, 110)
+	screen.DrawImage(sectionBg, op)
+
+	// Titre de section centré
+	sectionTitle := "PARAMETRES DE SIMULATION"
+	sectionTitleWidth := len(sectionTitle) * 7
+	sectionTitleX := (750 - sectionTitleWidth) / 2
+	text.Draw(screen, sectionTitle, basicfont.Face7x13,
+		sectionTitleX, 130, color.RGBA{100, 200, 255, 255})
+
+	// Slider voitures centré avec icône
+	labelCars := "Voitures par seconde:"
+	text.Draw(screen, labelCars, basicfont.Face7x13,
+		100, 175, color.RGBA{220, 220, 220, 255})
 	g.drawSlider(screen, g.carSpawnSlider)
-	carValue := fmt.Sprintf("%d/s", int(g.carSpawnSlider.Value)) // arrondi en int
-	text.Draw(screen, carValue, basicfont.Face7x13, 520, 130, color.RGBA{200, 200, 200, 255})
+	carValue := fmt.Sprintf("%d/s", int(g.carSpawnSlider.Value))
+	text.Draw(screen, carValue, basicfont.Face7x13,
+		555, 175, color.RGBA{100, 200, 100, 255})
 
 	// Slider piétons
-	text.Draw(screen, "Pietons par seconde:", basicfont.Face7x13, 50, 170, color.RGBA{255, 255, 255, 255})
+	labelPed := "Pietons par seconde:"
+	text.Draw(screen, labelPed, basicfont.Face7x13,
+		100, 215, color.RGBA{220, 220, 220, 255})
 	g.drawSlider(screen, g.pedSpawnSlider)
-	pedValue := fmt.Sprintf("%d/s", int(g.pedSpawnSlider.Value)) // arrondi en int
-	text.Draw(screen, pedValue, basicfont.Face7x13, 520, 170, color.RGBA{200, 200, 200, 255})
-	// Instruction de sélection
-	text.Draw(screen, "Choisissez un type de crossing:", basicfont.Face7x13, 50, 250, color.White)
+	pedValue := fmt.Sprintf("%d/s", int(g.pedSpawnSlider.Value))
+	text.Draw(screen, pedValue, basicfont.Face7x13,
+		555, 215, color.RGBA{100, 200, 100, 255})
 
-	// Dessiner les deux options de crossing
-	g.drawCrossingOption(screen, "Shibuya", g.shibuyaRect, g.selectedCrossing == "shibuya", imgShibuya)
-	g.drawCrossingOption(screen, "French", g.frenchRect, g.selectedCrossing == "french", imgFrench)
+	// ═══════════════════════════════════════════════════════════
+	// SECTION CHOIX DU CROSSING
+	// ═══════════════════════════════════════════════════════════
 
-	// Dessiner le bouton de validation
+	// Titre de section
+	sectionBg = ebiten.NewImage(650, 35)
+	sectionBg.Fill(color.RGBA{40, 50, 65, 255})
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(50, 260)
+	screen.DrawImage(sectionBg, op)
+
+	// Titre centré
+	crossingTitle := "CHOISISSEZ VOTRE TYPE DE CARREFOUR"
+	crossingTitleWidth := len(crossingTitle) * 7
+	crossingTitleX := (750 - crossingTitleWidth) / 2
+	text.Draw(screen, crossingTitle, basicfont.Face7x13,
+		crossingTitleX, 290, color.RGBA{100, 200, 255, 255})
+
+	// Instructions centrées
+	instructionText := "Cliquez sur une option ci-dessous"
+	instructionWidth := len(instructionText) * 7
+	instructionX := (750 - instructionWidth) / 2
+	text.Draw(screen, instructionText, basicfont.Face7x13,
+		instructionX, 320, color.RGBA{150, 160, 180, 255})
+
+	// Dessiner les deux options de crossing côté à côte
+	// Largeur totale des 2 cartes + espace entre = 200 + 50 + 200 = 450
+	// Position X de départ pour centrer : (750 - 450) / 2 = 150
+	g.drawCrossingOption(screen, "Shibuya Crossing",
+		ui.Rectangle{X: 150, Y: 360, W: 200, H: 200},
+		g.selectedCrossing == "shibuya", imgShibuya)
+
+	g.drawCrossingOption(screen, "French Crossing",
+		ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},
+		g.selectedCrossing == "french", imgFrench)
+
+	// ═══════════════════════════════════════════════════════════
+	// BOUTON VALIDER (Actif seulement si un crossing est sélectionné)
+	// ═══════════════════════════════════════════════════════════
+
+	// Repositionner le bouton (centré)
+	g.validateButton.Rect.X = 275
+	g.validateButton.Rect.Y = 620
+	g.validateButton.Rect.W = 200
+	g.validateButton.Rect.H = 50
+
 	g.drawButton(screen, g.validateButton, g.selectedCrossing != "")
+
+	// Message si aucune sélection
+	if g.selectedCrossing == "" {
+		helpText := "Selectionnez un crossing pour continuer"
+		helpWidth := len(helpText) * 7
+		helpX := (750 - helpWidth) / 2
+		text.Draw(screen, helpText, basicfont.Face7x13,
+			helpX, 700, color.RGBA{255, 100, 100, 255})
+	}
 }
 
-// drawCrossingOption dessine une option de crossing (cadre + image + label)
+// drawCrossingOption dessine une option de crossing
 func (g *Game) drawCrossingOption(screen *ebiten.Image, name string, rect ui.Rectangle, selected bool, img *ebiten.Image) {
-	// Choisir la couleur de bordure selon la sélection
-	borderColor := color.RGBA{100, 100, 100, 255}
+	// Couleur de bordure selon la sélection
+	var borderColor color.Color
+	var bgColor color.Color
+
 	if selected {
-		borderColor = color.RGBA{23, 182, 128, 1} // Vert si sélectionné
+		borderColor = color.RGBA{0, 200, 120, 255} // Vert brillant
+		bgColor = color.RGBA{30, 50, 45, 255}      // Fond légèrement vert
+	} else {
+		borderColor = color.RGBA{80, 90, 100, 255} // Gris
+		bgColor = color.RGBA{40, 45, 55, 255}      // Fond sombre
 	}
 
-	// Dessiner le fond du cadre
+	// Fond du cadre
 	bgImg := ebiten.NewImage(int(rect.W), int(rect.H))
-	bgImg.Fill(color.RGBA{60, 60, 70, 255})
+	bgImg.Fill(bgColor)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(rect.X, rect.Y)
 	screen.DrawImage(bgImg, op)
 
-	// Dessiner l'image du crossing à l'intérieur du cadre
+	// Image du crossing
 	if img != nil {
 		op := &ebiten.DrawImageOptions{}
-
-		// Calculer l'échelle pour remplir le rectangle (avec marge de 10px)
-		targetW := rect.W - 20 // marge de 10px de chaque côté
-		targetH := rect.H - 20
+		targetW := rect.W - 30
+		targetH := rect.H - 30
 		imgW, imgH := float64(img.Bounds().Dx()), float64(img.Bounds().Dy())
 
-		// Prendre l'échelle minimale pour garder les proportions
 		scaleX := targetW / imgW
 		scaleY := targetH / imgH
 		scale := math.Min(scaleX, scaleY)
 
-		// Centrer l'image
 		scaledW := imgW * scale
 		scaledH := imgH * scale
 		offsetX := (rect.W - scaledW) / 2
@@ -146,41 +247,135 @@ func (g *Game) drawCrossingOption(screen *ebiten.Image, name string, rect ui.Rec
 		op.GeoM.Translate(rect.X+offsetX, rect.Y+offsetY)
 		screen.DrawImage(img, op)
 	} else {
-		// Placeholder si pas d'image
-		text.Draw(screen, "[Image]", basicfont.Face7x13, int(rect.X+50), int(rect.Y+70), color.RGBA{255, 255, 255, 255})
+		placeholderText := "[Apercu]"
+		text.Draw(screen, placeholderText, basicfont.Face7x13,
+			int(rect.X+rect.W/2-35), int(rect.Y+rect.H/2),
+			color.RGBA{120, 130, 140, 255})
 	}
 
-	// Dessiner la bordure
-	g.drawRectBorder(screen, rect, 3, borderColor)
+	// Bordure avec effet lumineux si sélectionné
+	thickness := 2.0
+	if selected {
+		thickness = 4.0
+		// Effet de lueur
+		g.drawRectBorder(screen, rect, thickness+2, color.RGBA{0, 255, 150, 100})
+	}
+	g.drawRectBorder(screen, rect, thickness, borderColor)
 
-	// Label en dessous du cadre
-	text.Draw(screen, name, basicfont.Face7x13, int(rect.X+40), int(rect.Y+rect.H+20), color.White)
+	// Label centré en dessous
+	labelColor := color.RGBA{180, 190, 200, 255}
+	if selected {
+		labelColor = color.RGBA{0, 255, 150, 255}
+	}
+
+	textX := int(rect.X + rect.W/2 - float64(len(name)*7)/2)
+	text.Draw(screen, name, basicfont.Face7x13,
+		textX, int(rect.Y+rect.H+25), labelColor)
 }
 
 // drawButton dessine un bouton avec état hover (bouton validé dans le menu par exemple)
 func (g *Game) drawButton(screen *ebiten.Image, btn ui.Button, enabled bool) {
-	bgColor := color.RGBA{80, 80, 90, 255} // Gris par défaut (désactivé)
-	textColor := color.RGBA{150, 150, 150, 255}
+	var bgColor, textColor color.Color
 
-	if enabled {
-		if btn.IsMouseOver {
-			bgColor = color.RGBA{0, 200, 0, 255} // Vert clair (hover)
-		} else {
-			bgColor = color.RGBA{0, 150, 0, 255} // Vert normal
-		}
-		textColor = color.RGBA{255, 255, 255, 255} // Blanc
+	if !enabled {
+		// Désactivé
+		bgColor = color.RGBA{60, 65, 70, 255}
+		textColor = color.RGBA{100, 105, 110, 255}
+	} else if btn.IsMouseOver {
+		// Hover
+		bgColor = color.RGBA{0, 220, 130, 255}
+		textColor = color.RGBA{255, 255, 255, 255}
+
+		// Effet de lueur au survol
+		glowBtn := ebiten.NewImage(int(btn.Rect.W+10), int(btn.Rect.H+10))
+		glowBtn.Fill(color.RGBA{0, 255, 150, 40})
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(btn.Rect.X-5, btn.Rect.Y-5)
+		screen.DrawImage(glowBtn, op)
+	} else {
+		// Normal activé
+		bgColor = color.RGBA{0, 180, 100, 255}
+		textColor = color.RGBA{255, 255, 255, 255}
 	}
 
-	// Dessiner le fond du bouton
+	// Fond du bouton
 	btnImg := ebiten.NewImage(int(btn.Rect.W), int(btn.Rect.H))
 	btnImg.Fill(bgColor)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(btn.Rect.X, btn.Rect.Y)
 	screen.DrawImage(btnImg, op)
 
-	// Dessiner le texte centré
-	text.Draw(screen, btn.Text, basicfont.Face7x13,
-		int(btn.Rect.X+30), int(btn.Rect.Y+25), textColor)
+	// Bordure du bouton
+	borderColor := color.RGBA{0, 100, 60, 255}
+	if enabled {
+		borderColor = color.RGBA{0, 255, 150, 255}
+	}
+	g.drawRectBorder(screen, btn.Rect, 2, borderColor)
+
+	// Texte centré verticalement et horizontalement
+	textX := int(btn.Rect.X + btn.Rect.W/2 - float64(len(btn.Text)*7)/2)
+	textY := int(btn.Rect.Y + btn.Rect.H/2 + 5)
+	text.Draw(screen, btn.Text, basicfont.Face7x13, textX, textY, textColor)
+}
+
+// drawSlider dessine un slider avec sa barre et son curseur
+func (g *Game) drawSlider(screen *ebiten.Image, slider ui.Slider) {
+	if slider.Width <= 0 || slider.Height <= 0 {
+		return
+	}
+
+	// Barre de fond avec bordure
+	track := ebiten.NewImage(int(slider.Width), int(slider.Height))
+	track.Fill(color.RGBA{30, 35, 45, 255})
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(slider.X, slider.Y)
+	screen.DrawImage(track, op)
+
+	// Bordure de la barre
+	g.drawRectBorder(screen, ui.Rectangle{
+		X: slider.X, Y: slider.Y,
+		W: slider.Width, H: slider.Height,
+	}, 1, color.RGBA{60, 70, 80, 255})
+
+	// Partie remplie (gradient)
+	handleX := slider.GetHandleX()
+	filledWidth := handleX - slider.X
+	if filledWidth > 0 {
+		filled := ebiten.NewImage(int(filledWidth), int(slider.Height))
+		filled.Fill(color.RGBA{60, 130, 180, 255})
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(slider.X, slider.Y)
+		screen.DrawImage(filled, op)
+	}
+
+	// Curseur (cercle) avec effet de profondeur
+	handleSize := 12.0
+
+	// Ombre du curseur
+	shadow := ebiten.NewImage(int(handleSize+4), int(handleSize+4))
+	shadow.Fill(color.RGBA{0, 0, 0, 100})
+	op = &ebiten.DrawImageOptions{}
+	shadowX := handleX - handleSize/2 + 2
+	shadowY := slider.Y + slider.Height/2 - handleSize/2 + 2
+	shadowX = math.Max(slider.X, math.Min(slider.X+slider.Width-handleSize, shadowX))
+	op.GeoM.Translate(shadowX, shadowY)
+	screen.DrawImage(shadow, op)
+
+	// Curseur principal
+	handle := ebiten.NewImage(int(handleSize), int(handleSize))
+	handle.Fill(color.RGBA{255, 255, 255, 255})
+	op = &ebiten.DrawImageOptions{}
+	handleXPos := handleX - handleSize/2
+	handleXPos = math.Max(slider.X, math.Min(slider.X+slider.Width-handleSize, handleXPos))
+	handleY := slider.Y + slider.Height/2 - handleSize/2
+	op.GeoM.Translate(handleXPos, handleY)
+	screen.DrawImage(handle, op)
+
+	// Bordure du curseur
+	g.drawRectBorder(screen, ui.Rectangle{
+		X: handleXPos, Y: handleY,
+		W: handleSize, H: handleSize,
+	}, 1.5, color.RGBA{0, 200, 255, 255})
 }
 
 // drawRectBorder dessine une bordure autour d'un rectangle
@@ -208,40 +403,6 @@ func (g *Game) drawRectBorder(screen *ebiten.Image, rect ui.Rectangle, thickness
 	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(rect.X+rect.W-thickness, rect.Y)
 	screen.DrawImage(vertical, op)
-}
-
-// drawSlider dessine un slider avec sa barre et son curseur
-func (g *Game) drawSlider(screen *ebiten.Image, slider ui.Slider) {
-	// Vérifier que les dimensions sont valides
-	if slider.Width <= 0 || slider.Height <= 0 {
-		fmt.Printf("Slider invalide: W=%.1f, H=%.1f\n", slider.Width, slider.Height)
-		return
-	}
-
-	// Barre de fond (gris foncé)
-	track := ebiten.NewImage(int(slider.Width), int(slider.Height))
-	track.Fill(color.RGBA{60, 60, 60, 255})
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(slider.X, slider.Y)
-	screen.DrawImage(track, op)
-	// ─────────────────────────────────
-	// CURSEUR
-	// ─────────────────────────────────
-	// Curseur avec limitation
-	handleSize := 12.0
-	handle := ebiten.NewImage(int(handleSize), int(handleSize))
-	handle.Fill(color.RGBA{255, 255, 255, 255})
-	op = &ebiten.DrawImageOptions{}
-
-	// Calculer la position et limiter dans les bornes
-	handleX := slider.GetHandleX() - handleSize/2
-	minX := slider.X
-	maxX := slider.X + slider.Width - handleSize
-	handleX = math.Max(minX, math.Min(maxX, handleX))
-
-	handleY := slider.Y + slider.Height/2 - handleSize/2
-	op.GeoM.Translate(handleX, handleY)
-	screen.DrawImage(handle, op)
 }
 
 // ───────────────────────────────────────────────────────────────────

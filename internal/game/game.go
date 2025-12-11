@@ -60,8 +60,8 @@ func NewGame() *Game {
 		pedSpawnInput:  0.5,
 		shibuyaRect:    ui.Rectangle{X: 200, Y: 300, W: 150, H: 150},
 		frenchRect:     ui.Rectangle{X: 400, Y: 300, W: 150, H: 150},
-		carSpawnSlider: ui.NewSlider(200, 120, 300, 20, 1.0, 50.0, 1.0), // Min=1, Max=50
-		pedSpawnSlider: ui.NewSlider(200, 160, 300, 20, 1.0, 50.0, 5.0), // Min=1, Max=50
+		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
+		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
 	}
 
 	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
