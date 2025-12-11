@@ -19,16 +19,18 @@ var (
 
 // Constructeur pour créer un nouveau vecteur
 func NewVector(x, y float64) *Vector {
-	// Vérification des valeurs Not a Number (NaN) et infinies
-	isNan := math.IsNaN(x) || math.IsNaN(y)
-	isPosInf := math.IsInf(x, 1) || math.IsInf(y, 1)
-	isNegInf := math.IsInf(x, -1) || math.IsInf(y, -1)
-
-	if isNan || isPosInf || isNegInf {
+	if !FloatIsFinite(x) || !FloatIsFinite(y) {
 		return &VectorZero
 	}
 
 	return &Vector{x, y}
+}
+
+// Constructeur pour créer un vecteur à partir de deux points
+func NewVectorFromPoints(p1, p2 Point) *Vector {
+	x := float64(p2.X() - p1.X())
+	y := float64(p2.Y() - p1.Y())
+	return NewVector(x, y)
 }
 
 func (v Vector) X() float64 { return v.x }
@@ -115,4 +117,31 @@ func (v Vector) SetDirection(angle float64) Vector {
 	newX := norm * math.Cos(angle)
 	newY := norm * math.Sin(angle)
 	return Vector{newX, newY}
+}
+
+// Représente un point en deux dimensions, défini par ses coordonnées x et y.
+//
+// Le point est conçu pour être read-only, aucune méthode ne modifie ses
+// coordonnées après création. À la place, les opérations retournent de nouveaux
+// points.
+type Point struct {
+	x, y float64
+}
+
+// Constructeur pour créer un nouveau point
+func NewPoint(x, y float64) *Point {
+	if !FloatIsFinite(x) || !FloatIsFinite(y) {
+		return nil
+	}
+
+	return &Point{x, y}
+}
+
+func (p Point) X() float64 { return p.x }
+func (p Point) Y() float64 { return p.y }
+
+func (p Point) Translate(v Vector) Point {
+	newX := p.x + v.x
+	newY := p.y + v.y
+	return Point{newX, newY}
 }
