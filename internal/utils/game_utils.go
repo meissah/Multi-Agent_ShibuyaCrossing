@@ -36,14 +36,14 @@ type Agent interface {
 
 // Interface standard d'un objet, permettant de dessiner l'objet ou de le percept
 type Object interface {
+	Drawable
+
 	ObjectID() ObjectID
 	Type() string
 	Direction() Direction
 	TheAngle() float64
 	PositionX() float64
 	PositionY() float64
-	Draw() (Asset, *ebiten.DrawImageOptions) //pour dessiner l'objet
-
 }
 
 type Drawable interface {

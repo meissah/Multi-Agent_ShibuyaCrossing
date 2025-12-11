@@ -4,10 +4,10 @@ import (
 	"math/rand/v2"
 	"time"
 
-	pieton "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
-	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
 // on a besoin d'une durée pour connaitre la frequence d'introduction d'une voiture
@@ -16,7 +16,7 @@ type PietonSpawn struct {
 }
 
 // fonction permettant de creer une seule nouvelle voiture
-func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *[]Object) {
+func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan utils.ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *[]utils.Object) {
 
 	////Pietons pierrick part
 	// définir les zones autorisées et de spawn basées sur le dessin (rectangles rouges + carré central)
@@ -64,29 +64,27 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan
 
 	//cree une structure voiture
 	// spawn initial dans les rectangles de spawn
+	p := pedestrian.NewPedestrian(<-AgentCountCh, syncChan)
+	p.Start(env)
+	p.DesiredDirection = *utils.NewVector(1, 0)
+	p.DesiredSeparation = 15.0
+	p.MaxSpeed = .5
+
 	if x, y, ok := pathfinding.RandomPointInRects(spawns, rand.Float64); ok {
-		npieton := pieton.NewPieton(<-AgentCountCh, x, y, syncChan)
-		//lancement de la goroutine voiture
-		npieton.Start(env)
-
-		//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
-		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: npieton, SyncChan: syncChan}
+		p.Coords = *utils.NewPoint(x, y)
 	} else {
-		npieton := pieton.NewPieton(<-AgentCountCh, rand.Float64()*700, rand.Float64()*700, syncChan)
-		//lancement de la goroutine voiture
-		npieton.Start(env)
-
-		//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
-		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: npieton, SyncChan: syncChan}
+		p.Coords = *utils.NewPoint(0, 0)
 	}
+
+	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: p, SyncChan: syncChan}
 
 }
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
 func (g *PietonSpawn) Start(
-	AgentCountCh <-chan ObjectID,
+	AgentCountCh <-chan utils.ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
-	env *[]Object,
+	env *[]utils.Object,
 ) {
 	go func() {
 		ticker := time.NewTicker(g.SpawnInterval)

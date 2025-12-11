@@ -27,9 +27,9 @@ func NewVector(x, y float64) *Vector {
 }
 
 // Constructeur pour créer un vecteur à partir de deux points
-func NewVectorFromPoints(p1, p2 Point) *Vector {
-	x := float64(p2.X() - p1.X())
-	y := float64(p2.Y() - p1.Y())
+func NewVectorFromPoints(from, to Point) *Vector {
+	x := to.X() - from.X()
+	y := to.Y() - from.Y()
 	return NewVector(x, y)
 }
 
