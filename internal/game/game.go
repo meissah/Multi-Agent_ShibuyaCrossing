@@ -80,7 +80,7 @@ func (g *Game) InitSimulation() {
 	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
 
 	// Lancer le spawner de voitures avec la configuration choisie
-	g.carspawner = &carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate}
+	g.carspawner = &carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // CarSpawnRate c'est l'intervalle entre chaque spawn rentre par l'utilisateur
 	g.carspawner.Start(g.AgentCountCh, g.AgtsSliceCh, g.ObjtsSliceCh, &g.ObjtsCopy)
 
 	// A faire -> Lancer le spawner de piétons quand implémenté

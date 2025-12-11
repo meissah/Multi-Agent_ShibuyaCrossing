@@ -224,13 +224,21 @@ func (g *Game) drawSlider(screen *ebiten.Image, slider ui.Slider) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(slider.X, slider.Y)
 	screen.DrawImage(track, op)
-
-	// Curseur (cercle blanc)
+	// ─────────────────────────────────
+	// CURSEUR
+	// ─────────────────────────────────
+	// Curseur avec limitation
 	handleSize := 12.0
 	handle := ebiten.NewImage(int(handleSize), int(handleSize))
 	handle.Fill(color.RGBA{255, 255, 255, 255})
 	op = &ebiten.DrawImageOptions{}
+
+	// Calculer la position et limiter dans les bornes
 	handleX := slider.GetHandleX() - handleSize/2
+	minX := slider.X
+	maxX := slider.X + slider.Width - handleSize
+	handleX = math.Max(minX, math.Min(maxX, handleX))
+
 	handleY := slider.Y + slider.Height/2 - handleSize/2
 	op.GeoM.Translate(handleX, handleY)
 	screen.DrawImage(handle, op)
@@ -247,7 +255,7 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 
 	// Dessiner le crossing selon le type choisi
 	switch g.Config.CrossingType {
-	case "Shibuya":
+	case "shibuya":
 		g.drawShibuyaCrossing(screen)
 	case "French":
 		g.drawFrenchCrossing(screen)
