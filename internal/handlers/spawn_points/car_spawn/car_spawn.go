@@ -83,9 +83,9 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 	return x, y, dir, lane
 }
 
-// ChoisirVirage décide si la voiture doit tourner à gauche (30% de chances)
+// ChoisirVirage décide si la voiture doit tourner à gauche (25% de chances)
 func ChooseToTurn() bool {
-	return rand.Float64() < 0.99 // 99% tournent (A AJUSTER PLUS TARD)
+	return rand.Float64() < 0.25
 }
 
 // isSpawnPointClear vérifie si le point de spawn est libre de toute autre voiture proche

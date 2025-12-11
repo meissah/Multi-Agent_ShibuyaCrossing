@@ -17,6 +17,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"golang.org/x/image/font/basicfont"
 
@@ -62,7 +63,7 @@ func init() {
 	imgFrench, _, _ = ebitenutil.NewImageFromFile("internal/assets/menu/french.png")
 }
 
-// Draw est appelé 60 fois parfdrawSlider seconde par Ebiten pour afficher le jeu
+// Draw est appelé autant de fois que l'écran le permet
 func (g *Game) Draw(screen *ebiten.Image) {
 	switch g.State {
 	case config.StateMenu:
@@ -182,7 +183,7 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 
 	g.drawCrossingOption(screen, "French Crossing",
 		ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},
-		g.selectedCrossing == "french", imgFrench)
+		g.selectedCrossing == "French", imgFrench)
 
 	// ═══════════════════════════════════════════════════════════
 	// BOUTON VALIDER (Actif seulement si un crossing est sélectionné)
@@ -427,8 +428,8 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 		switch obj.Type() {
 		case "car":
 			g.drawCar(screen, obj)
-			// case "pedestrian":
-			//     g.drawPedestrian(screen, obj)
+		case "pieton":
+			g.drawPedestrian(screen, obj)
 		}
 	}
 
@@ -504,9 +505,60 @@ func (g *Game) drawShibuyaCrossing(screen *ebiten.Image) {
 
 // drawFrenchCrossing dessine le carrefour de type French (sans diagonale)
 func (g *Game) drawFrenchCrossing(screen *ebiten.Image) {
-	// A faire : Implémenter les spécificités du French crossing -> apres avec le behavore ca va changer mais c'est juste que j'ai aps la vision mtn
-	// Pour l'instant, même chose que Shibuya
-	g.drawShibuyaCrossing(screen)
+	// Route verticale
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(.15075, .392465)
+	op.GeoM.Translate(300, 0)
+	screen.DrawImage(imgRoad, op)
+
+	// Route horizontale
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(.15075, .392465)
+	op.GeoM.Rotate(math.Pi / 2)
+	op.GeoM.Translate(750, 300)
+	screen.DrawImage(imgRoad, op)
+
+	// Intersection centrale
+	img1 := ebiten.NewImage(260, 150)
+	img1.Fill(color.RGBA{71, 71, 71, 255})
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(245, 300)
+	screen.DrawImage(img1, op)
+
+	img1 = ebiten.NewImage(150, 260)
+	img1.Fill(color.RGBA{71, 71, 71, 255})
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(300, 245)
+	screen.DrawImage(img1, op)
+
+	// Bandes blanches verticales
+	stripes := ebiten.NewImage(55, 5)
+	stripes.Fill(color.RGBA{255, 255, 255, 255})
+	for y := 300.0; y < 445; y += 7.5 {
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(245, y)
+		screen.DrawImage(stripes, op)
+
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(450, y)
+		screen.DrawImage(stripes, op)
+	}
+
+	// Bandes blanches horizontales
+	stripes = ebiten.NewImage(5, 55)
+	stripes.Fill(color.RGBA{255, 255, 255, 255})
+	for x := 300.0; x < 445; x += 7.5 {
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(x, 245)
+		screen.DrawImage(stripes, op)
+
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(x, 450)
+		screen.DrawImage(stripes, op)
+	}
+
+	// Trottoirs
+	g.drawSidewalks(screen)
 }
 
 // drawSidewalks dessine les trottoirs autour du carrefour
@@ -603,4 +655,9 @@ func (g *Game) drawCar(screen *ebiten.Image, c Object) {
 
 	// Dessiner
 	screen.DrawImage(carImg, op)
+}
+
+func (g *Game) drawPedestrian(screen *ebiten.Image, c Object) {
+	X, Y := c.Position()
+	vector.FillCircle(screen, float32(X), float32(Y), 5, color.RGBA{0, 255, 0, 255}, false)
 }

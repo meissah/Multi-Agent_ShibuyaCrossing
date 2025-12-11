@@ -95,9 +95,7 @@ func (c *Pedestrian) Alive() bool {
 
 func (c *Pedestrian) Percept(env *[]Object) {}
 
-func (c *Pedestrian) Deliberate() {}
-
-// Act est appelé chaque frame pour mettre à jour le comportement du piéton.
+// Deliberate est appelé chaque frame pour mettre à jour le comportement du piéton.
 // Comportement résumé :
 //   - Si pas de Target défini, on choisit une cible aléatoire.
 //   - Si WaitUntil est dans le futur, le piéton reste en attente (petit jitter visuel).
@@ -107,7 +105,7 @@ func (c *Pedestrian) Deliberate() {}
 //     on choisit immédiatement une nouvelle cible aléatoire et on calcule son chemin
 //     pour pouvoir afficher la croix à l'endroit exact (mais le piéton n'avance
 //     qu'après l'expiration de WaitUntil).
-func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvironment*/ // ) {
+func (p *Pedestrian) Deliberate() {
 	now := time.Now()
 	if now.After(p.MaxAliveTime) {
 		p.AmIAlive = false
@@ -324,7 +322,9 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 	if p.Y > 750 {
 		p.Y = 750
 	}
+}
 
+func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) {
 	RespChan := make(chan int)
 	ActChn <- ObjectAddRequest{
 		Object:   p,

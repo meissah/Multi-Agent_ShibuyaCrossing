@@ -16,8 +16,7 @@ const (
 type SimulationConfig struct {
 	CarSpawnRate        time.Duration
 	PedestrianSpawnRate time.Duration
-	//TrafficLightDuration time.Duration // à implemnter plus tard
-	CrossingType string // "shibuya" ou "french"
+	CrossingType        string // "shibuya" ou "french"
 }
 
 // Retourne une configuration par défaut
@@ -25,7 +24,6 @@ func DefaultConfig() SimulationConfig {
 	return SimulationConfig{
 		CarSpawnRate:        1 * time.Second,
 		PedestrianSpawnRate: 2 * time.Second,
-		//TrafficLightDuration: 10 * time.Second,
-		CrossingType: "",
+		CrossingType:        "",
 	}
 }

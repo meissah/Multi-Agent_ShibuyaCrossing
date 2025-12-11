@@ -7,7 +7,6 @@
 package game
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -23,9 +22,9 @@ import (
 func (g *Game) Update() error {
 	switch g.State {
 	case config.StateMenu:
-		return g.UpdateMenu()
+		g.UpdateMenu()
 	case config.StateSimulation:
-		return g.UpdateSimulation()
+		g.UpdateSimulation()
 	}
 	return nil
 }
@@ -49,13 +48,11 @@ func (g *Game) UpdateMenu() error {
 		// Clic sur l'option Shibuya
 		if g.shibuyaRect.Contains(mouseX, mouseY) {
 			g.selectedCrossing = "shibuya"
-			fmt.Println("Shibuya crossing sélectionné")
 		}
 
 		// Clic sur l'option French
 		if g.frenchRect.Contains(mouseX, mouseY) {
-			g.selectedCrossing = "french"
-			fmt.Println("French crossing sélectionné")
+			g.selectedCrossing = "French"
 		}
 
 		// Clic sur le bouton Valider
@@ -68,11 +65,6 @@ func (g *Game) UpdateMenu() error {
 			g.Config.CrossingType = g.selectedCrossing
 			g.Config.CarSpawnRate = time.Duration(float64(time.Second) / float64(carRate))
 			g.Config.PedestrianSpawnRate = time.Duration(float64(time.Second) / float64(pedRate))
-
-			fmt.Printf("✓ Configuration validée:\n")
-			fmt.Printf("  - Crossing: %s\n", g.Config.CrossingType)
-			fmt.Printf("  - Voitures: %d/s (spawn toutes les %v)\n", carRate, g.Config.CarSpawnRate)
-			fmt.Printf("  - Piétons: %d/s (spawn toutes les %v)\n", pedRate, g.Config.PedestrianSpawnRate)
 
 			// Passer en mode simulation
 			g.State = config.StateSimulation

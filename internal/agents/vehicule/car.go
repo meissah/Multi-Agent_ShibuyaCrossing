@@ -3,7 +3,6 @@ package vehicule
 import (
 	"math"
 	"math/rand"
-	"time"
 
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -40,11 +39,6 @@ func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 
 }
 
-// jouera sur les distances d'arrêt et la vitesse pour chaque conducteur
-type DriverProfile struct {
-	Aggressiveness float64 // 0.0 (prudent) à 1.0 (agressif)
-}
-
 type Car struct {
 	ID        AgentID
 	X, Y      float64
@@ -57,20 +51,10 @@ type Car struct {
 	TurnStep   float64 // compteur de 0 à TURN_DURATION
 	TurnStartX float64 // position de départ du virage
 	TurnStartY float64
-	AngleRad   float64
 
 	Speed        float64 // vitesse actuelle en px/sec
 	MaxSpeed     float64 // Vitesse maximale souhaitée en px/sec
 	DrivingState string  // "moving","stopped"
-
-	lastStep time.Time
-
-	// Personnalité du conducteur
-	Profile             DriverProfile
-	DesiredStopDistance float64
-
-	// Intention (décidé par Deliberate)
-	intention string // "accelerate", "stop", "slow_down"
 
 	AmIAlive bool
 
@@ -82,13 +66,6 @@ type Car struct {
 	//env      CarEnvironment
 	syncChan chan int
 	endChan  chan int
-}
-
-// Update envoyé au handler pour mise à jour de l'état de la voiture
-type CarUpdate struct {
-	ID     AgentID
-	X, Y   float64
-	Remove bool // true si la voiture doit être supprimée ( hors écran par exemple )
 }
 
 // Constantes pour le virage
@@ -108,11 +85,6 @@ const (
 	TURN_DURATION = 30.0 // nombre de steps pour faire le virage
 )
 
-// Interface environnement pour la voiture ( on mettra plus tard les feux )
-type CarEnvironment interface {
-	GetCars() []*Car // Retourne toutes les voitures dans l'environnement
-}
-
 // NewCar constructeur
 func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, syncChan chan int) *Car {
 	return &Car{
@@ -128,42 +100,18 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, sy
 		TurnStep:   0.0, // compteur de 0 à TURN_DURATION
 		TurnStartX: 0.0, // position de départ du virage
 		TurnStartY: 0.0,
-		AngleRad:   0.0,
 
-		DesiredStopDistance: 50.0,
-
-		Speed:        0,
-		MaxSpeed:     100.0,    // pixels/sec j'ai mis au hasard a ajuster selon les tests
-		DrivingState: "moving", // par défaut en mouvement mais a voir parce que si trop de voiture tecnhiquemment elle devrait s'arreter
-		AmIAlive:     true,
-		//updateCh:              updateCh,
-		lastStep:      time.Now(),
-		Profile:       DriverProfile{Aggressiveness: 0.5}, // profil normale par défaut
-		intention:     "accelerate",                       // pareil que pour le State moving à voir plus tard
+		MaxSpeed:      100.0, // pixels/sec j'ai mis au hasard a ajuster selon les tests
+		AmIAlive:      true,
 		syncChan:      syncChan,
 		endChan:       make(chan int),
 		carColorIndex: rand.Intn(5),
 	}
 }
 
-// Percept: perçoit l'environnement (autres voitures et feux ( pas encore fait ))
-// La voiture regarde autour d'elle et détecte naturellement les dangers
 func (c *Car) Percept(env *[]Object) {
 
 }
-
-/*
-	func (c *Car) Deliberate() {
-		if c.TurnLeft && !c.IsTurning && c.Dir == North {
-			if c.Y <= SOUTH_LEFT_TURN_Y+5 && c.Y >= SOUTH_LEFT_TURN_Y-5 {
-				c.IsTurning = true
-				c.TurnStep = 0
-				c.TurnStartX = c.X // Sauvegarde position actuelle
-				c.TurnStartY = c.Y
-			}
-		}
-	}
-*/
 
 func (c *Car) Deliberate() {
 	if c.TurnLeft && !c.IsTurning {
@@ -204,9 +152,7 @@ func (c *Car) Deliberate() {
 			}
 		}
 	}
-}
 
-func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 	if c.IsTurning {
 		c.TurnStep++
 		t := c.TurnStep / TURN_DURATION
@@ -300,7 +246,6 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 			} else if c.Dir == East {
 				c.Dir = North
 			}
-			c.AngleRad = 0.0
 		}
 
 	} else {
@@ -316,6 +261,9 @@ func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 			c.X -= 2.0
 		}
 	}
+}
+
+func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
 	// Envoyer la position
 	RespChan := make(chan int)
 	ActChn <- ObjectAddRequest{
