@@ -5,27 +5,24 @@ import (
 	rand "math/rand/v2"
 	"time"
 
-	// "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/lights/pedestrian_lights"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
 type Pedestrian struct {
 	ID               AgentID
-	X, Y             float64 // world position
-	TargetX, TargetY float64 // destination point
-	Speed            float64 // magnitude of speed (pixels per frame)
-	PState           string  // "waiting", "walking"
-	Path             []pathfinding.Vec2
-	PathIndex        int
-	WaitUntil        time.Time
-	MaxAliveDuration time.Duration
-	MaxAliveTime     time.Time
-	Done             bool // true après avoir atteint la destination, prêt à être retiré après WaitUntil
-
-	AmIAlive bool
-	syncChan chan int
-	endChan  chan int
+	X, Y             float64            // world position
+	TargetX, TargetY float64            // destination point
+	Speed            float64            // speed (pixels per frame)
+	PState           string             // "waiting", "walking" -> pour différents choix de assets
+	Path             []pathfinding.Vec2 //vecteur du path par astar
+	PathIndex        int                //for astar (?)
+	MaxAliveDuration time.Duration      //duree de vie maximum d'un pieton (permet d'effacer les pietons vu qu'il y a un bug dans le 'Done' quand un pieton arrive à sa destination)
+	MaxAliveTime     time.Time          //temps auquel le pieton est marqué automatiquement comme Done
+	Done             bool               // marque l'arrivée à la destination
+	AmIAlive         bool               //marque la fin de vie, pour que le pieton demande sa suppression au prochain update
+	syncChan         chan int           //permet la synchronisation des goroutines des agents
+	endChan          chan int           //permet d'effacer un agent/sa goroutine
 }
 
 func NewPieton(id AgentID, x, y float64, syncChan chan int) *Pedestrian {
@@ -99,11 +96,6 @@ func (c *Pedestrian) Alive() bool {
 func (c *Pedestrian) Percept(env *[]Object) {}
 
 func (c *Pedestrian) Deliberate() {}
-
-// Method to be implemented by Game struct, gives the pedestrians the necessary information for his movement
-// type PedestrianEnvironment interface {
-// 	nearbyPedestrianLights(x, y float64) []pedestrian_lights.PedestrianLight
-// }
 
 // Act est appelé chaque frame pour mettre à jour le comportement du piéton.
 // Comportement résumé :
@@ -182,15 +174,7 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 		}
 	}
 
-	// si le piéton est marqué Done, il attend jusqu'à WaitUntil avant d'être retiré
-	//now := time.Now()
 	if p.Done {
-		// if p.WaitUntil.After(now) {
-		//  // petit jitter visuel pendant l'attente
-		//  p.X += rand.Float64()*0.2 - 0.1
-		//  p.Y += rand.Float64()*0.2 - 0.1
-		// }
-		// // pas d'autre comportement (la suppression est gérée par Game.Update)
 		p.AmIAlive = false
 	}
 
@@ -312,7 +296,6 @@ func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) { /*env PedestrianEnvir
 					// reached destination: marquer comme Done, attendre 3s avant suppression
 					p.Path = nil
 					p.PathIndex = 0
-					p.WaitUntil = time.Now().Add(3 * time.Second)
 					p.PState = "waiting"
 					p.Done = true
 					// conserver TargetX/TargetY sur le dernier waypoint pour l'affichage de la croix
