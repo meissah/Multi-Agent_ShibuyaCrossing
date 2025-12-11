@@ -1,6 +1,7 @@
 package carspawn
 
 import (
+	"math"
 	"math/rand"
 	"time"
 
@@ -9,13 +10,13 @@ import (
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
-// on a besoin d'une durée pour connaitre la frequence d'introduction d'une voiture
+// CarSpawn gère l'apparition des voitures
 type CarSpawn struct {
 	SpawnInterval time.Duration
 }
 
-// fonction permettant de creer une seule nouvelle voiture
-func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
+// ChoisirPointSpawn choisit aléatoirement un point de spawn
+func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 
 	// Définition des coordonnées de spawn pour chaque voie. (. que j'ai trouvé en mesurant sur l'image + par tâtonnement)
 	const (
@@ -38,12 +39,9 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 
 	// Choisir un point de SPAWN aléatoire
 	spawnPoint := Direction(rand.Intn(4))
-	var x, y float64
-	var lane int
-	var dir Direction // La direction de déplacement sera déterminée par le point de spawn ( par default la voiture va tout droit (donc la direction est opposée au spawn) )
 	switch spawnPoint {
 	case North: // SPAWN en HAUT (Nord)
-		dir = South // La voiture ira donc vers le BAS (Sud)
+		dir = South // La voiture ira donc vers le BAS (Sud) sinon
 		lane = rand.Intn(2)
 		if lane == 0 {
 			x = xSpawnNordLaneGauche
@@ -82,18 +80,71 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 			y = ySpawnOuestLaneBasse
 		}
 	}
+	return x, y, dir, lane
+}
 
-	//creation de la channel de synchronisation de l'agent voiture
-	syncChan := make(chan int)
+// ChoisirVirage décide si la voiture doit tourner à gauche (30% de chances)
+func ChooseToTurn() bool {
+	return rand.Float64() < 0.99 // 99% tournent (A AJUSTER PLUS TARD)
+}
 
-	//cree une structure voiture
-	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, syncChan)
+// isSpawnPointClear vérifie si le point de spawn est libre de toute autre voiture proche
+// pour éviter les collisions immédiates au spawn
+func (g *CarSpawn) isSpawnPointClear(x, y float64, env *[]Object) bool {
+	const MIN_DISTANCE = 80.0 // Distance minimale entre voitures ( A Ajuster si besoin )
 
-	//lancement de la goroutine voiture
-	car.Start(env, ObjtsSliceCh)
+	for _, obj := range *env {
+		if obj.Type() == "car" {
+			carX, carY := obj.Position()
 
-	//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
-	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
+			// Calculer la distance euclidienne
+			dx := carX - x
+			dy := carY - y
+			distance := math.Sqrt(dx*dx + dy*dy)
+
+			// Si une voiture est trop proche, la zone n'est pas libre
+			if distance < MIN_DISTANCE {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// fonction permettant de creer une seule nouvelle voiture
+// Essayer de spawner plusieurs fois si bloqué
+func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
+
+	const MAX_ATTEMPTS = 10 // Nombre maximum de tentatives
+
+	for attempt := 0; attempt < MAX_ATTEMPTS; attempt++ {
+		// Choisir un point de spawn aléatoire
+		x, y, dir, lane := ChoisirPointSpawn()
+
+		// Vérifier si le point est libre
+		if !g.isSpawnPointClear(x, y, env) {
+			// Zone occupée, réessayer avec un autre point
+			continue
+		}
+
+		//  Zone libre, créer la voiture
+		turnleft := ChooseToTurn() //choix aléatoire de si la voiture va tourner à gauche ou pas
+		syncChan := make(chan int)
+		car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
+
+		// Lancer la goroutine de la voiture
+		car.Start(env, ObjtsSliceCh)
+
+		// Ajouter l'agent à la boucle du jeu
+		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
+
+		// Succès !
+		return
+	}
+
+	// Toutes les tentatives ont échoué (trop de trafic)
+	// Ne pas spawner pour éviter les superpositions cas de trafic tres dense
 
 }
 
@@ -105,11 +156,16 @@ func (g *CarSpawn) Start(
 	env *[]Object,
 ) {
 	go func() {
-		ticker := time.NewTicker(g.SpawnInterval)
+		ticker := time.NewTicker(g.SpawnInterval) // emet un tick(signal) à chaque intervalle de spawn
 		defer ticker.Stop()
 
 		for range ticker.C {
 			g.spawnCars(AgentCountCh, AgtsSliceCh, ObjtsSliceCh, env)
+
+			// petit délai aléatoire (ici 0-15% de l'intervalle) pour éviter
+			// que toutes les voitures spawent simultanément depuis les 4 directions
+			delaiAleatoire := time.Duration(rand.Float64() * 0.15 * float64(g.SpawnInterval))
+			time.Sleep(delaiAleatoire)
 		}
 	}()
 }

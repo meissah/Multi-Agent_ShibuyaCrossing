@@ -6,7 +6,7 @@ import (
 
 // microservice pour avoir le prochain agentID disponible, evite des ecritures concurrentes en car et pieton spawn
 func LancerAgentCountHandler(agentCount *AgentID) <-chan AgentID {
-	out := make(chan AgentID, 1)
+	out := make(chan AgentID, 1) // toujours sur son channel le prochain ID d'agent disponible
 
 	go func() {
 		for {

@@ -13,10 +13,10 @@ type ObjectAddRequest struct {
 type Direction int
 
 const (
-	North Direction = iota // monte (y diminue)
-	South                  // descend (y augmente)
-	East                   // va à droite (x augmente)
-	West                   // va à gauche (x diminue)
+	North Direction = iota
+	South
+	East
+	West
 )
 
 // Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
@@ -34,6 +34,7 @@ type Agent interface {
 type Object interface {
 	Position() (float64, float64) // world position
 	Direction() Direction
-	Type() string  //to know what item to draw
-	State() string //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
+	Angle() float64 // angle de rotation
+	Type() string   //to know what item to draw
+	State() string  //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
 }

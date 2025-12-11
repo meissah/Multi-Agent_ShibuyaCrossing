@@ -43,6 +43,11 @@ func NewPieton(id AgentID, x, y float64, syncChan chan int) *Pedestrian {
 func (ag Pedestrian) AgtID() AgentID {
 	return ag.ID
 }
+
+func (ag Pedestrian) Angle() float64 {
+	return 0
+}
+
 func (ag Pedestrian) EndChan() chan int {
 	return ag.endChan
 }
