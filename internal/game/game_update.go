@@ -83,25 +83,26 @@ func (g *Game) UpdateMenu() error {
 
 // UpdateSimulation exécute un pas de simulation pour tous les agents vivants
 func (g *Game) UpdateSimulation() error {
-	// Copier l'état précédent des objets visuels
-	g.ObjtsCopy = append([]Object(nil), g.Objts...)
-
-	// Vider l'état courant pour permettre aux agents de l'actualiser
-	g.Objts = g.Objts[:0]
 
 	// Incrémenter le compteur de pas
 	g.step++
 
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
-	for _, agt := range g.Agts {
+	currentAgtSlice := g.Agents.Load()
+
+	if currentAgtSlice == nil {
+		fmt.Println("I AM NIL FROM UPDATE")
+		return nil
+	}
+	for _, agt := range *currentAgtSlice {
 		if agt.Alive() {
 			wg.Add(1)
 			go func(agt Agent) {
 				defer wg.Done()
 
 				// Récupérer le channel de synchronisation de l'agent
-				c, _ := g.syncChansAgt.Load(agt.AgtID())
+				c, _ := g.syncChansAgt.Load(agt.AgentID())
 
 				// Signaler à l'agent de faire son prochain pas
 				c.(chan int) <- g.step

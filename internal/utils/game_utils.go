@@ -1,13 +1,18 @@
 package utils
 
-// Declaration du type AgentID
-type AgentID uint
+import (
+	"sync/atomic"
 
-// Declaration du type de la requête pour ajouter un object dans l'environnement
-type ObjectAddRequest struct {
-	Object   Object
-	RespChan chan int
-}
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+// Declaration du type AgentID
+type AgentID ObjectID
+
+type ObjectID uint
+
+// Declaration asset (nom du fichier image)
+type Asset int
 
 // Direction enum pour voiture/pietons
 type Direction int
@@ -21,20 +26,28 @@ const (
 
 // Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
 type Agent interface {
-	Start(*[]Object, chan<- ObjectAddRequest)
-	Percept(*[]Object)
+	Object
+	Start(*atomic.Pointer[[]Object])
+	Percept(*atomic.Pointer[[]Object])
 	Deliberate()
-	Act(chan<- ObjectAddRequest)
-	AgtID() AgentID
+	Act()
+	AgentID() AgentID
 	Alive() bool
 	EndChan() chan int
 }
 
-// Interface standard d'un objet, permettant de dessiner l'objet en question par Draw() de ubiten
+// Interface standard d'un objet, permettant de dessiner l'objet ou de le percept
 type Object interface {
-	Position() (float64, float64) // world position
-	Direction() Direction
-	Angle() float64 // angle de rotation
-	Type() string   //to know what item to draw
-	State() string  //pour savoir quel etat dessiner (lumière éteinte/allumée par exemple)
+	ObjectID() ObjectID
+	Type() string
+	Draw() (Asset, *ebiten.DrawImageOptions) //pour dessiner l'objet
+	PhysicalCharacteristics() PhysicalCharacteristics
+}
+
+type PhysicalCharacteristics struct {
+	PositionX float64 // world position
+	PositionY float64
+	Direction Direction
+	State     string //pour connaiter l'etat du feu (par exemple)
+	Angle     float64
 }

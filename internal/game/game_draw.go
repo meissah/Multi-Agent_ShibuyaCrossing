@@ -17,11 +17,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"golang.org/x/image/font/basicfont"
 
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
@@ -32,6 +30,8 @@ var (
 	imgRoad       *ebiten.Image
 	carImages     []*ebiten.Image
 	carColorNames []string
+	pedImages     []*ebiten.Image
+	pedColorNames []string
 	imgShibuya    *ebiten.Image
 	imgFrench     *ebiten.Image
 )
@@ -55,6 +55,18 @@ func init() {
 			log.Fatalf("Erreur: Impossible de charger %s: %v", filename, err)
 		}
 		carImages = append(carImages, img)
+		log.Printf("✓ Image chargée: %s", filename)
+	}
+
+	// Charger les images des voitures (une par couleur)
+	pedColorNames = []string{"zero"}
+	for _, color := range pedColorNames {
+		filename := fmt.Sprintf("internal/assets/ped_%s.png", color)
+		img, _, err := ebitenutil.NewImageFromFile(filename)
+		if err != nil {
+			log.Fatalf("Erreur: Impossible de charger %s: %v", filename, err)
+		}
+		pedImages = append(pedImages, img)
 		log.Printf("✓ Image chargée: %s", filename)
 	}
 
@@ -424,7 +436,12 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 	}
 
 	// Dessiner tous les objets (voitures, piétons, etc.)
-	for _, obj := range g.Objts {
+	currentObjtSlice := g.Objets.Load()
+	if currentObjtSlice == nil {
+		fmt.Println("I AM NIL FROM DRAW")
+		return
+	}
+	for _, obj := range *currentObjtSlice {
 		switch obj.Type() {
 		case "car":
 			g.drawCar(screen, obj)
@@ -592,72 +609,15 @@ func (g *Game) drawSidewalks(screen *ebiten.Image) {
 
 // drawCar dessine une voiture avec rotation selon sa direction et son virage
 func (g *Game) drawCar(screen *ebiten.Image, c Object) {
-	car, ok := c.(*vehicule.Car)
-	if !ok {
-		return
-	}
-
-	// Récupérer l'image de la voiture selon sa couleur
-	colorIndex := car.CarColorIndex()
-	carImg := carImages[colorIndex]
-	bounds := carImg.Bounds()
-	imgW, imgH := float64(bounds.Dx()), float64(bounds.Dy())
-
-	op := &ebiten.DrawImageOptions{}
-	var w, h int
-	var scaleX, scaleY float64
-	angle := c.Angle()
-
-	// Appliquer la rotation de base selon la direction
-	switch c.Direction() {
-	case South:
-		w, h = 35, 50
-		op.GeoM.Rotate(math.Pi)
-		op.GeoM.Translate(imgW, imgH)
-		scaleX = float64(w) / imgW
-		scaleY = float64(h) / imgH
-	case North:
-		w, h = 35, 50
-		scaleX = float64(w) / imgW
-		scaleY = float64(h) / imgH
-	case West:
-		w, h = 50, 35
-		op.GeoM.Rotate((3 * math.Pi) / 2)
-		op.GeoM.Translate(0, imgW)
-		scaleY = float64(h) / imgW
-		scaleX = float64(w) / imgH
-	case East:
-		w, h = 50, 35
-		op.GeoM.Rotate(math.Pi / 2)
-		op.GeoM.Translate(imgH, 0)
-		scaleY = float64(h) / imgW
-		scaleX = float64(w) / imgH
-	}
-
-	// Appliquer le scale et centrer
-	op.GeoM.Scale(scaleX, scaleY)
-	op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
-
-	// Récupérer la position
-	x, y := c.Position()
-
-	// Appliquer la rotation du virage si nécessaire
-	if angle != 0 {
-		if c.Direction() == West || c.Direction() == South {
-			op.GeoM.Rotate(angle + math.Pi)
-		} else {
-			op.GeoM.Rotate(angle)
-		}
-	}
-
-	// Positionner à la position finale
-	op.GeoM.Translate(x, y)
+	assetIndex, op := c.Draw()
 
 	// Dessiner
-	screen.DrawImage(carImg, op)
+	screen.DrawImage(carImages[assetIndex], op)
 }
 
 func (g *Game) drawPedestrian(screen *ebiten.Image, c Object) {
-	X, Y := c.Position()
-	vector.FillCircle(screen, float32(X), float32(Y), 5, color.RGBA{0, 255, 0, 255}, false)
+	assetIndex, op := c.Draw()
+
+	// Dessiner
+	screen.DrawImage(pedImages[assetIndex], op)
 }

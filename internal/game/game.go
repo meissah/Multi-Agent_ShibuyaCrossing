@@ -4,11 +4,11 @@ package game
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
-	objectslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/object_slice_handler"
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
 	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
@@ -17,6 +17,10 @@ import (
 
 // Game représente l'état complet de l'application
 type Game struct {
+	//New Game Env
+	Agents atomic.Pointer[[]Agent]
+	Objets atomic.Pointer[[]Object]
+
 	// État actuel (menu ou simulation)
 	State  config.GameState        // État actuel du jeu si menu ou simulation
 	Config config.SimulationConfig // Configuration de la simulation choisie dans le menu par l'utilisateur
@@ -31,19 +35,13 @@ type Game struct {
 	carSpawnSlider ui.Slider
 	pedSpawnSlider ui.Slider
 
-	// Agents et objets de la simulation
-	Agts         []Agent
-	ObjtsCopy    []Object
-	Objts        []Object
 	syncChansAgt sync.Map
-	AgentCount   AgentID
+	ObjectCount  ObjectID
 
 	//Channels des differents microservices
-	AddAgtSlice     chan<- agentslicehandler.AddAgtRequest
-	ReceiveAgtSlice chan []Agent
-	DelAgtSlice     chan<- Agent
-	AgentCountCh    <-chan AgentID          // recevoir le prochain ID d'agent disponible
-	ObjtsSliceCh    chan<- ObjectAddRequest // channel pour ajouter des objets visuels ( seul qui a acces a Objts )
+	AddAgtSlice   chan<- agentslicehandler.AddAgtRequest
+	DelAgtSlice   chan<- Agent
+	ObjectCountCh <-chan ObjectID // recevoir le prochain ID d'agent disponible
 
 	step int
 }
@@ -58,6 +56,7 @@ func NewGame() *Game {
 		frenchRect:     ui.Rectangle{X: 400, Y: 300, W: 150, H: 150},
 		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
 		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
+
 	}
 
 	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
@@ -68,15 +67,14 @@ func NewGame() *Game {
 // InitSimulation initialise tous les handlers et spawners pour démarrer la simulation
 func (g *Game) InitSimulation() {
 	// Initialiser les channels des microservices
-	g.AgentCountCh = agentcounthandler.LancerAgentCountHandler(&g.AgentCount)
-	g.AddAgtSlice, g.ReceiveAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agts, &g.syncChansAgt)
-	g.ObjtsSliceCh = objectslicehandler.LancerObjectSliceHandler(&g.Objts)
+	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount)
+	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
 
 	//lance les goroutines autonome de creation de voitures et pietons
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
-	pietonspawner.Start(g.AgentCountCh, g.AddAgtSlice, g.ObjtsSliceCh, &g.ObjtsCopy)
+	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
 	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // initialise la structure de spawn de voiture
-	carspawner.Start(g.AgentCountCh, g.AddAgtSlice, g.ObjtsSliceCh, &g.ObjtsCopy)
+	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
 }
 
 // Layout définit la taille de la fenêtre du jeu (appelé automatiquement par Ebiten)

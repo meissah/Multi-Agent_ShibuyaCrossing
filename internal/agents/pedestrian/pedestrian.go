@@ -3,16 +3,20 @@ package pedestrian
 import (
 	"math"
 	rand "math/rand/v2"
+	"sync/atomic"
 	"time"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
 type Pedestrian struct {
 	ID               AgentID
-	X, Y             float64            // world position
-	TargetX, TargetY float64            // destination point
+	X, Y             float64 // world position
+	TargetX, TargetY float64 // destination point
+	Dir              Direction
+	Angle            float64
 	Speed            float64            // speed (pixels per frame)
 	PState           string             // "waiting", "walking" -> pour différents choix de assets
 	Path             []pathfinding.Vec2 //vecteur du path par astar
@@ -23,34 +27,33 @@ type Pedestrian struct {
 	AmIAlive         bool               //marque la fin de vie, pour que le pieton demande sa suppression au prochain update
 	syncChan         chan int           //permet la synchronisation des goroutines des agents
 	endChan          chan int           //permet d'effacer un agent/sa goroutine
+	pCharacteristics atomic.Pointer[PhysicalCharacteristics]
 }
 
-func NewPieton(id AgentID, x, y float64, syncChan chan int) *Pedestrian {
+func NewPieton(id ObjectID, x, y float64, syncChan chan int) *Pedestrian {
 	return &Pedestrian{
 		X:                x,
 		Y:                y,
-		ID:               id,
+		ID:               AgentID(id),
 		syncChan:         syncChan,
 		AmIAlive:         true,
 		endChan:          make(chan int),
 		MaxAliveDuration: 1 * time.Minute,
 	}
 }
-
-func (ag Pedestrian) AgtID() AgentID {
+func (ag *Pedestrian) ObjectID() ObjectID {
+	return ObjectID(ag.ID)
+}
+func (ag *Pedestrian) AgentID() AgentID {
 	return ag.ID
 }
 
-func (ag Pedestrian) Angle() float64 {
-	return 0
-}
-
-func (ag Pedestrian) EndChan() chan int {
+func (ag *Pedestrian) EndChan() chan int {
 	return ag.endChan
 }
 
 // lance la goroutine de l'agent car
-func (ag *Pedestrian) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
+func (ag *Pedestrian) Start(env *atomic.Pointer[[]Object]) {
 	ag.MaxAliveTime = time.Now().Add(ag.MaxAliveDuration)
 	go func() {
 		var step int
@@ -60,7 +63,7 @@ func (ag *Pedestrian) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 
 				ag.Percept(env)
 				ag.Deliberate()
-				ag.Act(ObjectCh)
+				ag.Act()
 				step++
 				ag.syncChan <- step
 			case <-ag.endChan:
@@ -73,27 +76,15 @@ func (ag *Pedestrian) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 
 }
 
-func (c *Pedestrian) Position() (float64, float64) {
-	return c.X, c.Y
-}
-
 func (c *Pedestrian) Type() string {
 	return "pieton"
-}
-
-func (c *Pedestrian) State() string {
-	return c.PState
-}
-
-func (c *Pedestrian) Direction() Direction {
-	return North
 }
 
 func (c *Pedestrian) Alive() bool {
 	return c.AmIAlive
 }
 
-func (c *Pedestrian) Percept(env *[]Object) {}
+func (c *Pedestrian) Percept(env *atomic.Pointer[[]Object]) {}
 
 // Deliberate est appelé chaque frame pour mettre à jour le comportement du piéton.
 // Comportement résumé :
@@ -324,12 +315,28 @@ func (p *Pedestrian) Deliberate() {
 	}
 }
 
-func (p *Pedestrian) Act(ActChn chan<- ObjectAddRequest) {
-	RespChan := make(chan int)
-	ActChn <- ObjectAddRequest{
-		Object:   p,
-		RespChan: RespChan,
-	}
-	<-RespChan
-	close(RespChan)
+func (c *Pedestrian) Act() {
+	c.pCharacteristics.Store(&PhysicalCharacteristics{
+		PositionX: c.X,
+		PositionY: c.Y,
+		Direction: c.Dir,
+		State:     c.PState,
+		Angle:     c.Angle,
+	})
+}
+
+func (c *Pedestrian) Draw() (Asset, *ebiten.DrawImageOptions) {
+	car := c.PhysicalCharacteristics()
+
+	X, Y := car.PositionX, car.PositionY
+
+	op := &ebiten.DrawImageOptions{}
+
+	op.GeoM.Translate(X, Y)
+	return Asset(0), op
+}
+
+func (c *Pedestrian) PhysicalCharacteristics() PhysicalCharacteristics {
+	currentCharacteristics := c.pCharacteristics.Load()
+	return *currentCharacteristics
 }

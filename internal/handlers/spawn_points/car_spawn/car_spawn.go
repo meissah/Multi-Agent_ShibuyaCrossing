@@ -1,8 +1,8 @@
 package carspawn
 
 import (
-	"math"
 	"math/rand"
+	"sync/atomic"
 	"time"
 
 	cars "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
@@ -90,31 +90,31 @@ func ChooseToTurn() bool {
 
 // isSpawnPointClear vérifie si le point de spawn est libre de toute autre voiture proche
 // pour éviter les collisions immédiates au spawn
-func (g *CarSpawn) isSpawnPointClear(x, y float64, env *[]Object) bool {
-	const MIN_DISTANCE = 80.0 // Distance minimale entre voitures ( A Ajuster si besoin )
+// func (g *CarSpawn) isSpawnPointClear(x, y float64, env *[]Object) bool {
+// 	const MIN_DISTANCE = 80.0 // Distance minimale entre voitures ( A Ajuster si besoin )
 
-	for _, obj := range *env {
-		if obj.Type() == "car" {
-			carX, carY := obj.Position()
+// 	for _, obj := range *env {
+// 		if obj.Type() == "car" {
+// 			carX, carY := obj.Position()
 
-			// Calculer la distance euclidienne
-			dx := carX - x
-			dy := carY - y
-			distance := math.Sqrt(dx*dx + dy*dy)
+// 			// Calculer la distance euclidienne
+// 			dx := carX - x
+// 			dy := carY - y
+// 			distance := math.Sqrt(dx*dx + dy*dy)
 
-			// Si une voiture est trop proche, la zone n'est pas libre
-			if distance < MIN_DISTANCE {
-				return false
-			}
-		}
-	}
+// 			// Si une voiture est trop proche, la zone n'est pas libre
+// 			if distance < MIN_DISTANCE {
+// 				return false
+// 			}
+// 		}
+// 	}
 
-	return true
-}
+// 	return true
+// }
 
 // fonction permettant de creer une seule nouvelle voiture
 // Essayer de spawner plusieurs fois si bloqué
-func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, ObjtsSliceCh chan<- ObjectAddRequest, env *[]Object) {
+func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *atomic.Pointer[[]Object]) {
 
 	const MAX_ATTEMPTS = 10 // Nombre maximum de tentatives
 
@@ -122,19 +122,13 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 		// Choisir un point de spawn aléatoire
 		x, y, dir, lane := ChoisirPointSpawn()
 
-		// Vérifier si le point est libre
-		if !g.isSpawnPointClear(x, y, env) {
-			// Zone occupée, réessayer avec un autre point
-			continue
-		}
-
 		//  Zone libre, créer la voiture
 		turnleft := ChooseToTurn() //choix aléatoire de si la voiture va tourner à gauche ou pas
 		syncChan := make(chan int)
 		car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
 
 		// Lancer la goroutine de la voiture
-		car.Start(env, ObjtsSliceCh)
+		car.Start(env)
 
 		// Ajouter l'agent à la boucle du jeu
 		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
@@ -150,17 +144,16 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan AgentID, AgtsSliceCh chan<- age
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
 func (g *CarSpawn) Start(
-	AgentCountCh <-chan AgentID,
+	AgentCountCh <-chan ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
-	ObjtsSliceCh chan<- ObjectAddRequest,
-	env *[]Object,
+	env *atomic.Pointer[[]Object],
 ) {
 	go func() {
 		ticker := time.NewTicker(g.SpawnInterval) // emet un tick(signal) à chaque intervalle de spawn
 		defer ticker.Stop()
 
 		for range ticker.C {
-			g.spawnCars(AgentCountCh, AgtsSliceCh, ObjtsSliceCh, env)
+			g.spawnCars(AgentCountCh, AgtsSliceCh, env)
 
 			// petit délai aléatoire (ici 0-15% de l'intervalle) pour éviter
 			// que toutes les voitures spawent simultanément depuis les 4 directions

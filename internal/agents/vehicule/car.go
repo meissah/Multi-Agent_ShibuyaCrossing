@@ -3,20 +3,42 @@ package vehicule
 import (
 	"math"
 	"math/rand"
+	"sync/atomic"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
-func (ag Car) AgtID() AgentID {
+type Bounds struct {
+	dX, dY float64
+}
+
+var carAllImgBounds = []Bounds{
+	{dX: 72, dY: 114},
+	{dX: 73, dY: 121},
+	{dX: 66, dY: 114},
+	{dX: 70, dY: 116},
+	{dX: 72, dY: 117},
+}
+
+func (b Bounds) Bounds() (float64, float64) {
+	return b.dX, b.dY
+}
+
+func (ag *Car) AgentID() AgentID {
 	return ag.ID
 }
 
-func (ag Car) EndChan() chan int {
+func (ag *Car) ObjectID() ObjectID {
+	return ObjectID(ag.ID)
+}
+
+func (ag *Car) EndChan() chan int {
 	return ag.endChan
 }
 
 // lance la goroutine de l'agent car
-func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
+func (ag *Car) Start(env *atomic.Pointer[[]Object]) {
 
 	go func() {
 		var step int
@@ -26,7 +48,7 @@ func (ag *Car) Start(env *[]Object, ObjectCh chan<- ObjectAddRequest) {
 
 				ag.Percept(env)
 				ag.Deliberate()
-				ag.Act(ObjectCh)
+				ag.Act()
 				step++
 				ag.syncChan <- step
 			case <-ag.endChan:
@@ -43,7 +65,10 @@ type Car struct {
 	ID        AgentID
 	X, Y      float64
 	Dir       Direction
+	Angle     float64
 	LaneIndex int // 0 ou 1 pour la voie utilisée (deux voies par direction)
+
+	pCharacteristics atomic.Pointer[PhysicalCharacteristics]
 
 	// Pour le virage
 	TurnLeft   bool
@@ -86,9 +111,9 @@ const (
 )
 
 // NewCar constructeur
-func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, syncChan chan int) *Car {
+func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, syncChan chan int) *Car {
 	return &Car{
-		ID:        id,
+		ID:        AgentID(id),
 		X:         x,
 		Y:         y,
 		Dir:       dir,
@@ -109,7 +134,7 @@ func NewCar(id AgentID, x, y float64, dir Direction, lane int, turnleft bool, sy
 	}
 }
 
-func (c *Car) Percept(env *[]Object) {
+func (c *Car) Percept(env *atomic.Pointer[[]Object]) {
 
 }
 
@@ -261,17 +286,103 @@ func (c *Car) Deliberate() {
 			c.X -= 2.0
 		}
 	}
+
+	if c.IsTurning {
+		t := c.TurnStep / TURN_DURATION
+
+		if c.Dir == North {
+			// Sud vers Ouest : rotation de 0 à -π/2
+			c.Angle = -t * (math.Pi / 2)
+		} else if c.Dir == South {
+			// Nord vers Est : rotation de π à π/2
+			c.Angle = math.Pi - t*(math.Pi/2)
+		} else if c.Dir == West {
+			// Est vers Sud : rotation de -π/2 à -π
+			c.Angle = -math.Pi - t*(math.Pi/2)
+		} else if c.Dir == East {
+			// Ouest vers Nord : rotation de π/2 à 0
+			c.Angle = -t * (math.Pi / 2)
+		}
+	}
 }
 
-func (c *Car) Act(ActChn chan<- ObjectAddRequest) {
-	// Envoyer la position
-	RespChan := make(chan int)
-	ActChn <- ObjectAddRequest{
-		Object:   c,
-		RespChan: RespChan,
+func (c *Car) Act() {
+	c.pCharacteristics.Store(&PhysicalCharacteristics{
+		PositionX: c.X,
+		PositionY: c.Y,
+		Direction: c.Dir,
+		State:     c.DrivingState,
+		Angle:     c.Angle,
+	})
+}
+
+func (c *Car) Type() string {
+	return c.Type()
+}
+
+func (c *Car) PhysicalCharacteristics() PhysicalCharacteristics {
+	currentCharacteristics := c.pCharacteristics.Load()
+	return *currentCharacteristics
+}
+
+func (c *Car) Draw() (Asset, *ebiten.DrawImageOptions) {
+	car := c.PhysicalCharacteristics()
+
+	// Récupérer l'image de la voiture selon sa couleur
+	colorIndex := c.CarColorIndex()
+	carImgBounds := carAllImgBounds[colorIndex]
+	imgW, imgH := carImgBounds.Bounds()
+
+	op := &ebiten.DrawImageOptions{}
+	var w, h int
+	var scaleX, scaleY float64
+
+	// Appliquer la rotation de base selon la direction
+	switch car.Direction {
+	case South:
+		w, h = 35, 50
+		op.GeoM.Rotate(math.Pi)
+		op.GeoM.Translate(imgW, imgH)
+		scaleX = float64(w) / imgW
+		scaleY = float64(h) / imgH
+	case North:
+		w, h = 35, 50
+		scaleX = float64(w) / imgW
+		scaleY = float64(h) / imgH
+	case West:
+		w, h = 50, 35
+		op.GeoM.Rotate((3 * math.Pi) / 2)
+		op.GeoM.Translate(0, imgW)
+		scaleY = float64(h) / imgW
+		scaleX = float64(w) / imgH
+	case East:
+		w, h = 50, 35
+		op.GeoM.Rotate(math.Pi / 2)
+		op.GeoM.Translate(imgH, 0)
+		scaleY = float64(h) / imgW
+		scaleX = float64(w) / imgH
 	}
-	<-RespChan
-	close(RespChan)
+
+	// Appliquer le scale et centrer
+	op.GeoM.Scale(scaleX, scaleY)
+	op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
+
+	// Récupérer la position
+	x, y := car.PositionX, car.PositionY
+
+	// Appliquer la rotation du virage si nécessaire
+	if car.Angle != 0 {
+		if car.Direction == West || car.Direction == South {
+			op.GeoM.Rotate(car.Angle + math.Pi)
+		} else {
+			op.GeoM.Rotate(car.Angle)
+		}
+	}
+
+	// Positionner à la position finale
+	op.GeoM.Translate(x, y)
+
+	return Asset(c.carColorIndex), op
 }
 
 func (c *Car) Position() (float64, float64) {
@@ -282,42 +393,30 @@ func (c *Car) TurningLeft() bool {
 	return c.IsTurning
 }
 
-func (c *Car) Angle() float64 {
-	if c.IsTurning {
-		t := c.TurnStep / TURN_DURATION
+// func (c *Car) Angle() float64 {
+// 	if c.IsTurning {
+// 		t := c.TurnStep / TURN_DURATION
 
-		if c.Dir == North {
-			// Sud vers Ouest : rotation de 0 à -π/2
-			return -t * (math.Pi / 2)
-		} else if c.Dir == South {
-			// Nord vers Est : rotation de π à π/2
-			return math.Pi - t*(math.Pi/2)
-		} else if c.Dir == West {
-			// Est vers Sud : rotation de -π/2 à -π
-			return -math.Pi - t*(math.Pi/2)
-		} else if c.Dir == East {
-			// Ouest vers Nord : rotation de π/2 à 0
-			return -t * (math.Pi / 2)
-		}
-	}
-	return 0
-}
+// 		if c.Dir == North {
+// 			// Sud vers Ouest : rotation de 0 à -π/2
+// 			return -t * (math.Pi / 2)
+// 		} else if c.Dir == South {
+// 			// Nord vers Est : rotation de π à π/2
+// 			return math.Pi - t*(math.Pi/2)
+// 		} else if c.Dir == West {
+// 			// Est vers Sud : rotation de -π/2 à -π
+// 			return -math.Pi - t*(math.Pi/2)
+// 		} else if c.Dir == East {
+// 			// Ouest vers Nord : rotation de π/2 à 0
+// 			return -t * (math.Pi / 2)
+// 		}
+// 	}
+// 	return 0
+// }
 
 // CarColorIndex retourne l'index de la couleur de la voiture (pour l'affichage)
 func (c *Car) CarColorIndex() int {
 	return c.carColorIndex
-}
-
-func (c *Car) Type() string {
-	return "car"
-}
-
-func (c *Car) State() string {
-	return c.DrivingState
-}
-
-func (c *Car) Direction() Direction {
-	return c.Dir
 }
 
 func (c *Car) Alive() bool {
