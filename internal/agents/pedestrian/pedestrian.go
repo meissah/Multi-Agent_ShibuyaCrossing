@@ -3,7 +3,6 @@ package pedestrian
 import (
 	"math"
 	rand "math/rand/v2"
-	"sync/atomic"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -27,7 +26,7 @@ type Pedestrian struct {
 	AmIAlive         bool               //marque la fin de vie, pour que le pieton demande sa suppression au prochain update
 	syncChan         chan int           //permet la synchronisation des goroutines des agents
 	endChan          chan int           //permet d'effacer un agent/sa goroutine
-	pCharacteristics atomic.Pointer[PhysicalCharacteristics]
+	pCharacteristics *PhysicalCharacteristics
 }
 
 func NewPieton(id ObjectID, x, y float64, syncChan chan int) *Pedestrian {
@@ -53,7 +52,7 @@ func (ag *Pedestrian) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Pedestrian) Start(env *atomic.Pointer[[]Object]) {
+func (ag *Pedestrian) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest) {
 	ag.MaxAliveTime = time.Now().Add(ag.MaxAliveDuration)
 	go func() {
 		var step int
@@ -61,9 +60,9 @@ func (ag *Pedestrian) Start(env *atomic.Pointer[[]Object]) {
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(env)
+				ag.Percept(<-env, rcCharacChan)
 				ag.Deliberate()
-				ag.Act()
+				ag.Act(chCharacChn)
 				step++
 				ag.syncChan <- step
 			case <-ag.endChan:
@@ -84,7 +83,7 @@ func (c *Pedestrian) Alive() bool {
 	return c.AmIAlive
 }
 
-func (c *Pedestrian) Percept(env *atomic.Pointer[[]Object]) {}
+func (c *Pedestrian) Percept(env []Object, rcCharacChan chan<- ReceiveCharacRequest) {}
 
 // Deliberate est appelé chaque frame pour mettre à jour le comportement du piéton.
 // Comportement résumé :
@@ -315,19 +314,25 @@ func (p *Pedestrian) Deliberate() {
 	}
 }
 
-func (c *Pedestrian) Act() {
-	c.pCharacteristics.Store(&PhysicalCharacteristics{
+func (c *Pedestrian) Act(ch chan<- ChangeCharacRequest) {
+	ch <- ChangeCharacRequest{NewCharacteristics: &PhysicalCharacteristics{
 		PositionX: c.X,
 		PositionY: c.Y,
 		Direction: c.Dir,
 		State:     c.PState,
 		Angle:     c.Angle,
-	})
+	},
+		Object: c,
+	}
 }
 
-func (c *Pedestrian) Draw() (Asset, *ebiten.DrawImageOptions) {
-	car := c.PhysicalCharacteristics()
-
+func (c *Pedestrian) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawImageOptions) {
+	receiveChannel := make(chan *PhysicalCharacteristics)
+	RcCharacCh <- ReceiveCharacRequest{Object: c, ReceiveCharac: receiveChannel}
+	car := <-receiveChannel
+	if car == nil {
+		return Asset(0), &ebiten.DrawImageOptions{}
+	}
 	X, Y := car.PositionX, car.PositionY
 
 	op := &ebiten.DrawImageOptions{}
@@ -336,7 +341,10 @@ func (c *Pedestrian) Draw() (Asset, *ebiten.DrawImageOptions) {
 	return Asset(0), op
 }
 
-func (c *Pedestrian) PhysicalCharacteristics() PhysicalCharacteristics {
-	currentCharacteristics := c.pCharacteristics.Load()
-	return *currentCharacteristics
+func (c *Pedestrian) PhysicalCharacteristics() *PhysicalCharacteristics {
+	return c.pCharacteristics
+}
+
+func (c *Pedestrian) ChangePhysicalCharac(pc *PhysicalCharacteristics) {
+	c.pCharacteristics = pc
 }

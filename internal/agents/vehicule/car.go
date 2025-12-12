@@ -3,7 +3,6 @@ package vehicule
 import (
 	"math"
 	"math/rand"
-	"sync/atomic"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
@@ -38,7 +37,7 @@ func (ag *Car) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Car) Start(env *atomic.Pointer[[]Object]) {
+func (ag *Car) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest) {
 
 	go func() {
 		var step int
@@ -46,11 +45,13 @@ func (ag *Car) Start(env *atomic.Pointer[[]Object]) {
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(env)
+				ag.Percept(<-env, rcCharacChan)
 				ag.Deliberate()
-				ag.Act()
+				ag.Act(chCharacChn)
 				step++
+				//fmt.Println("ID ", ag.AgentID(), "finished act")
 				ag.syncChan <- step
+
 			case <-ag.endChan:
 				close(ag.endChan)
 				close(ag.syncChan)
@@ -68,7 +69,7 @@ type Car struct {
 	Angle     float64
 	LaneIndex int // 0 ou 1 pour la voie utilisée (deux voies par direction)
 
-	pCharacteristics atomic.Pointer[PhysicalCharacteristics]
+	pCharacteristics *PhysicalCharacteristics
 
 	// Pour le virage
 	TurnLeft   bool
@@ -134,7 +135,7 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 	}
 }
 
-func (c *Car) Percept(env *atomic.Pointer[[]Object]) {
+func (c *Car) Percept(env []Object, rcCharacChan chan<- ReceiveCharacRequest) {
 
 }
 
@@ -262,6 +263,7 @@ func (c *Car) Deliberate() {
 		// Fin du virage
 		if c.TurnStep >= TURN_DURATION {
 			c.IsTurning = false
+			c.Angle = 0.0
 			if c.Dir == North {
 				c.Dir = West
 			} else if c.Dir == South {
@@ -306,27 +308,38 @@ func (c *Car) Deliberate() {
 	}
 }
 
-func (c *Car) Act() {
-	c.pCharacteristics.Store(&PhysicalCharacteristics{
+func (c *Car) Act(ch chan<- ChangeCharacRequest) {
+	ch <- ChangeCharacRequest{NewCharacteristics: &PhysicalCharacteristics{
 		PositionX: c.X,
 		PositionY: c.Y,
 		Direction: c.Dir,
 		State:     c.DrivingState,
 		Angle:     c.Angle,
-	})
+	},
+		Object: c,
+	}
 }
 
 func (c *Car) Type() string {
-	return c.Type()
+	return "car"
 }
 
-func (c *Car) PhysicalCharacteristics() PhysicalCharacteristics {
-	currentCharacteristics := c.pCharacteristics.Load()
-	return *currentCharacteristics
+func (c *Car) PhysicalCharacteristics() *PhysicalCharacteristics {
+	return c.pCharacteristics
 }
 
-func (c *Car) Draw() (Asset, *ebiten.DrawImageOptions) {
-	car := c.PhysicalCharacteristics()
+func (c *Car) ChangePhysicalCharac(pc *PhysicalCharacteristics) {
+	c.pCharacteristics = pc
+}
+
+func (c *Car) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawImageOptions) {
+	receiveChannel := make(chan *PhysicalCharacteristics)
+	RcCharacCh <- ReceiveCharacRequest{Object: c, ReceiveCharac: receiveChannel}
+	car := <-receiveChannel
+
+	if car == nil {
+		return Asset(0), &ebiten.DrawImageOptions{}
+	}
 
 	// Récupérer l'image de la voiture selon sa couleur
 	colorIndex := c.CarColorIndex()

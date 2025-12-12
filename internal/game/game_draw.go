@@ -47,7 +47,7 @@ func init() {
 	}
 
 	// Charger les images des voitures (une par couleur)
-	carColorNames = []string{"blue", "green", "purple", "lightblue", "yellow"}
+	carColorNames = []string{"nil", "blue", "green", "purple", "lightblue", "yellow"}
 	for _, color := range carColorNames {
 		filename := fmt.Sprintf("internal/assets/cars/car_%s.png", color)
 		img, _, err := ebitenutil.NewImageFromFile(filename)
@@ -59,7 +59,7 @@ func init() {
 	}
 
 	// Charger les images des voitures (une par couleur)
-	pedColorNames = []string{"zero"}
+	pedColorNames = []string{"nil", "zero"}
 	for _, color := range pedColorNames {
 		filename := fmt.Sprintf("internal/assets/ped_%s.png", color)
 		img, _, err := ebitenutil.NewImageFromFile(filename)
@@ -436,12 +436,11 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 	}
 
 	// Dessiner tous les objets (voitures, piétons, etc.)
-	currentObjtSlice := g.Objets.Load()
+	currentObjtSlice := <-g.ReceiveObjtsCh
 	if currentObjtSlice == nil {
-		fmt.Println("I AM NIL FROM DRAW")
 		return
 	}
-	for _, obj := range *currentObjtSlice {
+	for _, obj := range currentObjtSlice {
 		switch obj.Type() {
 		case "car":
 			g.drawCar(screen, obj)
@@ -609,14 +608,14 @@ func (g *Game) drawSidewalks(screen *ebiten.Image) {
 
 // drawCar dessine une voiture avec rotation selon sa direction et son virage
 func (g *Game) drawCar(screen *ebiten.Image, c Object) {
-	assetIndex, op := c.Draw()
+	assetIndex, op := c.Draw(g.RcCharacCh)
 
 	// Dessiner
 	screen.DrawImage(carImages[assetIndex], op)
 }
 
 func (g *Game) drawPedestrian(screen *ebiten.Image, c Object) {
-	assetIndex, op := c.Draw()
+	assetIndex, op := c.Draw(g.RcCharacCh)
 
 	// Dessiner
 	screen.DrawImage(pedImages[assetIndex], op)

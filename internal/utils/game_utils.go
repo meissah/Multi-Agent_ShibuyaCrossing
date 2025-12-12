@@ -1,10 +1,18 @@
 package utils
 
 import (
-	"sync/atomic"
-
 	"github.com/hajimehoshi/ebiten/v2"
 )
+
+type ChangeCharacRequest struct {
+	Object             Object
+	NewCharacteristics *PhysicalCharacteristics
+}
+
+type ReceiveCharacRequest struct {
+	Object        Object
+	ReceiveCharac chan *PhysicalCharacteristics
+}
 
 // Declaration du type AgentID
 type AgentID ObjectID
@@ -27,10 +35,10 @@ const (
 // Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
 type Agent interface {
 	Object
-	Start(*atomic.Pointer[[]Object])
-	Percept(*atomic.Pointer[[]Object])
+	Start(<-chan []Object, chan<- ChangeCharacRequest, chan<- ReceiveCharacRequest)
+	Percept([]Object, chan<- ReceiveCharacRequest)
 	Deliberate()
-	Act()
+	Act(chan<- ChangeCharacRequest)
 	AgentID() AgentID
 	Alive() bool
 	EndChan() chan int
@@ -40,8 +48,9 @@ type Agent interface {
 type Object interface {
 	ObjectID() ObjectID
 	Type() string
-	Draw() (Asset, *ebiten.DrawImageOptions) //pour dessiner l'objet
-	PhysicalCharacteristics() PhysicalCharacteristics
+	Draw(chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawImageOptions) //pour dessiner l'objet
+	PhysicalCharacteristics() *PhysicalCharacteristics
+	ChangePhysicalCharac(*PhysicalCharacteristics)
 }
 
 type PhysicalCharacteristics struct {

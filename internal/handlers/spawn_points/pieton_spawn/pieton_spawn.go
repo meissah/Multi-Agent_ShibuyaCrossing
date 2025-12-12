@@ -2,7 +2,6 @@ package pietonspawn
 
 import (
 	"math/rand/v2"
-	"sync/atomic"
 	"time"
 
 	pieton "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
@@ -17,7 +16,7 @@ type PietonSpawn struct {
 }
 
 // fonction permettant de creer une seule nouvelle voiture
-func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *atomic.Pointer[[]Object]) {
+func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest) {
 
 	////Pietons pierrick part
 	// définir les zones autorisées et de spawn basées sur le dessin (rectangles rouges + carré central)
@@ -68,14 +67,14 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan
 	if x, y, ok := pathfinding.RandomPointInRects(spawns, rand.Float64); ok {
 		npieton := pieton.NewPieton(<-AgentCountCh, x, y, syncChan)
 		//lancement de la goroutine voiture
-		npieton.Start(env)
+		npieton.Start(env, chCharacChn, rcCharacChan)
 
 		//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
 		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: npieton, SyncChan: syncChan}
 	} else {
 		npieton := pieton.NewPieton(<-AgentCountCh, rand.Float64()*700, rand.Float64()*700, syncChan)
 		//lancement de la goroutine voiture
-		npieton.Start(env)
+		npieton.Start(env, chCharacChn, rcCharacChan)
 
 		//ajout de l'agent à la boucle du jeu-> sa goroutine sera ainsi 'appelé' lors du prochain update()
 		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: npieton, SyncChan: syncChan}
@@ -87,14 +86,15 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan
 func (g *PietonSpawn) Start(
 	AgentCountCh <-chan ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
-	env *atomic.Pointer[[]Object],
+	env <-chan []Object,
+	chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest,
 ) {
 	go func() {
 		ticker := time.NewTicker(g.SpawnInterval)
 		defer ticker.Stop()
 
 		for range ticker.C {
-			g.spawnPieton(AgentCountCh, AgtsSliceCh, env)
+			g.spawnPieton(AgentCountCh, AgtsSliceCh, env, chCharacChn, rcCharacChan)
 		}
 	}()
 }

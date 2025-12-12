@@ -89,13 +89,13 @@ func (g *Game) UpdateSimulation() error {
 
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
-	currentAgtSlice := g.Agents.Load()
-
+	currentAgtSlice := <-g.ReceiveAgtsCh
 	if currentAgtSlice == nil {
-		fmt.Println("I AM NIL FROM UPDATE")
 		return nil
 	}
-	for _, agt := range *currentAgtSlice {
+
+	fmt.Println("THE AGENT SLICE: ", currentAgtSlice)
+	for _, agt := range currentAgtSlice {
 		if agt.Alive() {
 			wg.Add(1)
 			go func(agt Agent) {
@@ -110,7 +110,11 @@ func (g *Game) UpdateSimulation() error {
 				// Attendre que l'agent ait terminé
 				<-c.(chan int)
 			}(agt)
+		} else {
+			//demande suppression de l'agent
+			g.DelAgtSlice <- agt
 		}
+
 	}
 
 	// Attendre que tous les agents aient terminé leur pas

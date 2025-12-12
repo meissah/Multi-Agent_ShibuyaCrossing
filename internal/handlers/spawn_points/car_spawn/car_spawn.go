@@ -2,7 +2,6 @@ package carspawn
 
 import (
 	"math/rand"
-	"sync/atomic"
 	"time"
 
 	cars "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
@@ -114,7 +113,7 @@ func ChooseToTurn() bool {
 
 // fonction permettant de creer une seule nouvelle voiture
 // Essayer de spawner plusieurs fois si bloqué
-func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *atomic.Pointer[[]Object]) {
+func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest) {
 
 	const MAX_ATTEMPTS = 10 // Nombre maximum de tentatives
 
@@ -128,7 +127,7 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 		car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
 
 		// Lancer la goroutine de la voiture
-		car.Start(env)
+		car.Start(env, chCharacChn, rcCharacChan)
 
 		// Ajouter l'agent à la boucle du jeu
 		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
@@ -146,14 +145,15 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 func (g *CarSpawn) Start(
 	AgentCountCh <-chan ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
-	env *atomic.Pointer[[]Object],
+	env <-chan []Object,
+	chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest,
 ) {
 	go func() {
 		ticker := time.NewTicker(g.SpawnInterval) // emet un tick(signal) à chaque intervalle de spawn
 		defer ticker.Stop()
 
 		for range ticker.C {
-			g.spawnCars(AgentCountCh, AgtsSliceCh, env)
+			g.spawnCars(AgentCountCh, AgtsSliceCh, env, chCharacChn, rcCharacChan)
 
 			// petit délai aléatoire (ici 0-15% de l'intervalle) pour éviter
 			// que toutes les voitures spawent simultanément depuis les 4 directions
