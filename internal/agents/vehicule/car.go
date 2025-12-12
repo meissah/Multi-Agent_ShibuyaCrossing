@@ -37,7 +37,7 @@ func (ag *Car) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Car) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest) {
+func (ag *Car) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, allCharac <-chan []PhysicalCharacteristics) {
 
 	go func() {
 		var step int
@@ -45,7 +45,7 @@ func (ag *Car) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(<-env, rcCharacChan)
+				ag.Percept(<-allCharac)
 				ag.Deliberate()
 				ag.Act(chCharacChn)
 				step++
@@ -135,7 +135,7 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 	}
 }
 
-func (c *Car) Percept(env []Object, rcCharacChan chan<- ReceiveCharacRequest) {
+func (c *Car) Percept(env []PhysicalCharacteristics) {
 
 }
 

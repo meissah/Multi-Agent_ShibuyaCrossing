@@ -8,6 +8,7 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/perceptcharacteristicshandler"
 	physicialcharacteristicshandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/physicial_characteristics_handler"
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
 	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
@@ -39,13 +40,15 @@ type Game struct {
 	ObjectCount  ObjectID
 
 	//Channels des differents microservices
-	AddAgtSlice    chan<- agentslicehandler.AddAgtRequest
-	ReceiveAgtsCh  <-chan []Agent
-	ReceiveObjtsCh <-chan []Object
-	ChCharacCh     chan<- ChangeCharacRequest
-	RcCharacCh     chan<- ReceiveCharacRequest
-	DelAgtSlice    chan<- Agent
-	ObjectCountCh  <-chan ObjectID // recevoir le prochain ID d'agent disponible
+	AddAgtSlice       chan<- agentslicehandler.AddAgtRequest
+	ReceiveAgtsCh     <-chan []Agent
+	ReceiveObjtsCh    <-chan []Object
+	ChCharacCh        chan<- ChangeCharacRequest
+	RcCharacCh        chan<- ReceiveCharacRequest
+	AllCharacCh       <-chan []PhysicalCharacteristics
+	UpdateAllCharacCh chan<- int
+	DelAgtSlice       chan<- Agent
+	ObjectCountCh     <-chan ObjectID // recevoir le prochain ID d'agent disponible
 
 	step int
 }
@@ -74,12 +77,13 @@ func (g *Game) InitSimulation() {
 	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount)
 	g.AddAgtSlice, g.ReceiveAgtsCh, g.ReceiveObjtsCh, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
 	g.ChCharacCh, g.RcCharacCh = physicialcharacteristicshandler.LancerCharacteristicsHandler()
+	g.UpdateAllCharacCh, g.AllCharacCh = perceptcharacteristicshandler.LancerCharacteristicsHandler(&g.Objets, g.RcCharacCh)
 
 	//lance les goroutines autonome de creation de voitures et pietons
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
-	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, g.ReceiveObjtsCh, g.ChCharacCh, g.RcCharacCh)
+	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, g.ReceiveObjtsCh, g.ChCharacCh, g.AllCharacCh)
 	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // initialise la structure de spawn de voiture
-	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, g.ReceiveObjtsCh, g.ChCharacCh, g.RcCharacCh)
+	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, g.ReceiveObjtsCh, g.ChCharacCh, g.AllCharacCh)
 }
 
 // Layout définit la taille de la fenêtre du jeu (appelé automatiquement par Ebiten)

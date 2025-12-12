@@ -113,7 +113,7 @@ func ChooseToTurn() bool {
 
 // fonction permettant de creer une seule nouvelle voiture
 // Essayer de spawner plusieurs fois si bloqué
-func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest) {
+func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, allCharac <-chan []PhysicalCharacteristics) {
 
 	const MAX_ATTEMPTS = 10 // Nombre maximum de tentatives
 
@@ -127,7 +127,7 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 		car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
 
 		// Lancer la goroutine de la voiture
-		car.Start(env, chCharacChn, rcCharacChan)
+		car.Start(env, chCharacChn, allCharac)
 
 		// Ajouter l'agent à la boucle du jeu
 		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
@@ -146,14 +146,15 @@ func (g *CarSpawn) Start(
 	AgentCountCh <-chan ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
 	env <-chan []Object,
-	chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest,
+	chCharacChn chan<- ChangeCharacRequest,
+	allCharac <-chan []PhysicalCharacteristics,
 ) {
 	go func() {
 		ticker := time.NewTicker(g.SpawnInterval) // emet un tick(signal) à chaque intervalle de spawn
 		defer ticker.Stop()
 
 		for range ticker.C {
-			g.spawnCars(AgentCountCh, AgtsSliceCh, env, chCharacChn, rcCharacChan)
+			g.spawnCars(AgentCountCh, AgtsSliceCh, env, chCharacChn, allCharac)
 
 			// petit délai aléatoire (ici 0-15% de l'intervalle) pour éviter
 			// que toutes les voitures spawent simultanément depuis les 4 directions

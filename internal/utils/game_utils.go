@@ -35,8 +35,8 @@ const (
 // Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
 type Agent interface {
 	Object
-	Start(<-chan []Object, chan<- ChangeCharacRequest, chan<- ReceiveCharacRequest)
-	Percept([]Object, chan<- ReceiveCharacRequest)
+	Start(<-chan []Object, chan<- ChangeCharacRequest, <-chan []PhysicalCharacteristics)
+	Percept([]PhysicalCharacteristics)
 	Deliberate()
 	Act(chan<- ChangeCharacRequest)
 	AgentID() AgentID

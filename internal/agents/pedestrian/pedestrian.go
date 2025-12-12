@@ -52,7 +52,7 @@ func (ag *Pedestrian) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Pedestrian) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, rcCharacChan chan<- ReceiveCharacRequest) {
+func (ag *Pedestrian) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, allCharac <-chan []PhysicalCharacteristics) {
 	ag.MaxAliveTime = time.Now().Add(ag.MaxAliveDuration)
 	go func() {
 		var step int
@@ -60,7 +60,7 @@ func (ag *Pedestrian) Start(env <-chan []Object, chCharacChn chan<- ChangeCharac
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(<-env, rcCharacChan)
+				ag.Percept(<-allCharac)
 				ag.Deliberate()
 				ag.Act(chCharacChn)
 				step++
@@ -83,7 +83,7 @@ func (c *Pedestrian) Alive() bool {
 	return c.AmIAlive
 }
 
-func (c *Pedestrian) Percept(env []Object, rcCharacChan chan<- ReceiveCharacRequest) {}
+func (c *Pedestrian) Percept(env []PhysicalCharacteristics) {}
 
 // Deliberate est appelé chaque frame pour mettre à jour le comportement du piéton.
 // Comportement résumé :
