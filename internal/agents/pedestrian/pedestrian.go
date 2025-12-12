@@ -321,6 +321,7 @@ func (c *Pedestrian) Act(ch chan<- ChangeCharacRequest) {
 		Direction: c.Dir,
 		State:     c.PState,
 		Angle:     c.Angle,
+		Type:      "pieton",
 	},
 		Object: c,
 	}

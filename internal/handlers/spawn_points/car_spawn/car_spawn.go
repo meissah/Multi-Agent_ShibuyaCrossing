@@ -25,15 +25,15 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 
 		// SPAWN au NORD (en haut)
 		xSpawnNordLaneGauche = 395.0
-		xSpawnNordLaneDroite = 424.0
+		xSpawnNordLaneDroite = 430.0
 
 		// SPAWN à l'OUEST (à gauche)
-		ySpawnOuestLaneHaute = 323.0
+		ySpawnOuestLaneHaute = 320.0
 		ySpawnOuestLaneBasse = 355.0
 
 		// SPAWN à l'EST (à droite)
 		ySpawnEstLaneHaute = 395.0
-		ySpawnEstLaneBasse = 424.0
+		ySpawnEstLaneBasse = 431.0
 	)
 
 	// Choisir un point de SPAWN aléatoire
@@ -47,7 +47,7 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 		} else {
 			x = xSpawnNordLaneDroite
 		}
-		y = 0 // Point de spawn en haut de l'écran
+		y = -23 // Point de spawn en haut de l'écran
 
 	case South: // SPAWN en BAS (Sud)
 		dir = North // La voiture ira donc vers le HAUT (Nord)
@@ -57,12 +57,12 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 		} else {
 			x = xSpawnSudLaneDroite
 		}
-		y = 750 // Point de spawn en bas de l'écran ( car l'écran fait 750px de haut )
+		y = 773 // Point de spawn en bas de l'écran ( car l'écran fait 750px de haut )
 
 	case East: // SPAWN à DROITE (Est)
 		dir = West // La voiture ira donc vers la GAUCHE (Ouest)
 		lane = rand.Intn(2)
-		x = 750 // Point de spawn à droite de l'écran
+		x = 773 // Point de spawn à droite de l'écran
 		if lane == 0 {
 			y = ySpawnEstLaneHaute
 		} else {
@@ -72,7 +72,7 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 	case West: // SPAWN à GAUCHE (Ouest)
 		dir = East // La voiture ira donc vers la DROITE (Est)
 		lane = rand.Intn(2)
-		x = 0 // Point de spawn à gauche de l'écran
+		x = -23 // Point de spawn à gauche de l'écran
 		if lane == 0 {
 			y = ySpawnOuestLaneHaute
 		} else {
@@ -87,58 +87,39 @@ func ChooseToTurn() bool {
 	return rand.Float64() < 0.25
 }
 
-// isSpawnPointClear vérifie si le point de spawn est libre de toute autre voiture proche
-// pour éviter les collisions immédiates au spawn
-// func (g *CarSpawn) isSpawnPointClear(x, y float64, env *[]Object) bool {
-// 	const MIN_DISTANCE = 80.0 // Distance minimale entre voitures ( A Ajuster si besoin )
-
-// 	for _, obj := range *env {
-// 		if obj.Type() == "car" {
-// 			carX, carY := obj.Position()
-
-// 			// Calculer la distance euclidienne
-// 			dx := carX - x
-// 			dy := carY - y
-// 			distance := math.Sqrt(dx*dx + dy*dy)
-
-// 			// Si une voiture est trop proche, la zone n'est pas libre
-// 			if distance < MIN_DISTANCE {
-// 				return false
-// 			}
-// 		}
-// 	}
-
-// 	return true
-// }
-
 // fonction permettant de creer une seule nouvelle voiture
 // Essayer de spawner plusieurs fois si bloqué
 func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, allCharac <-chan []PhysicalCharacteristics) {
 
-	const MAX_ATTEMPTS = 10 // Nombre maximum de tentatives
+	// Choisir un point de spawn aléatoire
+	x, y, dir, lane := ChoisirPointSpawn()
 
-	for attempt := 0; attempt < MAX_ATTEMPTS; attempt++ {
-		// Choisir un point de spawn aléatoire
-		x, y, dir, lane := ChoisirPointSpawn()
+	// Increased safety radius for spawning (from 50 to 150 pixels)
+	const spawnSafetyRadius = 150.0
 
-		//  Zone libre, créer la voiture
-		turnleft := ChooseToTurn() //choix aléatoire de si la voiture va tourner à gauche ou pas
-		syncChan := make(chan int)
-		car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
-
-		// Lancer la goroutine de la voiture
-		car.Start(env, chCharacChn, allCharac)
-
-		// Ajouter l'agent à la boucle du jeu
-		AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
-
-		// Succès !
-		return
+	for _, pC := range <-allCharac {
+		if pC.Type != "car" {
+			continue
+		}
+		if pC.PositionX < x+spawnSafetyRadius && pC.PositionX > x-spawnSafetyRadius &&
+			pC.PositionY < y+spawnSafetyRadius && pC.PositionY > y-spawnSafetyRadius {
+			// Point de spawn occupé, ne pas créer de voiture
+			return
+		}
 	}
+	//  Zone libre, créer la voiture
+	turnleft := ChooseToTurn() //choix aléatoire de si la voiture va tourner à gauche ou pas
+	syncChan := make(chan int)
+	car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
 
-	// Toutes les tentatives ont échoué (trop de trafic)
-	// Ne pas spawner pour éviter les superpositions cas de trafic tres dense
+	// Lancer la goroutine de la voiture
+	car.Start(env, chCharacChn, allCharac)
 
+	// Ajouter l'agent à la boucle du jeu
+	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: car, SyncChan: syncChan}
+
+	// Succès !
+	return
 }
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.

@@ -8,6 +8,14 @@ import (
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
+// Add these constants at the top with other constants
+const (
+	MAX_ACCELERATION     = 50.0  // pixels/sec²
+	MAX_DECELERATION     = 120.0 // pixels/sec² (increased)
+	COMFORTABLE_DISTANCE = 140.0 // pixels (increased from 100)
+	MIN_SAFE_DISTANCE    = 80.0  // pixels (increased from 60)
+)
+
 type Bounds struct {
 	dX, dY float64
 }
@@ -88,6 +96,10 @@ type Car struct {
 	// 0=blue, 1=red, 2=green, 3=lightblue, 4=yellow ...
 	carColorIndex int
 
+	closestObject    PhysicalCharacteristics
+	normForce        float64
+	normForceClosest float64
+
 	// Référence à l'environnement pour les perceptions
 	//env      CarEnvironment
 	syncChan chan int
@@ -108,11 +120,14 @@ const (
 	WEST_LEFT_TURN_X = 307.0
 	WEST_LEFT_TURN_Y = 420.0
 
-	TURN_DURATION = 30.0 // nombre de steps pour faire le virage
+	TURN_DURATION = 47.0 // nombre de steps pour faire le virage
 )
 
 // NewCar constructeur
 func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, syncChan chan int) *Car {
+	speeds := []float64{5, 25, 50, 13}
+	randomSpeed := speeds[rand.Intn(len(speeds))]
+
 	return &Car{
 		ID:        AgentID(id),
 		X:         x,
@@ -127,19 +142,109 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 		TurnStartX: 0.0, // position de départ du virage
 		TurnStartY: 0.0,
 
-		MaxSpeed:      100.0, // pixels/sec j'ai mis au hasard a ajuster selon les tests
 		AmIAlive:      true,
 		syncChan:      syncChan,
 		endChan:       make(chan int),
 		carColorIndex: rand.Intn(5),
+
+		Speed:    0.0,         // Start from 0
+		MaxSpeed: randomSpeed, // pixels/sec
+
+		normForce:        1,
+		normForceClosest: 0,
 	}
 }
 
-func (c *Car) Percept(env []PhysicalCharacteristics) {
+func squaredDistance(x1, y1, x2, y2 float64) float64 {
+	dx := x1 - x2
+	dy := y1 - y2
+	return dx*dx + dy*dy
+}
 
+func (c *Car) Percept(env []PhysicalCharacteristics) {
+	var closest PhysicalCharacteristics
+	closest = PhysicalCharacteristics{PositionX: -750, PositionY: -750}
+	var compareX1, compareX2, compareY1, compareY2 float64
+	switch c.Dir {
+	case North:
+		compareX1, compareX2, compareY1, compareY2 = c.X-12, c.X+12, c.Y-200, c.Y-18
+	case South:
+		compareX1, compareX2, compareY1, compareY2 = c.X-12, c.X+12, c.Y+18, c.Y+200
+	case East:
+		compareX1, compareX2, compareY1, compareY2 = c.X+18, c.X+200, c.Y-12, c.Y+12
+	case West:
+		compareX1, compareX2, compareY1, compareY2 = c.X-200, c.X-18, c.Y-12, c.Y+12
+	}
+
+	for _, pc := range env {
+		// Skip self
+		if pc.PositionX == c.X && pc.PositionY == c.Y {
+			continue
+		}
+
+		if squaredDistance(pc.PositionX, pc.PositionY, c.X, c.Y) < squaredDistance(closest.PositionX, closest.PositionY, c.X, c.Y) {
+			if pc.PositionX >= compareX1 && pc.PositionX <= compareX2 && pc.PositionY >= compareY1 && pc.PositionY <= compareY2 {
+				closest = pc
+			}
+		}
+	}
+
+	if closest.PositionX == -750 && closest.PositionY == -750 {
+		closest.PositionX = c.X
+		closest.PositionY = c.Y
+	}
+
+	c.closestObject = closest
 }
 
 func (c *Car) Deliberate() {
+	if c.closestObject.PositionX != c.X && c.closestObject.PositionY != c.Y {
+		distance := math.Sqrt(squaredDistance(c.closestObject.PositionX, c.closestObject.PositionY, c.X, c.Y))
+
+		// Determine desired speed based on distance to object ahead
+		var desiredSpeed float64
+		if distance < MIN_SAFE_DISTANCE {
+			desiredSpeed = 0.0 // Stop
+		} else if distance < COMFORTABLE_DISTANCE {
+			// Gradual slowdown between MIN_SAFE and COMFORTABLE distance
+			ratio := (distance - MIN_SAFE_DISTANCE) / (COMFORTABLE_DISTANCE - MIN_SAFE_DISTANCE)
+			desiredSpeed = c.MaxSpeed * ratio
+		} else {
+			desiredSpeed = c.MaxSpeed // Full speed ahead
+		}
+
+		// Smoothly accelerate or decelerate toward desired speed
+		speedDifference := desiredSpeed - c.Speed
+		const frameTime = 0.016 // ~60fps
+
+		if speedDifference > 0 {
+			// Accelerate
+			c.Speed += MAX_ACCELERATION * frameTime
+			if c.Speed > desiredSpeed {
+				c.Speed = desiredSpeed
+			}
+		} else if speedDifference < 0 {
+			// Decelerate (brake harder)
+			c.Speed -= MAX_DECELERATION * frameTime
+			// Ensure speed doesn't go below zero
+			if c.Speed < desiredSpeed {
+				c.Speed = desiredSpeed
+			}
+			// Force complete stop if very close to desired speed of 0
+			if desiredSpeed == 0.0 && c.Speed < 1.0 {
+				c.Speed = 0.0
+			}
+		}
+	} else {
+		// No object ahead, accelerate to max speed
+		if c.Speed < c.MaxSpeed {
+			c.Speed += MAX_ACCELERATION * 0.016
+			if c.Speed > c.MaxSpeed {
+				c.Speed = c.MaxSpeed
+			}
+		}
+	}
+
 	if c.TurnLeft && !c.IsTurning {
 		// Virage pour les voitures venant du Sud (direction North)
 		if c.Dir == North {
@@ -276,16 +381,17 @@ func (c *Car) Deliberate() {
 		}
 
 	} else {
-		// Mouvement normal en ligne droite
+		// Mouvement normal en ligne droite - now using Speed
+		movementDelta := c.Speed * 0.016 // Convert speed to pixels per frame
 		switch c.Dir {
 		case North:
-			c.Y -= 2.0 // la voiture monte
+			c.Y -= movementDelta
 		case South:
-			c.Y += 2.0
+			c.Y += movementDelta
 		case East:
-			c.X += 2.0
+			c.X += movementDelta
 		case West:
-			c.X -= 2.0
+			c.X -= movementDelta
 		}
 	}
 
@@ -319,6 +425,7 @@ func (c *Car) Act(ch chan<- ChangeCharacRequest) {
 		Direction: c.Dir,
 		State:     c.DrivingState,
 		Angle:     c.Angle,
+		Type:      "car",
 	},
 		Object: c,
 	}
@@ -358,23 +465,23 @@ func (c *Car) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawI
 	// Appliquer la rotation de base selon la direction
 	switch car.Direction {
 	case South:
-		w, h = 35, 50
+		w, h = 25, 45
 		op.GeoM.Rotate(math.Pi)
 		op.GeoM.Translate(imgW, imgH)
 		scaleX = float64(w) / imgW
 		scaleY = float64(h) / imgH
 	case North:
-		w, h = 35, 50
+		w, h = 25, 45
 		scaleX = float64(w) / imgW
 		scaleY = float64(h) / imgH
 	case West:
-		w, h = 50, 35
+		w, h = 45, 25
 		op.GeoM.Rotate((3 * math.Pi) / 2)
 		op.GeoM.Translate(0, imgW)
 		scaleY = float64(h) / imgW
 		scaleX = float64(w) / imgH
 	case East:
-		w, h = 50, 35
+		w, h = 45, 25
 		op.GeoM.Rotate(math.Pi / 2)
 		op.GeoM.Translate(imgH, 0)
 		scaleY = float64(h) / imgW

@@ -14,11 +14,9 @@ func LancerCharacteristicsHandler() (chan<- ChangeCharacRequest, chan<- ReceiveC
 			select {
 			case req := <-AddRequestCh:
 				req.Object.ChangePhysicalCharac(req.NewCharacteristics)
-				//fmt.Println("Change of Charac")
 			case req := <-ReceiveRequestCh:
 				ptrCharac := req.Object.PhysicalCharacteristics()
 				req.ReceiveCharac <- ptrCharac
-				//fmt.Println("Receipt of charac")
 			}
 		}
 	}()

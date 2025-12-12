@@ -59,4 +59,5 @@ type PhysicalCharacteristics struct {
 	Direction Direction
 	State     string //pour connaiter l'etat du feu (par exemple)
 	Angle     float64
+	Type      string // type d'objet: car, pedestrian, trafficlight, ...
 }

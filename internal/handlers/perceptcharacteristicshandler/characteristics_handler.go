@@ -25,6 +25,9 @@ func LancerCharacteristicsHandler(gObjets *[]Object, pCChn chan<- ReceiveCharacR
 					}
 
 					currentCharac = <-receiveCh
+					if currentCharac == nil {
+						continue
+					}
 					currentCharacs = append(currentCharacs, *currentCharac)
 				}
 			case ReceiveRequestCh <- currentCharacs:

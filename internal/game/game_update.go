@@ -23,7 +23,7 @@ import (
 
 // Update est appelé 60 fois par seconde par Ebiten (boucle principale du jeu)
 func (g *Game) Update() error {
-	fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
+	fmt.Println("Goroutines running: ", runtime.NumGoroutine())
 	log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
 	switch g.State {
 	case config.StateMenu:
@@ -86,6 +86,8 @@ func (g *Game) UpdateSimulation() error {
 
 	// Incrémenter le compteur de pas
 	g.step++
+
+	g.UpdateAllCharacCh <- 1
 
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
