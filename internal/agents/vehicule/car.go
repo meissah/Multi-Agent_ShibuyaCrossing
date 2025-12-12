@@ -306,6 +306,10 @@ func (c *Car) Deliberate() {
 			c.Angle = -t * (math.Pi / 2)
 		}
 	}
+
+	if c.X < -50 || c.X > 800 || c.Y < -50 || c.Y > 800 {
+		c.AmIAlive = false
+	}
 }
 
 func (c *Car) Act(ch chan<- ChangeCharacRequest) {
@@ -336,6 +340,7 @@ func (c *Car) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawI
 	receiveChannel := make(chan *PhysicalCharacteristics)
 	RcCharacCh <- ReceiveCharacRequest{Object: c, ReceiveCharac: receiveChannel}
 	car := <-receiveChannel
+	close(receiveChannel)
 
 	if car == nil {
 		return Asset(0), &ebiten.DrawImageOptions{}
@@ -395,7 +400,7 @@ func (c *Car) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawI
 	// Positionner à la position finale
 	op.GeoM.Translate(x, y)
 
-	return Asset(c.carColorIndex), op
+	return Asset(c.carColorIndex + 1), op
 }
 
 func (c *Car) Position() (float64, float64) {
@@ -405,27 +410,6 @@ func (c *Car) Position() (float64, float64) {
 func (c *Car) TurningLeft() bool {
 	return c.IsTurning
 }
-
-// func (c *Car) Angle() float64 {
-// 	if c.IsTurning {
-// 		t := c.TurnStep / TURN_DURATION
-
-// 		if c.Dir == North {
-// 			// Sud vers Ouest : rotation de 0 à -π/2
-// 			return -t * (math.Pi / 2)
-// 		} else if c.Dir == South {
-// 			// Nord vers Est : rotation de π à π/2
-// 			return math.Pi - t*(math.Pi/2)
-// 		} else if c.Dir == West {
-// 			// Est vers Sud : rotation de -π/2 à -π
-// 			return -math.Pi - t*(math.Pi/2)
-// 		} else if c.Dir == East {
-// 			// Ouest vers Nord : rotation de π/2 à 0
-// 			return -t * (math.Pi / 2)
-// 		}
-// 	}
-// 	return 0
-// }
 
 // CarColorIndex retourne l'index de la couleur de la voiture (pour l'affichage)
 func (c *Car) CarColorIndex() int {

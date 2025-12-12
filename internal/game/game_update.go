@@ -94,7 +94,7 @@ func (g *Game) UpdateSimulation() error {
 		return nil
 	}
 
-	fmt.Println("THE AGENT SLICE: ", currentAgtSlice)
+	//fmt.Println("THE AGENT SLICE: ", currentAgtSlice)
 	for _, agt := range currentAgtSlice {
 		if agt.Alive() {
 			wg.Add(1)

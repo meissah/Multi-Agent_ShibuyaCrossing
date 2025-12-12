@@ -330,6 +330,8 @@ func (c *Pedestrian) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebite
 	receiveChannel := make(chan *PhysicalCharacteristics)
 	RcCharacCh <- ReceiveCharacRequest{Object: c, ReceiveCharac: receiveChannel}
 	car := <-receiveChannel
+	close(receiveChannel)
+
 	if car == nil {
 		return Asset(0), &ebiten.DrawImageOptions{}
 	}
@@ -338,7 +340,7 @@ func (c *Pedestrian) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebite
 	op := &ebiten.DrawImageOptions{}
 
 	op.GeoM.Translate(X, Y)
-	return Asset(0), op
+	return Asset(1), op
 }
 
 func (c *Pedestrian) PhysicalCharacteristics() *PhysicalCharacteristics {
