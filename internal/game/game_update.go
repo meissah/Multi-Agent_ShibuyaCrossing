@@ -112,7 +112,7 @@ func (g *Game) UpdateSimulation() error {
 			}(agt)
 		} else {
 			//demande suppression de l'agent
-			g.DelAgtSlice <- agt
+			go func() { g.DelAgtSlice <- agt }()
 		}
 
 	}
