@@ -2,6 +2,7 @@ package pedestrian
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -15,11 +16,12 @@ type Pedestrian struct {
 	DesiredDirection  utils.Vector
 	DesiredSeparation float64
 
-	id                utils.ObjectID
-	velocity          utils.Vector
-	syncChan          chan int
-	endChan           chan int
-	pedestriansAround []Pedestrian
+	id                  utils.ObjectID
+	velocity            utils.Vector
+	syncChan            chan int
+	endChan             chan int
+	pedestriansAround   []Pedestrian
+	repulsionAreasUnder []environment.RepulsionArea
 }
 
 // Constructeur de piéton
@@ -68,7 +70,6 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 		for {
 			select {
 			case step = <-p.syncChan:
-
 				p.Percept(*env)
 				p.Deliberate()
 
@@ -102,6 +103,13 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 			}
 
 			p.pedestriansAround = append(p.pedestriansAround, *otherPedestrian)
+		}
+
+		// Ajouter les routes sous le piéton
+		if ra, ok := obj.(*environment.RepulsionArea); ok {
+			if ra.IsPointInside(p.Coords) {
+				p.repulsionAreasUnder = append(p.repulsionAreasUnder, *ra)
+			}
 		}
 	}
 }
@@ -139,16 +147,10 @@ func (p *Pedestrian) Deliberate() {
 		p.velocity = p.velocity.Add(repulsion)
 	}
 
-	// Le piéton s'éloigne des bords de la fenêtre
-	windowHeight := 750.0
-	margin := 20.0
-
-	if p.Coords.Y() < margin {
-		windowRepulsion := *utils.NewVector(0, p.MaxSpeed*(margin-p.Coords.Y())/margin)
-		p.velocity = p.velocity.Add(windowRepulsion)
-	} else if p.Coords.Y() > windowHeight-margin {
-		windowRepulsion := *utils.NewVector(0, -p.MaxSpeed*(margin-p.Coords.Y())/margin)
-		p.velocity = p.velocity.Add(windowRepulsion)
+	// Appliquer les forces de l'environnement (zones de répulsion)
+	for _, ra := range p.repulsionAreasUnder {
+		force := ra.ForceAtPoint(p.Coords)
+		p.velocity = p.velocity.Add(force.Scale(.10))
 	}
 
 	// Limiter la vitesse

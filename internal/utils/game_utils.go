@@ -36,8 +36,6 @@ type Agent interface {
 
 // Interface standard d'un objet, permettant de dessiner l'objet ou de le percept
 type Object interface {
-	Drawable
-
 	ObjectID() ObjectID
 	Type() string
 	Direction() Direction
