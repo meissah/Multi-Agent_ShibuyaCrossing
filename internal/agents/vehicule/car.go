@@ -355,23 +355,23 @@ func (c *Car) Draw() (Asset, *ebiten.DrawImageOptions) {
 	// Appliquer la rotation de base selon la direction
 	switch c.Direction() {
 	case South:
-		w, h = 35, 50
+		w, h = 15, 25
 		op.GeoM.Rotate(math.Pi)
 		op.GeoM.Translate(imgW, imgH)
 		scaleX = float64(w) / imgW
 		scaleY = float64(h) / imgH
 	case North:
-		w, h = 35, 50
+		w, h = 15, 25
 		scaleX = float64(w) / imgW
 		scaleY = float64(h) / imgH
 	case West:
-		w, h = 50, 35
+		w, h = 25, 15
 		op.GeoM.Rotate((3 * math.Pi) / 2)
 		op.GeoM.Translate(0, imgW)
 		scaleY = float64(h) / imgW
 		scaleX = float64(w) / imgH
 	case East:
-		w, h = 50, 35
+		w, h = 25, 15
 		op.GeoM.Rotate(math.Pi / 2)
 		op.GeoM.Translate(imgH, 0)
 		scaleY = float64(h) / imgW
