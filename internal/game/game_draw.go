@@ -608,14 +608,14 @@ func (g *Game) drawSidewalks(screen *ebiten.Image) {
 
 // drawCar dessine une voiture avec rotation selon sa direction et son virage
 func (g *Game) drawCar(screen *ebiten.Image, c Object) {
-	assetIndex, op := c.Draw(g.RcCharacCh)
+	assetIndex, op := c.Draw()
 
 	// Dessiner
 	screen.DrawImage(carImages[assetIndex], op)
 }
 
 func (g *Game) drawPedestrian(screen *ebiten.Image, c Object) {
-	assetIndex, op := c.Draw(g.RcCharacCh)
+	assetIndex, op := c.Draw()
 
 	// Dessiner
 	screen.DrawImage(pedImages[assetIndex], op)

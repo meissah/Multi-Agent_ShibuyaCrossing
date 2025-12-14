@@ -77,6 +77,7 @@ func LancerAgentSliceHandler(AgentSlice *[]Agent, ObjectSlice *[]Object, syncCha
 						break
 					}
 				}
+				syncChans.Delete(Agt.AgentID())
 
 			}
 		}

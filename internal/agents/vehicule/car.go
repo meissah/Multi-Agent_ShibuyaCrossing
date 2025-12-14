@@ -37,7 +37,7 @@ func (ag *Car) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Car) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, allCharac <-chan []PhysicalCharacteristics) {
+func (ag *Car) Start(env <-chan []Object) {
 
 	go func() {
 		var step int
@@ -45,13 +45,15 @@ func (ag *Car) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(<-allCharac)
-				ag.Deliberate()
-				ag.Act(chCharacChn)
-				step++
-				//fmt.Println("ID ", ag.AgentID(), "finished act")
-				ag.syncChan <- step
+				ag.Percept(<-env)
 
+				ag.syncChan <- step
+				<-ag.syncChan
+
+				ag.Deliberate()
+				ag.Act()
+
+				ag.syncChan <- step
 			case <-ag.endChan:
 				close(ag.endChan)
 				close(ag.syncChan)
@@ -68,8 +70,7 @@ type Car struct {
 	Dir       Direction
 	Angle     float64
 	LaneIndex int // 0 ou 1 pour la voie utilisée (deux voies par direction)
-
-	pCharacteristics *PhysicalCharacteristics
+	wtvthisis float64
 
 	// Pour le virage
 	TurnLeft   bool
@@ -135,8 +136,13 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 	}
 }
 
-func (c *Car) Percept(env []PhysicalCharacteristics) {
-
+func (c *Car) Percept(env []Object) {
+	for _, obj := range env {
+		c.wtvthisis = obj.PositionX()
+		//fmt.Println("Pedestrian ", c.ID, " perceives object: ", obj.Type(), " at (", obj.PositionX(), ",", obj.PositionX(), ")")
+		// Le piéton peut percevoir les objets autour de lui (voitures, feux, autres piétons)
+		// mais pour l'instant on n'utilise pas cette information dans le comportement
+	}
 }
 
 func (c *Car) Deliberate() {
@@ -312,39 +318,30 @@ func (c *Car) Deliberate() {
 	}
 }
 
-func (c *Car) Act(ch chan<- ChangeCharacRequest) {
-	ch <- ChangeCharacRequest{NewCharacteristics: &PhysicalCharacteristics{
-		PositionX: c.X,
-		PositionY: c.Y,
-		Direction: c.Dir,
-		State:     c.DrivingState,
-		Angle:     c.Angle,
-	},
-		Object: c,
-	}
+func (c *Car) Act() {
 }
 
 func (c *Car) Type() string {
 	return "car"
 }
 
-func (c *Car) PhysicalCharacteristics() *PhysicalCharacteristics {
-	return c.pCharacteristics
+func (c *Car) Direction() Direction {
+	return c.Dir
 }
 
-func (c *Car) ChangePhysicalCharac(pc *PhysicalCharacteristics) {
-	c.pCharacteristics = pc
+func (c *Car) TheAngle() float64 {
+	return c.Angle
 }
 
-func (c *Car) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawImageOptions) {
-	receiveChannel := make(chan *PhysicalCharacteristics)
-	RcCharacCh <- ReceiveCharacRequest{Object: c, ReceiveCharac: receiveChannel}
-	car := <-receiveChannel
-	close(receiveChannel)
+func (c *Car) PositionX() float64 {
+	return c.X
+}
 
-	if car == nil {
-		return Asset(0), &ebiten.DrawImageOptions{}
-	}
+func (c *Car) PositionY() float64 {
+	return c.Y
+}
+
+func (c *Car) Draw() (Asset, *ebiten.DrawImageOptions) {
 
 	// Récupérer l'image de la voiture selon sa couleur
 	colorIndex := c.CarColorIndex()
@@ -356,7 +353,7 @@ func (c *Car) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawI
 	var scaleX, scaleY float64
 
 	// Appliquer la rotation de base selon la direction
-	switch car.Direction {
+	switch c.Direction() {
 	case South:
 		w, h = 35, 50
 		op.GeoM.Rotate(math.Pi)
@@ -386,14 +383,14 @@ func (c *Car) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawI
 	op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
 
 	// Récupérer la position
-	x, y := car.PositionX, car.PositionY
+	x, y := c.PositionX(), c.PositionY()
 
 	// Appliquer la rotation du virage si nécessaire
-	if car.Angle != 0 {
-		if car.Direction == West || car.Direction == South {
-			op.GeoM.Rotate(car.Angle + math.Pi)
+	if c.Angle != 0 {
+		if c.Direction() == West || c.Direction() == South {
+			op.GeoM.Rotate(c.Angle + math.Pi)
 		} else {
-			op.GeoM.Rotate(car.Angle)
+			op.GeoM.Rotate(c.Angle)
 		}
 	}
 

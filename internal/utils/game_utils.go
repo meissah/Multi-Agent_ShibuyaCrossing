@@ -4,16 +4,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type ChangeCharacRequest struct {
-	Object             Object
-	NewCharacteristics *PhysicalCharacteristics
-}
-
-type ReceiveCharacRequest struct {
-	Object        Object
-	ReceiveCharac chan *PhysicalCharacteristics
-}
-
 // Declaration du type AgentID
 type AgentID ObjectID
 
@@ -35,10 +25,10 @@ const (
 // Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
 type Agent interface {
 	Object
-	Start(<-chan []Object, chan<- ChangeCharacRequest, <-chan []PhysicalCharacteristics)
-	Percept([]PhysicalCharacteristics)
+	Start(<-chan []Object)
+	Percept([]Object)
 	Deliberate()
-	Act(chan<- ChangeCharacRequest)
+	Act()
 	AgentID() AgentID
 	Alive() bool
 	EndChan() chan int
@@ -48,15 +38,9 @@ type Agent interface {
 type Object interface {
 	ObjectID() ObjectID
 	Type() string
-	Draw(chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawImageOptions) //pour dessiner l'objet
-	PhysicalCharacteristics() *PhysicalCharacteristics
-	ChangePhysicalCharac(*PhysicalCharacteristics)
-}
-
-type PhysicalCharacteristics struct {
-	PositionX float64 // world position
-	PositionY float64
-	Direction Direction
-	State     string //pour connaiter l'etat du feu (par exemple)
-	Angle     float64
+	Direction() Direction
+	TheAngle() float64
+	PositionX() float64
+	PositionY() float64
+	Draw() (Asset, *ebiten.DrawImageOptions) //pour dessiner l'objet
 }

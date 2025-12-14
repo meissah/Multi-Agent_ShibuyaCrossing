@@ -116,9 +116,33 @@ func (g *Game) UpdateSimulation() error {
 		}
 
 	}
+	wg.Wait()
+	currentAgtSlice = <-g.ReceiveAgtsCh
+	if currentAgtSlice == nil {
+		return nil
+	}
+	var wg2 sync.WaitGroup
+	for _, agt := range currentAgtSlice {
+		if agt.Alive() {
+			wg2.Add(1)
+			go func(agt Agent) {
+				defer wg2.Done()
+
+				// Récupérer le channel de synchronisation de l'agent
+				c, _ := g.syncChansAgt.Load(agt.AgentID())
+
+				// Signaler à l'agent de faire son prochain pas
+				c.(chan int) <- g.step
+
+				// Attendre que l'agent ait terminé
+				<-c.(chan int)
+			}(agt)
+		}
+
+	}
 
 	// Attendre que tous les agents aient terminé leur pas
-	wg.Wait()
+	wg2.Wait()
 
 	return nil
 }

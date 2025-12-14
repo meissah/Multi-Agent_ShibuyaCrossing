@@ -26,7 +26,7 @@ type Pedestrian struct {
 	AmIAlive         bool               //marque la fin de vie, pour que le pieton demande sa suppression au prochain update
 	syncChan         chan int           //permet la synchronisation des goroutines des agents
 	endChan          chan int           //permet d'effacer un agent/sa goroutine
-	pCharacteristics *PhysicalCharacteristics
+	wtvthisis        float64
 }
 
 func NewPieton(id ObjectID, x, y float64, syncChan chan int) *Pedestrian {
@@ -52,7 +52,7 @@ func (ag *Pedestrian) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Pedestrian) Start(env <-chan []Object, chCharacChn chan<- ChangeCharacRequest, allCharac <-chan []PhysicalCharacteristics) {
+func (ag *Pedestrian) Start(env <-chan []Object) {
 	ag.MaxAliveTime = time.Now().Add(ag.MaxAliveDuration)
 	go func() {
 		var step int
@@ -60,10 +60,14 @@ func (ag *Pedestrian) Start(env <-chan []Object, chCharacChn chan<- ChangeCharac
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(<-allCharac)
+				ag.Percept(<-env)
+
+				ag.syncChan <- step
+				<-ag.syncChan
+
 				ag.Deliberate()
-				ag.Act(chCharacChn)
-				step++
+				ag.Act()
+
 				ag.syncChan <- step
 			case <-ag.endChan:
 				close(ag.endChan)
@@ -83,7 +87,14 @@ func (c *Pedestrian) Alive() bool {
 	return c.AmIAlive
 }
 
-func (c *Pedestrian) Percept(env []PhysicalCharacteristics) {}
+func (c *Pedestrian) Percept(env []Object) {
+	for _, obj := range env {
+		c.wtvthisis = obj.PositionX()
+		//fmt.Println("Pedestrian ", c.ID, " perceives object: ", obj.Type(), " at (", obj.PositionX(), ",", obj.PositionX(), ")")
+		// Le piéton peut percevoir les objets autour de lui (voitures, feux, autres piétons)
+		// mais pour l'instant on n'utilise pas cette information dans le comportement
+	}
+}
 
 // Deliberate est appelé chaque frame pour mettre à jour le comportement du piéton.
 // Comportement résumé :
@@ -188,7 +199,7 @@ func (p *Pedestrian) Deliberate() {
 		} else {
 			// pick candidates from SpawnRects (if any) and verify A* finds a path
 			if len(pathfinding.SpawnRects) > 0 {
-				for attempt := 0; attempt < 80; attempt++ {
+				for attempt := 0; attempt < 5; attempt++ {
 					rx, ry, ok := pathfinding.RandomPointInRects(pathfinding.SpawnRects, rand.Float64)
 					if !ok {
 						break
@@ -314,28 +325,13 @@ func (p *Pedestrian) Deliberate() {
 	}
 }
 
-func (c *Pedestrian) Act(ch chan<- ChangeCharacRequest) {
-	ch <- ChangeCharacRequest{NewCharacteristics: &PhysicalCharacteristics{
-		PositionX: c.X,
-		PositionY: c.Y,
-		Direction: c.Dir,
-		State:     c.PState,
-		Angle:     c.Angle,
-	},
-		Object: c,
-	}
+func (c *Pedestrian) Act() {
+
 }
 
-func (c *Pedestrian) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebiten.DrawImageOptions) {
-	receiveChannel := make(chan *PhysicalCharacteristics)
-	RcCharacCh <- ReceiveCharacRequest{Object: c, ReceiveCharac: receiveChannel}
-	car := <-receiveChannel
-	close(receiveChannel)
+func (c *Pedestrian) Draw() (Asset, *ebiten.DrawImageOptions) {
 
-	if car == nil {
-		return Asset(0), &ebiten.DrawImageOptions{}
-	}
-	X, Y := car.PositionX, car.PositionY
+	X, Y := c.X, c.Y
 
 	op := &ebiten.DrawImageOptions{}
 
@@ -343,10 +339,18 @@ func (c *Pedestrian) Draw(RcCharacCh chan<- ReceiveCharacRequest) (Asset, *ebite
 	return Asset(1), op
 }
 
-func (c *Pedestrian) PhysicalCharacteristics() *PhysicalCharacteristics {
-	return c.pCharacteristics
+func (c *Pedestrian) Direction() Direction {
+	return c.Dir
 }
 
-func (c *Pedestrian) ChangePhysicalCharac(pc *PhysicalCharacteristics) {
-	c.pCharacteristics = pc
+func (c *Pedestrian) TheAngle() float64 {
+	return c.Angle
+}
+
+func (c *Pedestrian) PositionX() float64 {
+	return c.X
+}
+
+func (c *Pedestrian) PositionY() float64 {
+	return c.Y
 }
