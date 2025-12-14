@@ -16,6 +16,7 @@ import (
 type RepulsionArea struct {
 	utils.Object
 
+	id            utils.ObjectID
 	topLeft       utils.Point
 	bottomRight   utils.Point
 	forceStrength float64
@@ -24,8 +25,9 @@ type RepulsionArea struct {
 	active        bool
 }
 
-func NewRepulsionArea(topLeft, bottomRight utils.Point, forceStrength, bufferSize float64) *RepulsionArea {
+func NewRepulsionArea(id utils.ObjectID, topLeft, bottomRight utils.Point, forceStrength, bufferSize float64) *RepulsionArea {
 	return &RepulsionArea{
+		id:            id,
 		topLeft:       topLeft,
 		bottomRight:   bottomRight,
 		forceStrength: forceStrength,
@@ -40,15 +42,13 @@ func (ra *RepulsionArea) Show()       { ra.visible = true }
 func (ra *RepulsionArea) Activate()   { ra.active = true }
 func (ra *RepulsionArea) Deactivate() { ra.active = false }
 
+func (ra RepulsionArea) ObjectID() utils.ObjectID   { return ra.id }
+func (ra RepulsionArea) PositionX() float64         { return ra.topLeft.X() }
+func (ra RepulsionArea) PositionY() float64         { return ra.topLeft.Y() }
 func (ra RepulsionArea) Direction() utils.Direction { return utils.North }      // placeholder
 func (ra RepulsionArea) State() string              { return "active" }         // placeholder
 func (ra RepulsionArea) Type() string               { return "repulsion_area" } // placeholder
-
-func (ra RepulsionArea) Position() (float64, float64) {
-	centerX := (ra.topLeft.X() + ra.bottomRight.X()) / 2
-	centerY := (ra.topLeft.Y() + ra.bottomRight.Y()) / 2
-	return centerX, centerY
-}
+func (ra RepulsionArea) TheAngle() float64          { return 0.0 }              // placeholder
 
 // Dessine la zone de répulsion si elle est marquée comme visible.
 func (ra RepulsionArea) Draw(screen *ebiten.Image) {

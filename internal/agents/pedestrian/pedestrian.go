@@ -7,6 +7,7 @@ import (
 
 // Réprésente un piéton dans la simulation.
 type Pedestrian struct {
+	utils.Drawable
 	utils.Agent
 
 	Coords            utils.Point
