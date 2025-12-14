@@ -4,7 +4,9 @@ package game
 
 import (
 	"sync"
+	"time"
 
+	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
@@ -61,6 +63,37 @@ func NewGame() *Game {
 	}
 
 	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
+
+	configs := []struct {
+		x, y float64
+		dir  Direction
+		id   string
+	}{
+		{325, 225, East, "Nord"}, // En haut à gauche
+		{425, 525, East, "Sud"},  // En bas à droite
+
+		{225, 425, North, "Ouest"}, // En bas à gauche
+		{525, 325, North, "Est"},   // En haut à droite
+	}
+
+	for _, cfg := range configs {
+		// 1. Visuel : On passe la direction 'cfg.dir'
+		tlVisu := trafficlight.NewTrafficLightObject(cfg.x, cfg.y, cfg.dir, "Red")
+
+		g.Objets = append(g.Objets, tlVisu)
+
+		// 2. Logique (timer de 3s pour tester)
+		tlLogic := trafficlight.NewTrafficLight(cfg.id, 3*time.Second, 3*time.Second)
+		tlLogic.Start()
+
+		// 3. Liaison
+		go func(visu *trafficlight.TrafficLightObject, logic *trafficlight.TrafficLight) {
+			chUpdate := logic.Subscribe()
+			for newState := range chUpdate {
+				visu.SetState(newState.String())
+			}
+		}(tlVisu, tlLogic)
+	}
 
 	return g
 }

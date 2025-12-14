@@ -42,5 +42,8 @@ type Object interface {
 	TheAngle() float64
 	PositionX() float64
 	PositionY() float64
-	Draw() (Asset, *ebiten.DrawImageOptions) //pour dessiner l'objet
+}
+
+type Drawable interface {
+	Draw() (Asset, *ebiten.DrawImageOptions)
 }
