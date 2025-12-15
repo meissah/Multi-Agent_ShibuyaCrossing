@@ -122,7 +122,7 @@ func (p *Pedestrian) Deliberate() {
 		placed := false
 		// si SpawnRects est non vide, on tire dedans
 		if len(pathfinding.SpawnRects) > 0 {
-			for attempt := 0; attempt < 50; attempt++ {
+			for attempt := 0; attempt < 5; attempt++ {
 				rx, ry, ok := pathfinding.RandomPointInRects(pathfinding.SpawnRects, rand.Float64)
 				if !ok {
 					break

@@ -117,15 +117,6 @@ func (g *Game) UpdateSimulation() error {
 
 	var wg2 sync.WaitGroup
 
-	for _, agt := range agentsToRemove {
-		wg2.Add(1)
-		// Supprimer l'agent de la simulation
-		go func() {
-			defer wg2.Done()
-			g.DelAgtSlice <- agt
-
-		}()
-	}
 	for _, agt := range currentAgtSlice {
 		if agt.Alive() {
 			wg2.Add(1)
@@ -147,6 +138,10 @@ func (g *Game) UpdateSimulation() error {
 
 	// Attendre que tous les agents aient terminé leur pas
 	wg2.Wait()
+
+	for _, agt := range agentsToRemove {
+		g.DelAgtSlice <- agt
+	}
 
 	return nil
 }
