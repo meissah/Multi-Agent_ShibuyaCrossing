@@ -445,55 +445,83 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 			g.drawCar(screen, obj.(Drawable))
 		case "pieton":
 			g.drawPedestrian(screen, obj.(Drawable))
-		case "traffic_light":
+		case "traffic_light_car":
 			X, Y := obj.PositionX(), obj.PositionY()
 			dir := obj.Direction()
-			// boîtier
-			boxW, boxH := 24, 48
-
 			isHorizontal := dir == East || dir == West
 
-			// Dimensions et décalages par défaut (Vertical : Nord/Sud)
-			boxW, boxH = 24, 48
-			// Décalage des cercles par rapport au centre (X, Y)
-			rDx, rDy := 0.0, -12.0 // Rouge en haut
-			gDx, gDy := 0.0, +12.0 // Vert en bas
+			// Dimensions "Standard"
+			boxW, boxH := 24, 48
+			rDx, rDy := 0.0, -12.0
+			gDx, gDy := 0.0, +12.0
 
-			// Si horizontal, on inverse les dimensions et les décalages
 			if isHorizontal {
 				boxW, boxH = 48, 24
-				rDx, rDy = -12.0, 0.0 // Rouge à gauche
-				gDx, gDy = +12.0, 0.0 // Vert à droite
+				rDx, rDy = -12.0, 0.0
+				gDx, gDy = +12.0, 0.0
 			}
 
-			// Boitier
+			// Dessin Boitier
 			box := ebiten.NewImage(boxW, boxH)
-			box.Fill(color.RGBA{50, 50, 50, 255}) // rectange gris foncé
+			box.Fill(color.RGBA{50, 50, 50, 255})
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(X-float64(boxW)/2, Y-float64(boxH)/2)
 			screen.DrawImage(box, op)
 
+			// Dessin Cercles
 			state := obj.(*trafficlight.TrafficLightObject).State()
-			onRed := color.RGBA{255, 0, 0, 255}
-			onGreen := color.RGBA{0, 200, 0, 255}
-			off := color.RGBA{70, 70, 70, 255}
-			radius := float32(7)
+			radius := float32(7) // Gros cercles
 
-			// Position et couleur Rouge
-			rCol := off
+			// Couleurs
+			onRed, onGreen := color.RGBA{255, 0, 0, 255}, color.RGBA{0, 200, 0, 255}
+			off := color.RGBA{70, 70, 70, 255}
+
+			rCol, gCol := off, off
 			if state == "Red" {
 				rCol = onRed
 			}
-			// On applique les décalages calculés plus haut
-			vector.FillCircle(screen, float32(X+rDx), float32(Y+rDy), radius, rCol, false)
-
-			// Position et couleur Vert
-			gCol := off
 			if state == "Green" {
 				gCol = onGreen
 			}
+
+			vector.FillCircle(screen, float32(X+rDx), float32(Y+rDy), radius, rCol, false)
 			vector.FillCircle(screen, float32(X+gDx), float32(Y+gDy), radius, gCol, false)
 
+		case "traffic_light_pedestrian":
+			// Pour accéder aux champs W et H, on doit "caster" l'interface Object
+			// vers son type concret *trafficlight.TrafficLightObject
+			tlObj, ok := obj.(*trafficlight.TrafficLightObject)
+			if !ok {
+				continue // Sécurité si le cast échoue
+			}
+
+			cX, cY := tlObj.PositionX(), tlObj.PositionY() // Centre
+			w, h := tlObj.Size()                           // Dimensions
+
+			// Définition des couleurs avec transparence (Alpha = 100 sur 255)
+			// Cela permet de voir le passage piéton dessous.
+			redTransparent := color.RGBA{255, 0, 0, 100}
+			greenTransparent := color.RGBA{0, 255, 0, 100}
+
+			var drawColor color.Color
+
+			switch tlObj.State() {
+			case "Red":
+				drawColor = redTransparent
+			case "Green":
+				drawColor = greenTransparent
+			default:
+				// Si l'état est inconnu, on ne dessine rien (invisible)
+				continue
+			}
+
+			// vector.DrawFilledRect prend les coordonnées du coin supérieur gauche.
+			// On convertit depuis le centre :
+			topLeftX := float32(cX - w/2)
+			topLeftY := float32(cY - h/2)
+
+			// On dessine le rectangle coloré semi-transparent
+			vector.DrawFilledRect(screen, topLeftX, topLeftY, float32(w), float32(h), drawColor, false)
 		}
 	}
 
