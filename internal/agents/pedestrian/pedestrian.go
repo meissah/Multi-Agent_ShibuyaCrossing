@@ -52,7 +52,7 @@ func (ag *Pedestrian) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Pedestrian) Start(env <-chan []Object) {
+func (ag *Pedestrian) Start(env *[]Object) {
 	ag.MaxAliveTime = time.Now().Add(ag.MaxAliveDuration)
 	go func() {
 		var step int
@@ -60,7 +60,7 @@ func (ag *Pedestrian) Start(env <-chan []Object) {
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(<-env)
+				ag.Percept(*env)
 
 				ag.syncChan <- step
 				<-ag.syncChan

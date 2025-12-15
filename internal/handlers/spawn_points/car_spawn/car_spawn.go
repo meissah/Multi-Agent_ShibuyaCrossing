@@ -113,7 +113,7 @@ func ChooseToTurn() bool {
 
 // fonction permettant de creer une seule nouvelle voiture
 // Essayer de spawner plusieurs fois si bloqué
-func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env <-chan []Object) {
+func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *[]Object) {
 
 	const MAX_ATTEMPTS = 10 // Nombre maximum de tentatives
 
@@ -145,7 +145,7 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 func (g *CarSpawn) Start(
 	AgentCountCh <-chan ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
-	env <-chan []Object,
+	env *[]Object,
 ) {
 	go func() {
 		ticker := time.NewTicker(g.SpawnInterval) // emet un tick(signal) à chaque intervalle de spawn

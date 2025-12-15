@@ -436,10 +436,7 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 	}
 
 	// Dessiner tous les objets (voitures, piétons, etc.)
-	currentObjtSlice := <-g.ReceiveObjtsCh
-	if currentObjtSlice == nil {
-		return
-	}
+	currentObjtSlice := g.Objets
 	for _, obj := range currentObjtSlice {
 		switch obj.Type() {
 		case "car":

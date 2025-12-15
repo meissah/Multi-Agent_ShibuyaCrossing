@@ -37,7 +37,7 @@ func (ag *Car) EndChan() chan int {
 }
 
 // lance la goroutine de l'agent car
-func (ag *Car) Start(env <-chan []Object) {
+func (ag *Car) Start(env *[]Object) {
 
 	go func() {
 		var step int
@@ -45,7 +45,7 @@ func (ag *Car) Start(env <-chan []Object) {
 			select {
 			case step = <-ag.syncChan:
 
-				ag.Percept(<-env)
+				ag.Percept(*env)
 
 				ag.syncChan <- step
 				<-ag.syncChan

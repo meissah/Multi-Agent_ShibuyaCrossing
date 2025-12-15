@@ -25,7 +25,7 @@ const (
 // Interface standard d'un agent (voiture/pieton/feu voiture/feu pieton)
 type Agent interface {
 	Object
-	Start(<-chan []Object)
+	Start(*[]Object)
 	Percept([]Object)
 	Deliberate()
 	Act()

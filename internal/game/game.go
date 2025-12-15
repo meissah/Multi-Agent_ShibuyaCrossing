@@ -73,9 +73,9 @@ func (g *Game) InitSimulation() {
 
 	//lance les goroutines autonome de creation de voitures et pietons
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
-	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, g.ReceiveObjtsCh)
+	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
 	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // initialise la structure de spawn de voiture
-	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, g.ReceiveObjtsCh)
+	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
 }
 
 // Layout définit la taille de la fenêtre du jeu (appelé automatiquement par Ebiten)

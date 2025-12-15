@@ -90,9 +90,7 @@ func (g *Game) UpdateSimulation() error {
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
 	currentAgtSlice := <-g.ReceiveAgtsCh
-	if currentAgtSlice == nil {
-		return nil
-	}
+	var agentsToRemove []Agent
 
 	//fmt.Println("THE AGENT SLICE: ", currentAgtSlice)
 	for _, agt := range currentAgtSlice {
@@ -111,17 +109,23 @@ func (g *Game) UpdateSimulation() error {
 				<-c.(chan int)
 			}(agt)
 		} else {
-			//demande suppression de l'agent
-			go func() { g.DelAgtSlice <- agt }()
+			agentsToRemove = append(agentsToRemove, agt)
 		}
 
 	}
 	wg.Wait()
-	currentAgtSlice = <-g.ReceiveAgtsCh
-	if currentAgtSlice == nil {
-		return nil
-	}
+
 	var wg2 sync.WaitGroup
+
+	for _, agt := range agentsToRemove {
+		wg2.Add(1)
+		// Supprimer l'agent de la simulation
+		go func() {
+			defer wg2.Done()
+			g.DelAgtSlice <- agt
+
+		}()
+	}
 	for _, agt := range currentAgtSlice {
 		if agt.Alive() {
 			wg2.Add(1)

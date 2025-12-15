@@ -16,7 +16,7 @@ type PietonSpawn struct {
 }
 
 // fonction permettant de creer une seule nouvelle voiture
-func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env <-chan []Object) {
+func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *[]Object) {
 
 	////Pietons pierrick part
 	// définir les zones autorisées et de spawn basées sur le dessin (rectangles rouges + carré central)
@@ -86,7 +86,7 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan ObjectID, AgtsSliceCh chan
 func (g *PietonSpawn) Start(
 	AgentCountCh <-chan ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
-	env <-chan []Object,
+	env *[]Object,
 ) {
 	go func() {
 		ticker := time.NewTicker(g.SpawnInterval)
