@@ -605,8 +605,56 @@ func (g *Game) drawSidewalks(screen *ebiten.Image) {
 func (g *Game) drawCar(screen *ebiten.Image, c Object) {
 	assetIndex, op := c.Draw()
 
-	// Dessiner
+	// Dessiner la voiture
 	screen.DrawImage(carImages[assetIndex], op)
+
+	// VISUALISATION DU SYSTÈME DE RALENTISSEMENT
+	// Cast en *Car pour accéder aux méthodes spécifiques
+	if car, ok := c.(interface {
+		GetSpeed() float64
+		GetCarAhead() (interface{}, float64)
+	}); ok {
+		// 1. Afficher la vitesse au-dessus de la voiture
+		speed := car.GetSpeed()
+		speedText := fmt.Sprintf("%.1f", speed)
+		speedColor := color.RGBA{0, 255, 0, 255} // Vert par défaut
+
+		// Changer la couleur selon la vitesse
+		if speed < 1.0 {
+			speedColor = color.RGBA{255, 0, 0, 255} // Rouge si très lent
+		} else if speed < 1.5 {
+			speedColor = color.RGBA{255, 165, 0, 255} // Orange si ralenti
+		}
+
+		text.Draw(screen, speedText, basicfont.Face7x13,
+			int(c.PositionX())-10, int(c.PositionY())-15, speedColor)
+
+		// 2. Dessiner une ligne vers la voiture détectée
+		carAhead, distance := car.GetCarAhead()
+		if carAhead != nil && distance > 0 {
+			// Récupérer la position de la voiture devant
+			if aheadObj, ok := carAhead.(Object); ok {
+				// Couleur de la ligne selon la distance
+				lineColor := color.RGBA{255, 255, 0, 180} // Jaune
+				if distance < 70 {
+					lineColor = color.RGBA{255, 0, 0, 200} // Rouge si trop proche
+				}
+
+				// Dessiner la ligne de détection
+				ebitenutil.DrawLine(screen,
+					c.PositionX(), c.PositionY(),
+					aheadObj.PositionX(), aheadObj.PositionY(),
+					lineColor)
+
+				// Afficher la distance
+				distText := fmt.Sprintf("%.0f", distance)
+				midX := (c.PositionX() + aheadObj.PositionX()) / 2
+				midY := (c.PositionY() + aheadObj.PositionY()) / 2
+				text.Draw(screen, distText, basicfont.Face7x13,
+					int(midX)-10, int(midY), color.RGBA{255, 255, 255, 255})
+			}
+		}
+	}
 }
 
 func (g *Game) drawPedestrian(screen *ebiten.Image, c Object) {

@@ -89,6 +89,10 @@ type Car struct {
 	// 0=blue, 1=red, 2=green, 3=lightblue, 4=yellow ...
 	carColorIndex int
 
+	// Perception : voiture détectée devant
+	carAhead           *Car    // Voiture devant (nil si aucune)
+	distanceToCarAhead float64 // Distance à la voiture devant
+
 	// Référence à l'environnement pour les perceptions
 	//env      CarEnvironment
 	syncChan chan int
@@ -110,6 +114,11 @@ const (
 	WEST_LEFT_TURN_Y = 420.0
 
 	TURN_DURATION = 30.0 // nombre de steps pour faire le virage
+
+	// Constantes pour le ralentissement progressif
+	DETECTION_DISTANCE = 150.0 // Distance de détection en pixels (commence à ralentir)
+	SAFE_DISTANCE      = 70.0  // Distance de sécurité minimale (7 mètres)
+	MIN_SPEED          = 0.5   // Vitesse minimale (pour éviter l'arrêt complet)
 )
 
 // NewCar constructeur
@@ -128,20 +137,62 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 		TurnStartX: 0.0, // position de départ du virage
 		TurnStartY: 0.0,
 
-		MaxSpeed:      100.0, // pixels/sec j'ai mis au hasard a ajuster selon les tests
-		AmIAlive:      true,
-		syncChan:      syncChan,
-		endChan:       make(chan int),
-		carColorIndex: rand.Intn(5),
+		MaxSpeed:           100.0, // pixels/sec j'ai mis au hasard a ajuster selon les tests
+		Speed:              2.0,   // Vitesse initiale
+		AmIAlive:           true,
+		syncChan:           syncChan,
+		endChan:            make(chan int),
+		carColorIndex:      rand.Intn(5),
+		carAhead:           nil,
+		distanceToCarAhead: 0,
 	}
 }
 
 func (c *Car) Percept(env []Object) {
+	// Réinitialiser la perception
+	c.carAhead = nil
+	c.distanceToCarAhead = 0
+
+	var closestCar *Car
+	minDistance := DETECTION_DISTANCE
+
+	// Parcourir tous les objets pour trouver les voitures
 	for _, obj := range env {
-		c.wtvthisis = obj.PositionX()
-		//fmt.Println("Pedestrian ", c.ID, " perceives object: ", obj.Type(), " at (", obj.PositionX(), ",", obj.PositionX(), ")")
-		// Le piéton peut percevoir les objets autour de lui (voitures, feux, autres piétons)
-		// mais pour l'instant on n'utilise pas cette information dans le comportement
+		// Ignorer la voiture elle-meme (soi-même)
+		if obj.ObjectID() == c.ObjectID() {
+			continue
+		}
+
+		// Ne regarder que les voitures ( POUR L'INSTANT A VOIR APRES POUR LES PIETONS) !!!!!!!!!!!!!!!!!!!!!!
+		if obj.Type() != "car" {
+			continue
+		}
+
+		// Convertir en Car pour accéder aux propriétés
+		otherCar, ok := obj.(*Car)
+		if !ok {
+			continue
+		}
+
+		// Vérifier si la voiture est devant nous (même direction et même lane)
+		if !c.isCarAhead(otherCar) {
+			continue
+		}
+
+		// Calculer la distance
+		dist := c.distanceTo(otherCar)
+
+		// Garder la voiture la plus proche dans la zone de détection
+		if dist < minDistance {
+			minDistance = dist
+			closestCar = otherCar
+		}
+	}
+
+	// Stocker la voiture détectée
+	if closestCar != nil {
+		c.carAhead = closestCar
+		c.distanceToCarAhead = minDistance
 	}
 }
 
@@ -282,16 +333,19 @@ func (c *Car) Deliberate() {
 		}
 
 	} else {
-		// Mouvement normal en ligne droite
+		// Ajuster la vitesse en fonction de la voiture devant
+		c.adjustSpeed()
+
+		// Mouvement normal en ligne droite avec la vitesse ajustée
 		switch c.Dir {
 		case North:
-			c.Y -= 2.0 // la voiture monte
+			c.Y -= c.Speed
 		case South:
-			c.Y += 2.0
+			c.Y += c.Speed
 		case East:
-			c.X += 2.0
+			c.X += c.Speed
 		case West:
-			c.X -= 2.0
+			c.X -= c.Speed
 		}
 	}
 
@@ -343,7 +397,7 @@ func (c *Car) PositionY() float64 {
 
 func (c *Car) Draw() (Asset, *ebiten.DrawImageOptions) {
 
-	// Récupérer l'image de la voiture selon sa couleur
+	// Récupérer l'image de la voiture selon sa couleur ( grc a son index)
 	colorIndex := c.CarColorIndex()
 	carImgBounds := carAllImgBounds[colorIndex]
 	imgW, imgH := carImgBounds.Bounds()
@@ -397,7 +451,7 @@ func (c *Car) Draw() (Asset, *ebiten.DrawImageOptions) {
 	// Positionner à la position finale
 	op.GeoM.Translate(x, y)
 
-	return Asset(c.carColorIndex + 1), op
+	return Asset(c.carColorIndex + 1), op // Asset 1 à 5 pour les voitures colorées pour debug
 }
 
 func (c *Car) Position() (float64, float64) {
@@ -415,4 +469,89 @@ func (c *Car) CarColorIndex() int {
 
 func (c *Car) Alive() bool {
 	return c.AmIAlive
+}
+
+// GetSpeed retourne la vitesse actuelle (pour debug/visualisation)
+func (c *Car) GetSpeed() float64 {
+	return c.Speed
+}
+
+// GetCarAhead retourne la voiture détectée devant (pour debug/visualisation)
+func (c *Car) GetCarAhead() (*Car, float64) {
+	return c.carAhead, c.distanceToCarAhead
+}
+
+// isCarAhead vérifie si une autre voiture est devant nous
+// (même direction et même lane et position devant selon la direction)
+func (c *Car) isCarAhead(other *Car) bool {
+	// Vérifier la direction
+	if c.Dir != other.Dir {
+		return false
+	}
+
+	// Vérifier la lane (voie)
+	if c.LaneIndex != other.LaneIndex {
+		return false
+	}
+
+	// Vérifier que l'autre voiture est bien devant nous selon la direction
+	// pas oublier que l'axe Y augmente vers le bas de l'écran et x vers la droite
+	switch c.Dir {
+	case North: // On va vers le haut, donc Y diminue
+		return other.Y < c.Y // L'autre doit avoir un Y plus petit
+	case South: // On va vers le bas, donc Y augmente
+		return other.Y > c.Y // L'autre doit avoir un Y plus grand
+	case East: // On va vers la droite, donc X augmente
+		return other.X > c.X // L'autre doit avoir un X plus grand
+	case West: // On va vers la gauche, donc X diminue
+		return other.X < c.X // L'autre doit avoir un X plus petit
+	}
+
+	return false
+}
+
+// distanceTo calcule la distance euclidienne à une autre voiture
+func (c *Car) distanceTo(other *Car) float64 {
+	dx := other.X - c.X
+	dy := other.Y - c.Y
+	return math.Sqrt(dx*dx + dy*dy)
+}
+
+// adjustSpeed ajuste la vitesse en fonction de la voiture devant
+// Ralentissement progressif de DETECTION_DISTANCE à SAFE_DISTANCE declarer plus haut
+func (c *Car) adjustSpeed() {
+	// Vitesse normale par défaut
+	targetSpeed := 2.0
+
+	if c.carAhead != nil && c.distanceToCarAhead > 0 {
+		if c.distanceToCarAhead <= SAFE_DISTANCE {
+			// La voiture est très proche => vitesse minimale
+			targetSpeed = MIN_SPEED
+		} else if c.distanceToCarAhead <= DETECTION_DISTANCE {
+			// Zone de ralentissement progressif
+			// Interpolation linéaire entre MIN_SPEED et vitesse normale
+			// Plus on est proche, plus on ralentit
+			ratio := (c.distanceToCarAhead - SAFE_DISTANCE) / (DETECTION_DISTANCE - SAFE_DISTANCE)
+			targetSpeed = MIN_SPEED + ratio*(2.0-MIN_SPEED)
+		}
+		// Sinon, garder la vitesse normale (2.0)
+	}
+
+	// Ajustement progressif de la vitesse (de maniere smooth)
+	// Pour éviter les changements brusques ( que ca soit naturel )
+	if math.Abs(c.Speed-targetSpeed) < 0.1 {
+		c.Speed = targetSpeed
+	} else if c.Speed < targetSpeed {
+		c.Speed += 0.05 // Accélération douce
+	} else {
+		c.Speed -= 0.1 // Décélération plus rapide pour la sécurité
+	}
+
+	// Limiter la vitesse entre MIN_SPEED et la vitesse normale
+	if c.Speed < MIN_SPEED {
+		c.Speed = MIN_SPEED
+	}
+	if c.Speed > 2.0 {
+		c.Speed = 2.0
+	}
 }
