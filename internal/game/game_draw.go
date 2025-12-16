@@ -186,15 +186,13 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 	text.Draw(screen, instructionText, basicfont.Face7x13,
 		instructionX, 320, color.RGBA{150, 160, 180, 255})
 
-	// Dessiner les deux options de crossing côté à côte
-	// Largeur totale des 2 cartes + espace entre = 200 + 50 + 200 = 450
-	// Position X de départ pour centrer : (750 - 450) / 2 = 150
+	// Dessiner les deux options de crossing côté à côté
 	g.drawCrossingOption(screen, "Shibuya Crossing",
-		ui.Rectangle{X: 150, Y: 360, W: 200, H: 200},
+		g.shibuyaRect, // Utilise directement le rectangle de détection
 		g.selectedCrossing == "shibuya", imgShibuya)
 
 	g.drawCrossingOption(screen, "French Crossing",
-		ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},
+		g.frenchRect, // Utilise directement le rectangle de détection
 		g.selectedCrossing == "French", imgFrench)
 
 	// ═══════════════════════════════════════════════════════════

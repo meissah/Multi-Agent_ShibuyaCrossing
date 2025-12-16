@@ -51,10 +51,10 @@ type Game struct {
 
 func NewGame() *Game {
 	g := &Game{
-		State:          config.StateMenu,       // commencer dans le menu
-		Config:         config.DefaultConfig(), // configuration par défaut si l'utilisateur ne choisit rien
-		shibuyaRect:    ui.Rectangle{X: 200, Y: 300, W: 150, H: 150},
-		frenchRect:     ui.Rectangle{X: 400, Y: 300, W: 150, H: 150},
+		State:          config.StateMenu,                                // commencer dans le menu
+		Config:         config.DefaultConfig(),                          // configuration par défaut si l'utilisateur ne choisit rien
+		shibuyaRect:    ui.Rectangle{X: 150, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption -> regler le probleme de click sur les images
+		frenchRect:     ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption
 		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
 		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
 
