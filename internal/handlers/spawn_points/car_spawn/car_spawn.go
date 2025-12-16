@@ -83,8 +83,12 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 }
 
 // ChoisirVirage décide si la voiture doit tourner à gauche (25% de chances)
-func ChooseToTurn() bool {
+func ChooseToTurn(lane int) bool {
+	if lane != 0 {
+		return false
+	}
 	return rand.Float64() < 0.25
+
 }
 
 // isSpawnPointClear vérifie si le point de spawn est libre de toute autre voiture proche
@@ -122,7 +126,7 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 		x, y, dir, lane := ChoisirPointSpawn()
 
 		//  Zone libre, créer la voiture
-		turnleft := ChooseToTurn() //choix aléatoire de si la voiture va tourner à gauche ou pas
+		turnleft := ChooseToTurn(lane) //choix aléatoire de si la voiture va tourner à gauche ou pas
 		syncChan := make(chan int)
 		car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
 

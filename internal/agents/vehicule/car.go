@@ -1,7 +1,6 @@
 package vehicule
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -143,8 +142,8 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 		TurnStartX: 0.0, // position de départ du virage
 		TurnStartY: 0.0,
 
-		MaxSpeed:           100.0, // pixels/sec j'ai mis au hasard a ajuster selon les tests
-		Speed:              2.0,   // Vitesse initiale
+		MaxSpeed:           RandomFloatInRange(30, 100), // pixels/sec j'ai mis au hasard a ajuster selon les tests
+		Speed:              2.0,                         // Vitesse initiale
 		AmIAlive:           true,
 		syncChan:           syncChan,
 		endChan:            make(chan int),
@@ -210,12 +209,6 @@ func (c *Car) Percept(env []Object) {
 		repulsionForce := c.calculateRepulsionForce(*myPos, *otherPos, minDistance)
 		c.forces = c.forces.Add(repulsionForce)
 
-		// TEST DEBUG. ( voir si logique force fonctionne bien )
-		forceNorm := c.forces.Norm()
-		if forceNorm > 0.1 { // Afficher seulement si force significative
-			fmt.Printf("Car %d: Distance=%.1f | Force=%.3f | Speed=%.2f\n",
-				c.ID, minDistance, forceNorm, c.Speed)
-		}
 	}
 }
 
