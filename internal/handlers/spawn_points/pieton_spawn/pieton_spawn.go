@@ -1,12 +1,11 @@
 package pietonspawn
 
 import (
-	"math/rand/v2"
 	"time"
 
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -20,43 +19,38 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan utils.ObjectID, AgtsSliceC
 
 	////Pietons pierrick part
 	// définir les zones autorisées et de spawn basées sur le dessin (rectangles rouges + carré central)
-	allowed := []pathfinding.Rect{
-		// rectangles rouges verticaux (55x300) placés à 245 et 450
-		{X: 245, Y: 0, W: 55, H: 300},
-		{X: 245, Y: 450, W: 55, H: 300},
-		{X: 450, Y: 0, W: 55, H: 300},
-		{X: 450, Y: 450, W: 55, H: 300},
-		// rectangles rouges horizontaux (300x55) à 0 et 450
-		{X: 0, Y: 245, W: 300, H: 55},
-		{X: 450, Y: 245, W: 300, H: 55},
-		{X: 0, Y: 450, W: 300, H: 55},
-		{X: 450, Y: 450, W: 300, H: 55},
-		// carré central (approx.)
-		{X: 245, Y: 245, W: 205, H: 205},
-		// passages piétons (bandes blanches) reliant le carré central aux trottoirs
-		// étendre les passages pour couvrir entièrement les bords du carré central
-		// afin que les quatre trottoirs soient connectés sans trou
-		{X: 245, Y: 245, W: 55, H: 205}, // zone de passage verticale gauche
-		{X: 450, Y: 245, W: 55, H: 205}, // zone de passage verticale droite
-		{X: 245, Y: 245, W: 205, H: 55}, // zone de passage horizontale supérieure
-		{X: 245, Y: 450, W: 205, H: 55}, // zone de passage horizontale inférieure
-	}
-	spawns := []pathfinding.Rect{
-		// spawn / destination uniquement à l'intérieur des rectangles rouges (pas le carré central)
-		{X: 245, Y: 0, W: 55, H: 300},
-		{X: 245, Y: 450, W: 55, H: 300},
-		{X: 450, Y: 0, W: 55, H: 300},
-		{X: 450, Y: 450, W: 55, H: 300},
-		{X: 0, Y: 245, W: 300, H: 55},
-		{X: 450, Y: 245, W: 300, H: 55},
-		{X: 0, Y: 450, W: 300, H: 55},
-		{X: 450, Y: 450, W: 300, H: 55},
-	}
-	pathfinding.SetAllowedRects(allowed)
-	pathfinding.SetSpawnRects(spawns)
+	// allowed := []pathfinding.Rect{
+	// 	// rectangles rouges verticaux (55x300) placés à 245 et 450
+	// 	{X: 245, Y: 0, W: 55, H: 300},
+	// 	{X: 245, Y: 450, W: 55, H: 300},
+	// 	{X: 450, Y: 0, W: 55, H: 300},
+	// 	{X: 450, Y: 450, W: 55, H: 300},
+	// 	// rectangles rouges horizontaux (300x55) à 0 et 450
+	// 	{X: 0, Y: 245, W: 300, H: 55},
+	// 	{X: 450, Y: 245, W: 300, H: 55},
+	// 	{X: 0, Y: 450, W: 300, H: 55},
+	// 	{X: 450, Y: 450, W: 300, H: 55},
+	// 	// carré central (approx.)
+	// 	{X: 245, Y: 245, W: 205, H: 205},
+	// 	// passages piétons (bandes blanches) reliant le carré central aux trottoirs
+	// 	// étendre les passages pour couvrir entièrement les bords du carré central
+	// 	// afin que les quatre trottoirs soient connectés sans trou
+	// 	{X: 245, Y: 245, W: 55, H: 205}, // zone de passage verticale gauche
+	// 	{X: 450, Y: 245, W: 55, H: 205}, // zone de passage verticale droite
+	// 	{X: 245, Y: 245, W: 205, H: 55}, // zone de passage horizontale supérieure
+	// 	{X: 245, Y: 450, W: 205, H: 55}, // zone de passage horizontale inférieure
+	// }
 
-	for i := 0; i < 5; i++ {
-
+	// Zones de spawn des piétons
+	spawns := environment.SpawnAreaCollection{
+		&environment.SpawnArea{X: 245, Y: 0, Width: 55, Height: 300},
+		&environment.SpawnArea{X: 245, Y: 450, Width: 55, Height: 300},
+		&environment.SpawnArea{X: 450, Y: 0, Width: 55, Height: 300},
+		&environment.SpawnArea{X: 450, Y: 450, Width: 55, Height: 300},
+		&environment.SpawnArea{X: 0, Y: 245, Width: 300, Height: 55},
+		&environment.SpawnArea{X: 450, Y: 245, Width: 300, Height: 55},
+		&environment.SpawnArea{X: 0, Y: 450, Width: 300, Height: 55},
+		&environment.SpawnArea{X: 450, Y: 450, Width: 300, Height: 55},
 	}
 
 	//creation de la channel de synchronisation de l'agent voiture
@@ -69,12 +63,7 @@ func (g *PietonSpawn) spawnPieton(AgentCountCh <-chan utils.ObjectID, AgtsSliceC
 	p.DesiredDirection = *utils.NewVector(1, 0)
 	p.DesiredSeparation = 15.0
 	p.MaxSpeed = .5
-
-	if x, y, ok := pathfinding.RandomPointInRects(spawns, rand.Float64); ok {
-		p.Coords = *utils.NewPoint(x, y)
-	} else {
-		p.Coords = *utils.NewPoint(0, 0)
-	}
+	p.Coords = spawns.RandomPoint()
 
 	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: p, SyncChan: syncChan}
 

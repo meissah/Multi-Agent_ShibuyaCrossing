@@ -2,7 +2,7 @@ package utils
 
 import (
 	"math"
-	"math/rand/v2"
+	"math/rand"
 )
 
 // Restriction d'une valeur dans un intervalle donné [min, max]
@@ -19,12 +19,12 @@ func FloatIsFinite(value float64) bool {
 	return !isNan && !isPosInf && !isNegInf
 }
 
-// Génération de nombres entiers aléatoires dans un intervalle donné
-func RandomIntInRange(min, max int) int {
-	return rand.IntN(max-min+1) + min
+// Génération d'un nombre réel aléatoire dans une plage spécifique [min, max]
+func RandomFloatInRange(min, max float64) float64 {
+	return min + rand.Float64()*(max-min)
 }
 
-// Génération de nombres réels aléatoires dans un intervalle donné
-func RandomFloatInRange(min, max float64) float64 {
-	return rand.Float64()*(max-min) + min
+// Génération d'un entier aléatoire dans une plage spécifique [min, max]
+func RandomIntInRange(min, max int) int {
+	return rand.Intn(max-min+1) + min
 }
