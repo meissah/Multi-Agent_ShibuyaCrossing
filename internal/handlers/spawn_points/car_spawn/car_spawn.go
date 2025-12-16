@@ -36,8 +36,13 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 		ySpawnEstLaneBasse = 424.0
 	)
 
+	//DirectionsHorizontal := [2]Direction{West, East}
+	DirectionVertical := [2]Direction{North, South}
+	// DirectionsAll := [4]Direction{North, South, East, West}
+
 	// Choisir un point de SPAWN aléatoire
-	spawnPoint := Direction(rand.Intn(4))
+	//spawnPoint := DirectionsHorizontal[rand.Intn(len(DirectionsHorizontal))]
+	spawnPoint := DirectionVertical[rand.Intn(len(DirectionVertical))]
 	switch spawnPoint {
 	case North: // SPAWN en HAUT (Nord)
 		dir = South // La voiture ira donc vers le BAS (Sud) sinon
@@ -47,7 +52,7 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 		} else {
 			x = xSpawnNordLaneDroite
 		}
-		y = 0 // Point de spawn en haut de l'écran
+		y = -25 // Point de spawn en haut de l'écran
 
 	case South: // SPAWN en BAS (Sud)
 		dir = North // La voiture ira donc vers le HAUT (Nord)
@@ -57,12 +62,12 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 		} else {
 			x = xSpawnSudLaneDroite
 		}
-		y = 750 // Point de spawn en bas de l'écran ( car l'écran fait 750px de haut )
+		y = 775 // Point de spawn en bas de l'écran ( car l'écran fait 750px de haut )
 
 	case East: // SPAWN à DROITE (Est)
 		dir = West // La voiture ira donc vers la GAUCHE (Ouest)
 		lane = rand.Intn(2)
-		x = 750 // Point de spawn à droite de l'écran
+		x = 775 // Point de spawn à droite de l'écran
 		if lane == 0 {
 			y = ySpawnEstLaneHaute
 		} else {
@@ -72,7 +77,7 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 	case West: // SPAWN à GAUCHE (Ouest)
 		dir = East // La voiture ira donc vers la DROITE (Est)
 		lane = rand.Intn(2)
-		x = 0 // Point de spawn à gauche de l'écran
+		x = -25 // Point de spawn à gauche de l'écran
 		if lane == 0 {
 			y = ySpawnOuestLaneHaute
 		} else {
@@ -83,11 +88,14 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 }
 
 // ChoisirVirage décide si la voiture doit tourner à gauche (25% de chances)
-func ChooseToTurn(lane int) bool {
-	if lane != 0 {
+func ChooseToTurn(lane int, dir Direction) bool {
+	if (lane != 0) && (dir == East || dir == North) {
 		return false
 	}
-	return rand.Float64() < 0.25
+	if (lane == 0) && (dir == West || dir == South) {
+		return false
+	}
+	return rand.Float64() < 0.50
 
 }
 
@@ -119,14 +127,41 @@ func ChooseToTurn(lane int) bool {
 // Essayer de spawner plusieurs fois si bloqué
 func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- agentslicehandler.AddAgtRequest, env *[]Object) {
 
-	const MAX_ATTEMPTS = 10 // Nombre maximum de tentatives
+	//const MAX_ATTEMPTS = 4 // Nombre maximum de tentatives
+	// Vérifier si le point de spawn est libre
+	const spawnSafetyInFront = 60.0 // Rayon de sécurité autour du point de spawn
+	const spawnSafetyWidth = 15.0   // Rayon de sécurité autour du point de spawn
 
-	for attempt := 0; attempt < MAX_ATTEMPTS; attempt++ {
-		// Choisir un point de spawn aléatoire
-		x, y, dir, lane := ChoisirPointSpawn()
+	//for attempt := 0; attempt < MAX_ATTEMPTS; attempt++ {
+	// Choisir un point de spawn aléatoire
+	x, y, dir, lane := ChoisirPointSpawn()
 
+	var occupied bool = false
+	for _, pC := range *env {
+		if pC.Type() != "car" {
+			continue
+		}
+		switch dir {
+		case North, South:
+			// La voiture va vers le haut ou bas, vérifier devant elle
+			if pC.PositionY() > y-spawnSafetyInFront && pC.PositionY() < y+spawnSafetyInFront &&
+				pC.PositionX() < x+spawnSafetyWidth && pC.PositionX() > x-spawnSafetyWidth {
+				// Point de spawn occupé, ne pas créer de voiture
+				occupied = true
+			}
+		case East, West:
+			// La voiture va vers la droite, vérifier devant elle
+			if pC.PositionX() > x-spawnSafetyInFront && pC.PositionX() < x+spawnSafetyInFront &&
+				pC.PositionY() < y+spawnSafetyWidth && pC.PositionY() > y-spawnSafetyWidth {
+				// Point de spawn occupé, ne pas créer de voiture
+				occupied = true
+			}
+		}
+
+	}
+	if !occupied {
 		//  Zone libre, créer la voiture
-		turnleft := ChooseToTurn(lane) //choix aléatoire de si la voiture va tourner à gauche ou pas
+		turnleft := ChooseToTurn(lane, dir) //choix aléatoire de si la voiture va tourner à gauche ou pas
 		syncChan := make(chan int)
 		car := cars.NewCar(<-AgentCountCh, x, y, dir, lane, turnleft, syncChan)
 
@@ -142,7 +177,9 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 
 	// Toutes les tentatives ont échoué (trop de trafic)
 	// Ne pas spawner pour éviter les superpositions cas de trafic tres dense
+	return
 
+	//}
 }
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
@@ -157,11 +194,6 @@ func (g *CarSpawn) Start(
 
 		for range ticker.C {
 			g.spawnCars(AgentCountCh, AgtsSliceCh, env)
-
-			// petit délai aléatoire (ici 0-15% de l'intervalle) pour éviter
-			// que toutes les voitures spawent simultanément depuis les 4 directions
-			delaiAleatoire := time.Duration(rand.Float64() * 0.15 * float64(g.SpawnInterval))
-			time.Sleep(delaiAleatoire)
 		}
 	}()
 }
