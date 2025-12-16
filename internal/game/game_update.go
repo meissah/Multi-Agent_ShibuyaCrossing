@@ -89,7 +89,7 @@ func (g *Game) UpdateSimulation() error {
 
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
-	currentAgtSlice := <-g.ReceiveAgtsCh
+	currentAgtSlice := g.Agents
 	var agentsToRemove []Agent
 
 	//fmt.Println("THE AGENT SLICE: ", currentAgtSlice)

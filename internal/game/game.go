@@ -38,11 +38,9 @@ type Game struct {
 	ObjectCount  ObjectID
 
 	//Channels des differents microservices
-	AddAgtSlice    chan<- agentslicehandler.AddAgtRequest
-	ReceiveAgtsCh  <-chan []Agent
-	ReceiveObjtsCh <-chan []Object
-	DelAgtSlice    chan<- Agent
-	ObjectCountCh  <-chan ObjectID // recevoir le prochain ID d'agent disponible
+	AddAgtSlice   chan<- agentslicehandler.AddAgtRequest
+	DelAgtSlice   chan<- Agent
+	ObjectCountCh <-chan ObjectID // recevoir le prochain ID d'agent disponible
 
 	step int
 }
@@ -69,7 +67,7 @@ func NewGame() *Game {
 func (g *Game) InitSimulation() {
 	// Initialiser les channels des microservices
 	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount)
-	g.AddAgtSlice, g.ReceiveAgtsCh, g.ReceiveObjtsCh, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
+	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
 
 	//lance les goroutines autonome de creation de voitures et pietons
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}

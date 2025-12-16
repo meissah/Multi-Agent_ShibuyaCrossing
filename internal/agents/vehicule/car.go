@@ -216,7 +216,7 @@ func (c *Car) Percept(env []Object) {
 func (c *Car) Deliberate() {
 	//A ENLEVER QUAND YAURA LES FEUX
 	//At random stopping (to simulate stopping at red lights behavior or for pedestrians in french mode when turning left)
-	if rand.Float64() < 0.5 && c.AgentID()%2 == 0 { //80% chance of stopping randomly si on a un agent id pair
+	if !c.IsTurning && rand.Float64() < 0.2 && c.AgentID()%2 == 0 { //80% chance of stopping randomly si on a un agent id pair
 		return
 	}
 
