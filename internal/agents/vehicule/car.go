@@ -117,12 +117,12 @@ const (
 	WEST_LEFT_TURN_X = 307.0
 	WEST_LEFT_TURN_Y = 420.0
 
-	TURN_DURATION = 30.0 // nombre de steps pour faire le virage
+	TURN_DURATION = 60.0 // nombre de steps pour faire le virage
 
 	// Constantes pour le ralentissement progressif
-	DETECTION_DISTANCE = 90.0 // Distance de détection en pixels (commence à ralentir)
-	SAFE_DISTANCE      = 50.0 // Distance de sécurité minimale (7 mètres)
-	MIN_SPEED          = 0.5  // Vitesse minimale (pour éviter l'arrêt complet)
+	DETECTION_DISTANCE = 80.0 // Distance de détection en pixels (commence à ralentir)
+	SAFE_DISTANCE      = 31.0 // Distance de sécurité minimale (7 mètres)
+	MIN_SPEED          = 0    // Vitesse minimale (pour éviter l'arrêt complet)
 	FORCE_SPEED_FACTOR = 3.0  // amplificateur de freinage
 )
 
@@ -142,8 +142,8 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 		TurnStartX: 0.0, // position de départ du virage
 		TurnStartY: 0.0,
 
-		MaxSpeed:           RandomFloatInRange(30, 100), // pixels/sec j'ai mis au hasard a ajuster selon les tests
-		Speed:              2.0,                         // Vitesse initiale
+		MaxSpeed:           RandomFloatInRange(50, 80), // pixels/sec j'ai mis au hasard a ajuster selon les tests
+		Speed:              2.0,                        // Vitesse initiale
 		AmIAlive:           true,
 		syncChan:           syncChan,
 		endChan:            make(chan int),
@@ -155,6 +155,7 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 }
 
 func (c *Car) Percept(env []Object) {
+
 	// Réinitialiser la perception ET les forces (qu'on reutilise aussi pour les voitures ) avant de prendre en compte l'environnement
 	c.carAhead = nil
 	c.distanceToCarAhead = 0
@@ -213,6 +214,12 @@ func (c *Car) Percept(env []Object) {
 }
 
 func (c *Car) Deliberate() {
+	//A ENLEVER QUAND YAURA LES FEUX
+	//At random stopping (to simulate stopping at red lights behavior or for pedestrians in french mode when turning left)
+	if rand.Float64() < 0.5 && c.AgentID()%2 == 0 { //80% chance of stopping randomly si on a un agent id pair
+		return
+	}
+
 	if c.TurnLeft && !c.IsTurning {
 		// Virage pour les voitures venant du Sud (direction North)
 		if c.Dir == North {
@@ -516,7 +523,7 @@ func (c *Car) calculateRepulsionForce(myPos, otherPos utils.Point, distance floa
 	var forceMagnitude float64
 	if distance <= SAFE_DISTANCE {
 		// Très proche =force maximale ( ralentissement important)
-		forceMagnitude = 0.5 // a augmenter si besoin de ralentir plus ( car voitures se touchent ) ou diminuer si slowdown trop brusque
+		forceMagnitude = 1 // a augmenter si besoin de ralentir plus ( car voitures se touchent ) ou diminuer si slowdown trop brusque
 	} else {
 		// Interpolation -> force décroissante avec la distance et donc ralentissement progressif tjrs
 		// Force inversement proportionnelle à la distance -> Plus on est proche, plus la force est grande

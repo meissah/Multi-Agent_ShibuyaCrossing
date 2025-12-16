@@ -40,9 +40,11 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 	DirectionVertical := [2]Direction{North, South}
 	// DirectionsAll := [4]Direction{North, South, East, West}
 
+	//A ENLEVER QUAND YAURA LES FEUX
 	// Choisir un point de SPAWN aléatoire
 	//spawnPoint := DirectionsHorizontal[rand.Intn(len(DirectionsHorizontal))]
 	spawnPoint := DirectionVertical[rand.Intn(len(DirectionVertical))]
+
 	switch spawnPoint {
 	case North: // SPAWN en HAUT (Nord)
 		dir = South // La voiture ira donc vers le BAS (Sud) sinon
