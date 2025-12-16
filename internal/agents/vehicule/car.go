@@ -1,10 +1,12 @@
 package vehicule
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -93,6 +95,9 @@ type Car struct {
 	carAhead           *Car    // Voiture devant (nil si aucune)
 	distanceToCarAhead float64 // Distance à la voiture devant
 
+	// Système de forces vectorielles
+	forces utils.Vector // Forces accumulées appliquées à la voiture
+
 	// Référence à l'environnement pour les perceptions
 	//env      CarEnvironment
 	syncChan chan int
@@ -116,9 +121,10 @@ const (
 	TURN_DURATION = 30.0 // nombre de steps pour faire le virage
 
 	// Constantes pour le ralentissement progressif
-	DETECTION_DISTANCE = 150.0 // Distance de détection en pixels (commence à ralentir)
-	SAFE_DISTANCE      = 70.0  // Distance de sécurité minimale (7 mètres)
-	MIN_SPEED          = 0.5   // Vitesse minimale (pour éviter l'arrêt complet)
+	DETECTION_DISTANCE = 90.0 // Distance de détection en pixels (commence à ralentir)
+	SAFE_DISTANCE      = 50.0 // Distance de sécurité minimale (7 mètres)
+	MIN_SPEED          = 0.5  // Vitesse minimale (pour éviter l'arrêt complet)
+	FORCE_SPEED_FACTOR = 3.0  // amplificateur de freinage
 )
 
 // NewCar constructeur
@@ -145,16 +151,21 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 		carColorIndex:      rand.Intn(5),
 		carAhead:           nil,
 		distanceToCarAhead: 0,
+		forces:             utils.VectorZero,
 	}
 }
 
 func (c *Car) Percept(env []Object) {
-	// Réinitialiser la perception
+	// Réinitialiser la perception ET les forces (qu'on reutilise aussi pour les voitures ) avant de prendre en compte l'environnement
 	c.carAhead = nil
 	c.distanceToCarAhead = 0
+	c.forces = utils.VectorZero // Remettre à zéro à chaque perception
 
 	var closestCar *Car
 	minDistance := DETECTION_DISTANCE
+
+	// Position actuelle comme Point (pour calculs vectoriels)
+	myPos := utils.NewPoint(c.X, c.Y)
 
 	// Parcourir tous les objets pour trouver les voitures
 	for _, obj := range env {
@@ -163,7 +174,7 @@ func (c *Car) Percept(env []Object) {
 			continue
 		}
 
-		// Ne regarder que les voitures ( POUR L'INSTANT A VOIR APRES POUR LES PIETONS) !!!!!!!!!!!!!!!!!!!!!!
+		// Ne regarder que les voitures ( POUR L'INSTANT A VOIR APRES POUR LES PIETONS si voiture tourne a gauche et qu'il y a encore un pieton qui traverse) !!!!!!!!!!!!!!!!!!!!!!
 		if obj.Type() != "car" {
 			continue
 		}
@@ -189,10 +200,22 @@ func (c *Car) Percept(env []Object) {
 		}
 	}
 
-	// Stocker la voiture détectée
+	// Stocker la voiture détectée ET calculer la force de répulsion vectorielle ( pour ralentir de maniere fluide/creshendo)
 	if closestCar != nil {
 		c.carAhead = closestCar
 		c.distanceToCarAhead = minDistance
+
+		// calcul de force vectorielle (logique identique aux piétons) -> repuslsion de la voiture devant
+		otherPos := utils.NewPoint(closestCar.X, closestCar.Y)
+		repulsionForce := c.calculateRepulsionForce(*myPos, *otherPos, minDistance)
+		c.forces = c.forces.Add(repulsionForce)
+
+		// TEST DEBUG. ( voir si logique force fonctionne bien )
+		forceNorm := c.forces.Norm()
+		if forceNorm > 0.1 { // Afficher seulement si force significative
+			fmt.Printf("Car %d: Distance=%.1f | Force=%.3f | Speed=%.2f\n",
+				c.ID, minDistance, forceNorm, c.Speed)
+		}
 	}
 }
 
@@ -307,7 +330,7 @@ func (c *Car) Deliberate() {
 		c.X = u*u*u*p0x + 3*u*u*t*p1x + 3*u*t*t*p2x + t*t*t*p3x
 		c.Y = u*u*u*p0y + 3*u*u*t*p1y + 3*u*t*t*p2y + t*t*t*p3y
 
-		/*
+		/* Comprendre la formule Bézier cubique :
 		   B(t) = (1-t)³·P0 + 3(1-t)²t·P1 + 3(1-t)t²·P2 + t³·P3 // formule bézier cubique
 		   c.X = u*u*u*p0x + 3*u*u*t*p1x + 3*u*t*t*p2x + t*t*t*p3x
 		         └─────┘     └───────┘     └───────┘     └─────┘
@@ -481,6 +504,37 @@ func (c *Car) GetCarAhead() (*Car, float64) {
 	return c.carAhead, c.distanceToCarAhead
 }
 
+// calculateRepulsionForce calcule la force de répulsion vectorielle
+// Utilise la même logique que les piétons avec les forces vectorielles ( de ralentissement progressif)
+func (c *Car) calculateRepulsionForce(myPos, otherPos utils.Point, distance float64) utils.Vector {
+	// Si hors de la distance de détection, pas de force
+	if distance <= 0 || distance > DETECTION_DISTANCE {
+		return utils.VectorZero
+	}
+
+	// Vecteur de répulsion -> de l'autre voiture vers moi ( vecteur de répulsion pr rapport a l'autre voiture (devant moi) )
+	repulsionDir := *utils.NewVectorFromPoints(otherPos, myPos)
+
+	// Normaliser pour obtenir la direction
+	repulsionDir = repulsionDir.Normalize()
+
+	// Calculer l'intensité de la force selon la distance
+	// Plus on est proche, plus la force est grande (inversement proportionnel) -> ralentissement progressif
+	var forceMagnitude float64
+	if distance <= SAFE_DISTANCE {
+		// Très proche =force maximale ( ralentissement important)
+		forceMagnitude = 0.5 // a augmenter si besoin de ralentir plus ( car voitures se touchent ) ou diminuer si slowdown trop brusque
+	} else {
+		// Interpolation -> force décroissante avec la distance et donc ralentissement progressif tjrs
+		// Force inversement proportionnelle à la distance -> Plus on est proche, plus la force est grande
+		ratio := 1.0 - ((distance - SAFE_DISTANCE) / (DETECTION_DISTANCE - SAFE_DISTANCE)) // valeur entre 0 et 1 suivant si on est proche ou loin
+		forceMagnitude = ratio * 0.5
+	}
+
+	// Retourner le vecteur force = direction × intensité
+	return repulsionDir.Scale(forceMagnitude)
+}
+
 // isCarAhead vérifie si une autre voiture est devant nous
 // (même direction et même lane et position devant selon la direction)
 func (c *Car) isCarAhead(other *Car) bool {
@@ -517,41 +571,37 @@ func (c *Car) distanceTo(other *Car) float64 {
 	return math.Sqrt(dx*dx + dy*dy)
 }
 
-// adjustSpeed ajuste la vitesse en fonction de la voiture devant
-// Ralentissement progressif de DETECTION_DISTANCE à SAFE_DISTANCE declarer plus haut
+// adjustSpeed ajuste la vitesse en fonction des forces vectorielles appliquées
+// logique identique au pieton -> la norme des forces détermine le ralentissement
 func (c *Car) adjustSpeed() {
-	// Vitesse normale par défaut
-	targetSpeed := 2.0
+	// Vitesse de base qu'on a attribue aux voitures
+	baseSpeed := 2.0
 
-	if c.carAhead != nil && c.distanceToCarAhead > 0 {
-		if c.distanceToCarAhead <= SAFE_DISTANCE {
-			// La voiture est très proche => vitesse minimale
-			targetSpeed = MIN_SPEED
-		} else if c.distanceToCarAhead <= DETECTION_DISTANCE {
-			// Zone de ralentissement progressif
-			// Interpolation linéaire entre MIN_SPEED et vitesse normale
-			// Plus on est proche, plus on ralentit
-			ratio := (c.distanceToCarAhead - SAFE_DISTANCE) / (DETECTION_DISTANCE - SAFE_DISTANCE)
-			targetSpeed = MIN_SPEED + ratio*(2.0-MIN_SPEED)
-		}
-		// Sinon, garder la vitesse normale (2.0)
-	}
+	// Calculer l'intensité totale des forces (norme du vecteur)
+	forceIntensity := c.forces.Norm() // les forces ont été calculées par calculateRepulsionForce et on été ajouté dans le champ c.forces dans Percept " c.forces = c.forces.Add(repulsionForce)" et donc ici on récupère la norme de ces forces du champ c.forces
 
-	// Ajustement progressif de la vitesse (de maniere smooth)
-	// Pour éviter les changements brusques ( que ca soit naturel )
-	if math.Abs(c.Speed-targetSpeed) < 0.1 {
+	// Convertir l'intensité de la force en réduction de vitesse
+	// Plus la norme est grande, plus on ralentit
+	// FORCE_SPEED_FACTOR détermine l'intensité du ralentissement (plus grand = freinage plus fort)
+	targetSpeed := baseSpeed - (forceIntensity * FORCE_SPEED_FACTOR)
+
+	// Contraindre la vitesse cible dans les limites acceptables
+	targetSpeed = utils.Clamp(targetSpeed, MIN_SPEED, baseSpeed)
+
+	// Ajustement progressif et fluide de la vitesse (obj d'avoir un effet smooth )
+	// Évite les changements brusques pour un comportement réaliste
+	speedDiff := targetSpeed - c.Speed
+	if math.Abs(speedDiff) < 0.05 {
+		// Changement négligeable -> adopter directement la vitesse cible
 		c.Speed = targetSpeed
-	} else if c.Speed < targetSpeed {
-		c.Speed += 0.05 // Accélération douce
+	} else if speedDiff > 0 {
+		// Accélération douce
+		c.Speed += 0.05
 	} else {
-		c.Speed -= 0.1 // Décélération plus rapide pour la sécurité
+		// Décélération plus rapide (important pour la sécurité)
+		c.Speed -= 0.15
 	}
 
-	// Limiter la vitesse entre MIN_SPEED et la vitesse normale
-	if c.Speed < MIN_SPEED {
-		c.Speed = MIN_SPEED
-	}
-	if c.Speed > 2.0 {
-		c.Speed = 2.0
-	}
+	// Garantir que la vitesse finale reste dans les limites
+	c.Speed = utils.Clamp(c.Speed, MIN_SPEED, baseSpeed)
 }
