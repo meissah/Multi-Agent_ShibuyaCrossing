@@ -17,9 +17,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"golang.org/x/image/font/basicfont"
 
+	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
@@ -438,9 +440,86 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 	for _, obj := range currentObjtSlice {
 		switch obj.Type() {
 		case "car":
-			g.drawCar(screen, obj)
+			g.drawCar(screen, obj.(Drawable))
 		case "pieton":
-			g.drawPedestrian(screen, obj)
+			g.drawPedestrian(screen, obj.(Drawable))
+		case "traffic_light_car":
+			X, Y := obj.PositionX(), obj.PositionY()
+			dir := obj.Direction()
+			isHorizontal := dir == East || dir == West
+
+			// Dimensions "Standard"
+			boxW, boxH := 24, 48
+			rDx, rDy := 0.0, -12.0
+			gDx, gDy := 0.0, +12.0
+
+			if isHorizontal {
+				boxW, boxH = 48, 24
+				rDx, rDy = -12.0, 0.0
+				gDx, gDy = +12.0, 0.0
+			}
+
+			// Dessin Boitier
+			box := ebiten.NewImage(boxW, boxH)
+			box.Fill(color.RGBA{50, 50, 50, 255})
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(X-float64(boxW)/2, Y-float64(boxH)/2)
+			screen.DrawImage(box, op)
+
+			// Dessin Cercles
+			state := obj.(*trafficlight.TrafficLightObject).State()
+			radius := float32(7) // Gros cercles
+
+			// Couleurs
+			onRed, onGreen := color.RGBA{255, 0, 0, 255}, color.RGBA{0, 200, 0, 255}
+			off := color.RGBA{70, 70, 70, 255}
+
+			rCol, gCol := off, off
+			if state == "Red" {
+				rCol = onRed
+			}
+			if state == "Green" {
+				gCol = onGreen
+			}
+
+			vector.FillCircle(screen, float32(X+rDx), float32(Y+rDy), radius, rCol, false)
+			vector.FillCircle(screen, float32(X+gDx), float32(Y+gDy), radius, gCol, false)
+
+		case "traffic_light_pedestrian":
+			// Pour accéder aux champs W et H, on doit "caster" l'interface Object
+			// vers son type concret *trafficlight.TrafficLightObject
+			tlObj, ok := obj.(*trafficlight.TrafficLightObject)
+			if !ok {
+				continue // Sécurité si le cast échoue
+			}
+
+			cX, cY := tlObj.PositionX(), tlObj.PositionY() // Centre
+			w, h := tlObj.Size()                           // Dimensions
+
+			// Définition des couleurs avec transparence (Alpha = 100 sur 255)
+			// Cela permet de voir le passage piéton dessous.
+			redTransparent := color.RGBA{255, 0, 0, 100}
+			greenTransparent := color.RGBA{0, 255, 0, 100}
+
+			var drawColor color.Color
+
+			switch tlObj.State() {
+			case "Red":
+				drawColor = redTransparent
+			case "Green":
+				drawColor = greenTransparent
+			default:
+				// Si l'état est inconnu, on ne dessine rien (invisible)
+				continue
+			}
+
+			// vector.DrawFilledRect prend les coordonnées du coin supérieur gauche.
+			// On convertit depuis le centre :
+			topLeftX := float32(cX - w/2)
+			topLeftY := float32(cY - h/2)
+
+			// On dessine le rectangle coloré semi-transparent
+			vector.DrawFilledRect(screen, topLeftX, topLeftY, float32(w), float32(h), drawColor, false)
 		}
 	}
 
@@ -602,7 +681,7 @@ func (g *Game) drawSidewalks(screen *ebiten.Image) {
 }
 
 // drawCar dessine une voiture avec rotation selon sa direction et son virage
-func (g *Game) drawCar(screen *ebiten.Image, c Object) {
+func (g *Game) drawCar(screen *ebiten.Image, c Drawable) {
 	assetIndex, op := c.Draw()
 
 	// Dessiner la voiture
@@ -657,7 +736,7 @@ func (g *Game) drawCar(screen *ebiten.Image, c Object) {
 	}
 }
 
-func (g *Game) drawPedestrian(screen *ebiten.Image, c Object) {
+func (g *Game) drawPedestrian(screen *ebiten.Image, c Drawable) {
 	assetIndex, op := c.Draw()
 
 	// Dessiner
