@@ -440,9 +440,9 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 	for _, obj := range currentObjtSlice {
 		switch obj.Type() {
 		case "car":
-			g.drawCar(screen, obj.(Drawable))
+			g.drawCar(screen, obj)
 		case "pieton":
-			g.drawPedestrian(screen, obj.(Drawable))
+			g.drawPedestrian(screen, obj)
 		case "traffic_light_car":
 			X, Y := obj.PositionX(), obj.PositionY()
 			dir := obj.Direction()
@@ -681,7 +681,7 @@ func (g *Game) drawSidewalks(screen *ebiten.Image) {
 }
 
 // drawCar dessine une voiture avec rotation selon sa direction et son virage
-func (g *Game) drawCar(screen *ebiten.Image, c Drawable) {
+func (g *Game) drawCar(screen *ebiten.Image, c Object) {
 	assetIndex, op := c.Draw()
 
 	// Dessiner la voiture
