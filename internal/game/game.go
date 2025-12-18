@@ -23,7 +23,7 @@ type Game struct {
 	Agents []Agent
 	Objets []Object
 
-	PersistentObjets []Object // pour l'affichage persistent des feux
+	//PersistentObjets []Object // pour l'affichage persistent des feux
 
 	// État actuel (menu ou simulation)
 	State  config.GameState        // État actuel du jeu si menu ou simulation
@@ -85,10 +85,11 @@ func NewGame() *Game {
 		kind       string // "car" ou "pedestrian"
 		group      string // "NS" (Nord/Sud) ou "EW" (Est/Ouest)
 	}{ // --- VOITURES ---
-		{425, 225, 0, 0, East, "Car_Nord", "car", "NS"},
+
 		{325, 525, 0, 0, East, "Car_Sud", "car", "NS"},
 		{225, 325, 0, 0, North, "Car_Ouest", "car", "EW"},
 		{525, 425, 0, 0, North, "Car_Est", "car", "EW"},
+		{425, 225, 0, 0, East, "Car_Nord", "car", "NS"},
 
 		// --- PIETONS
 		// Ped_N (en haut) et Ped_S (en bas) traversent l'axe Vertical -> NS
@@ -102,8 +103,8 @@ func NewGame() *Game {
 	for _, cfg := range configs {
 		tlVisu := trafficlight.NewTrafficLightObject(cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
 
-		// g.Objets = append(g.Objets, tlVisu)
-		g.PersistentObjets = append(g.PersistentObjets, tlVisu)
+		g.Objets = append(g.Objets, tlVisu)
+		//g.PersistentObjets = append(g.PersistentObjets, tlVisu)
 
 		// 2. Logique
 		tlLogic := trafficlight.NewTrafficLight(cfg.id, 1*time.Hour, 1*time.Hour)
@@ -143,7 +144,7 @@ func NewGame() *Game {
 // InitSimulation initialise tous les handlers et spawners pour démarrer la simulation
 func (g *Game) InitSimulation() {
 	// Initialiser les channels des microservices
-	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount)
+	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount, &g.Objets)
 	g.AddAgtSlice, g.ReceiveAgtsCh, g.ReceiveObjtsCh, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
 
 	//lance les goroutines autonome de creation de voitures et pietons
