@@ -24,6 +24,7 @@ import (
 	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -521,6 +522,8 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 
 			// On dessine le rectangle coloré semi-transparent
 			vector.DrawFilledRect(screen, topLeftX, topLeftY, float32(w), float32(h), drawColor, false)
+		case "repulsion_area":
+			obj.(*environment.RepulsionArea).Draw(screen)
 		}
 
 	}
@@ -735,6 +738,10 @@ func (g *Game) drawCar(screen *ebiten.Image, c Drawable) {
 
 func (g *Game) drawPedestrian(screen *ebiten.Image, c Drawable) {
 	assetIndex, op := c.Draw()
+
+	// Centrer l'image sur la position
+	op.GeoM.Translate(-float64(pedImages[assetIndex].Bounds().Dx())/2,
+		-float64(pedImages[assetIndex].Bounds().Dy())/2)
 
 	// Dessiner
 	screen.DrawImage(pedImages[assetIndex], op)
