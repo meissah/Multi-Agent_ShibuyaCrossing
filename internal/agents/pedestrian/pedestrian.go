@@ -45,11 +45,11 @@ func (p Pedestrian) State() string              { return "walking" }        // P
 func (p Pedestrian) Type() string               { return "pieton" }         // Placeholder
 func (p Pedestrian) Alive() bool                { return !p.OutOfBounds() } // Placeholder
 
+// Vérifie si le piéton est hors des limites de la zone de simulation.
 func (p Pedestrian) OutOfBounds() bool {
-	if p.Coords.X() < 0 || p.Coords.X() > 800 || p.Coords.Y() < 0 || p.Coords.Y() > 750 {
-		return true
-	}
-	return false
+	isOutsideX := p.Coords.X() < -50 || p.Coords.X() > 800
+	isOutsideY := p.Coords.Y() < -50 || p.Coords.Y() > 800
+	return isOutsideX || isOutsideY
 }
 
 // Méthode de dessin du piéton.
@@ -129,20 +129,10 @@ func (p *Pedestrian) Deliberate() {
 
 		// La force de répulsion est telle que les piétons mettent
 		// plus d'effort à s'éloigner qu'à se diriger vers leur objectif
-		repulsionFactor := 1.0
+		repulsionFactor := 3.0
 		repulsionDirection := diff.Normalize()
 		repulsionForce := (p.DesiredSeparation - distance) / p.DesiredSeparation
 		repulsion := repulsionDirection.Scale(repulsionForce * repulsionFactor * p.MaxSpeed)
-
-		// Si la répulsion est dans la direction opposée au mouvement désiré
-		// on la décale légèrement pour imiter le choix social de contourner
-		// l'autre piéton.
-		// goalAngle := p.DesiredDirection.Direction()
-		// repulsionAngle := repulsion.Direction()
-
-		// if math.Abs(float64(goalAngle-repulsionAngle)) > math.Pi*0.9 {
-		// 	repulsion = repulsion.SetDirection(goalAngle + (math.Pi * 0.9))
-		// }
 
 		p.velocity = p.velocity.Add(repulsion)
 	}
@@ -150,7 +140,7 @@ func (p *Pedestrian) Deliberate() {
 	// Appliquer les forces de l'environnement (zones de répulsion)
 	for _, ra := range p.repulsionAreasUnder {
 		force := ra.ForceAtPoint(p.Coords)
-		p.velocity = p.velocity.Add(force.Scale(.10))
+		p.velocity = p.velocity.Add(force)
 	}
 
 	// Limiter la vitesse
