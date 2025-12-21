@@ -495,33 +495,39 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 				continue // Sécurité si le cast échoue
 			}
 
-			cX, cY := tlObj.PositionX(), tlObj.PositionY() // Centre
-			w, h := tlObj.Size()                           // Dimensions
-
-			// Définition des couleurs avec transparence (Alpha = 100 sur 255)
-			// Cela permet de voir le passage piéton dessous.
-			redTransparent := color.RGBA{255, 0, 0, 100}
-			greenTransparent := color.RGBA{0, 255, 0, 100}
-
-			var drawColor color.Color
-
-			switch tlObj.State() {
-			case "Red":
-				drawColor = redTransparent
-			case "Green":
-				drawColor = greenTransparent
-			default:
-				// Si l'état est inconnu, on ne dessine rien (invisible)
+			if tlObj.ID == "Ped_Diag" && g.Config.CrossingType != "shibuya" {
 				continue
 			}
 
-			// vector.DrawFilledRect prend les coordonnées du coin supérieur gauche.
-			// On convertit depuis le centre :
-			topLeftX := float32(cX - w/2)
-			topLeftY := float32(cY - h/2)
+			cX, cY := tlObj.PositionX(), tlObj.PositionY() // Centre
+			w, h := tlObj.Size()                           // Dimensions
 
-			// On dessine le rectangle coloré semi-transparent
-			vector.DrawFilledRect(screen, topLeftX, topLeftY, float32(w), float32(h), drawColor, false)
+			var drawColor color.RGBA
+			if tlObj.State() == "Red" {
+				drawColor = color.RGBA{128, 0, 128, 100} // Violet semi-transparent //On changera en rouge plus tard
+			} else {
+				drawColor = color.RGBA{0, 255, 0, 100} // Vert semi-transparent
+			}
+
+			// Création d'une image temporaire pour le rectangle de couleur
+			rectImg := ebiten.NewImage(int(w), int(h))
+			rectImg.Fill(drawColor)
+
+			op := &ebiten.DrawImageOptions{}
+
+			// 1. Centrer le rectangle sur lui-même pour la rotation
+			op.GeoM.Translate(-w/2, -h/2)
+
+			// 2. Appliquer la rotation de 45° (PI/4) pour la diagonale
+			if tlObj.ID == "Ped_Diag" {
+				op.GeoM.Rotate(math.Pi / 4)
+			}
+
+			// 3. Placer le rectangle au centre du carrefour
+			op.GeoM.Translate(cX, cY)
+
+			screen.DrawImage(rectImg, op)
+
 		case "repulsion_area":
 			obj.(*environment.RepulsionArea).Draw(screen)
 		}
@@ -725,6 +731,13 @@ func (g *Game) drawCar(screen *ebiten.Image, c Drawable) {
 				car.PositionX(), car.PositionY(),
 				carAhead.PositionX(), carAhead.PositionY(),
 				lineColor)
+
+			// strokeWidth := float32(1.0)
+
+			// vector.StrokeLine(screen,
+			// 	float32(car.PositionX()), float32(car.PositionY()),
+			// 	float32(carAhead.PositionX()), float32(carAhead.PositionY()),
+			// 	strokeWidth, lineColor, false)
 
 			// Afficher la distance
 			distText := fmt.Sprintf("%.0f", distance)

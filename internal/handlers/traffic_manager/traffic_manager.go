@@ -1,6 +1,7 @@
 package traffic_manager
 
 import (
+	"sync/atomic"
 	"time"
 
 	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
@@ -15,23 +16,41 @@ type TrafficManager struct {
 	PedsNS []*trafficlight.TrafficLight // Nord-Sud
 	PedsEW []*trafficlight.TrafficLight // Est-Ouest
 
-	// Configuration
-	IsShibuyaMode bool          // true = mode shibuya, false = mode french
-	StepDuration  time.Duration // Durée d'un feu vert
-	RedDuration   time.Duration // Durée de sécurité (tout rouge entre deux changements)
+	PedsDiag []*trafficlight.TrafficLight // groupe pour la diagonale
+
+	// 1 = Shibuya, 0 = French
+	ShibuyaFlag  int32
+	StepDuration time.Duration
+	RedDuration  time.Duration
+
+	started int32
 }
 
 // Start lance la boucle de contrôle infinie
 func (tm *TrafficManager) Start() {
+	// Si déjà démarré, on ne fait rien
+	if !atomic.CompareAndSwapInt32(&tm.started, 0, 1) {
+		return
+	}
+
 	go func() {
 		for {
-			if tm.IsShibuyaMode {
+			if atomic.LoadInt32(&tm.ShibuyaFlag) == 1 {
 				tm.runShibuyaCycle()
 			} else {
 				tm.runStandardCycle()
 			}
 		}
 	}()
+}
+
+// SetMode change le mode de manière sécurisée
+func (tm *TrafficManager) SetMode(isShibuya bool) {
+	if isShibuya {
+		atomic.StoreInt32(&tm.ShibuyaFlag, 1)
+	} else {
+		atomic.StoreInt32(&tm.ShibuyaFlag, 0)
+	}
 }
 
 // setGroupState : utilitaire pour changer la couleur de toute une liste de feux d'un coup
@@ -49,8 +68,8 @@ func (tm *TrafficManager) runStandardCycle() {
 	tm.setGroupState(tm.PedsEW, trafficlight.Green)
 	tm.setGroupState(tm.CarsEW, trafficlight.Red)
 	tm.setGroupState(tm.PedsNS, trafficlight.Red)
+	tm.setGroupState(tm.PedsDiag, trafficlight.Red) // Diagonale toujours interdite
 	time.Sleep(tm.StepDuration)
-
 	// 2. Phase de Sécurité
 	tm.setAllRed()
 	time.Sleep(tm.RedDuration)
@@ -60,6 +79,7 @@ func (tm *TrafficManager) runStandardCycle() {
 	tm.setGroupState(tm.PedsEW, trafficlight.Red)
 	tm.setGroupState(tm.CarsEW, trafficlight.Green)
 	tm.setGroupState(tm.PedsNS, trafficlight.Green)
+	tm.setGroupState(tm.PedsDiag, trafficlight.Red)
 	time.Sleep(tm.StepDuration)
 
 	// 4. Phase de Sécurité
@@ -89,7 +109,8 @@ func (tm *TrafficManager) runShibuyaCycle() {
 	tm.setAllRed()
 	time.Sleep(tm.RedDuration)
 
-	// 3. Tous les piétons Vert, toutes les voitures Rouge)	tm.setGroupState(tm.CarsNS, trafficlight.Red)
+	// 3. Tous les piétons Vert, toutes les voitures Rouge)
+	tm.setGroupState(tm.CarsNS, trafficlight.Red)
 	tm.setGroupState(tm.CarsEW, trafficlight.Red)
 	tm.setAllPeds(trafficlight.Green) // les piétons traversent
 	time.Sleep(tm.StepDuration)
@@ -102,11 +123,14 @@ func (tm *TrafficManager) runShibuyaCycle() {
 func (tm *TrafficManager) setAllRed() {
 	tm.setGroupState(tm.CarsNS, trafficlight.Red)
 	tm.setGroupState(tm.CarsEW, trafficlight.Red)
-	tm.setAllPeds(trafficlight.Red)
+	tm.setGroupState(tm.PedsNS, trafficlight.Red)
+	tm.setGroupState(tm.PedsEW, trafficlight.Red)
+	tm.setGroupState(tm.PedsDiag, trafficlight.Red)
 }
 
 // setAllPeds : utilitaire pour changer la couleur de tous les feux piétons d'un coup
 func (tm *TrafficManager) setAllPeds(s trafficlight.State) {
 	tm.setGroupState(tm.PedsNS, s)
 	tm.setGroupState(tm.PedsEW, s)
+	tm.setGroupState(tm.PedsDiag, s)
 }

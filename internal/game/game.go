@@ -24,7 +24,8 @@ type Game struct {
 	Agents []Agent
 	Objets []Object
 
-	//PersistentObjets []Object // pour l'affichage persistent des feux
+	PersistentObjets []Object // pour l'affichage persistent des feux
+	TM               *trafficmanger.TrafficManager
 
 	// État actuel (menu ou simulation)
 	State  config.GameState        // État actuel du jeu si menu ou simulation
@@ -49,6 +50,9 @@ type Game struct {
 	ObjectCountCh <-chan ObjectID // recevoir le prochain ID d'agent disponible
 
 	step int
+
+	// pour identifier les zones de repulsion pour les piétons
+	CrosswalkZones map[string]*environment.RepulsionArea
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -61,21 +65,30 @@ func NewGame() *Game {
 		frenchRect:     ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption
 		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
 		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
-
+		CrosswalkZones: make(map[string]*environment.RepulsionArea),
 	}
+	// permet d'éviter un deadlock
+	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount, &g.Objets)
+
+	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
 
 	tm := &trafficmanger.TrafficManager{
-		IsShibuyaMode: true,            // tester les modes (true/false)
-		StepDuration:  5 * time.Second, // Temps de feu vert
-		RedDuration:   2 * time.Second, // Temps de sécurité
+		ShibuyaFlag:  1,               // 1 pour True (Shibuya), 0 pour False (French)
+		StepDuration: 5 * time.Second, // Temps de feu vert
+		RedDuration:  2 * time.Second, // Temps de sécurité
 
-		CarsNS: make([]*trafficlight.TrafficLight, 0),
-		CarsEW: make([]*trafficlight.TrafficLight, 0),
-		PedsNS: make([]*trafficlight.TrafficLight, 0),
-		PedsEW: make([]*trafficlight.TrafficLight, 0),
+		CarsNS:   make([]*trafficlight.TrafficLight, 0),
+		CarsEW:   make([]*trafficlight.TrafficLight, 0),
+		PedsNS:   make([]*trafficlight.TrafficLight, 0),
+		PedsEW:   make([]*trafficlight.TrafficLight, 0),
+		PedsDiag: make([]*trafficlight.TrafficLight, 0),
 	}
 
+	g.TM = tm
+
 	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
+
+	g.generateRepulsionAreas()
 
 	configs := []struct {
 		x, y, w, h float64
@@ -89,6 +102,7 @@ func NewGame() *Game {
 		{225, 325, 0, 0, North, "Car_Ouest", "car", "EW"},
 		{525, 425, 0, 0, North, "Car_Est", "car", "EW"},
 		{425, 225, 0, 0, East, "Car_Nord", "car", "NS"},
+		{375, 375, 155, 55, North, "Ped_Diag", "pedestrian", "SHIBUYA"}, // FEU FANTÔME DIAGONALE
 
 		// --- PIETONS
 		// Ped_N (en haut) et Ped_S (en bas) traversent l'axe Vertical -> NS
@@ -100,10 +114,11 @@ func NewGame() *Game {
 	}
 
 	for _, cfg := range configs {
-		tlVisu := trafficlight.NewTrafficLightObject(cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
+		//objet visuel
+		tlVisu := trafficlight.NewTrafficLightObject(cfg.id, cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
 
-		g.Objets = append(g.Objets, tlVisu)
-		//g.PersistentObjets = append(g.PersistentObjets, tlVisu)
+		// g.Objets = append(g.Objets, tlVisu)
+		g.PersistentObjets = append(g.PersistentObjets, tlVisu)
 
 		// 2. Logique
 		tlLogic := trafficlight.NewTrafficLight(cfg.id, 1*time.Hour, 1*time.Hour)
@@ -112,15 +127,27 @@ func NewGame() *Game {
 		// C. Classement dans le Manager
 		if cfg.kind == "car" {
 			if cfg.group == "NS" {
-				tm.CarsNS = append(tm.CarsNS, tlLogic)
+				g.TM.CarsNS = append(g.TM.CarsNS, tlLogic)
 			} else {
-				tm.CarsEW = append(tm.CarsEW, tlLogic)
+				g.TM.CarsEW = append(g.TM.CarsEW, tlLogic)
 			}
-		} else { // pedestrian
+		} else {
+			// Gestion des groupes piétons (NS, EW et SHIBUYA)
+			// On ajoute la diagonale (SHIBUYA) aux groupes NS pour qu'elle s'allume lors du scramble
 			if cfg.group == "NS" {
-				tm.PedsNS = append(tm.PedsNS, tlLogic)
-			} else {
-				tm.PedsEW = append(tm.PedsEW, tlLogic)
+				g.TM.PedsNS = append(g.TM.PedsNS, tlLogic)
+			} else if cfg.group == "EW" {
+				g.TM.PedsEW = append(g.TM.PedsEW, tlLogic)
+			} else if cfg.group == "SHIBUYA" {
+				g.TM.PedsDiag = append(g.TM.PedsDiag, tlLogic)
+			}
+		}
+
+		//abonnement de la zone au feu correspondant
+		if cfg.kind == "pedestrian" {
+			if zone, ok := g.CrosswalkZones[cfg.id]; ok {
+				// Le feu va maintenant appeler Activate/Deactivate sur la zone
+				tlLogic.AddZone(zone)
 			}
 		}
 
@@ -135,17 +162,15 @@ func NewGame() *Game {
 	}
 
 	// Lancement du Traffic Manager
-	tm.Start()
 
 	return g
 }
 
 // InitSimulation initialise tous les handlers et spawners pour démarrer la simulation
 func (g *Game) InitSimulation() {
-	// Initialiser les channels des microservices
-	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount, &g.Objets)
-	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
-	g.generateRepulsionAreas()
+	g.TM.SetMode(g.Config.CrossingType == "shibuya")
+
+	g.TM.Start()
 
 	//lance les goroutines autonome de creation de voitures et pietons
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
@@ -156,6 +181,35 @@ func (g *Game) InitSimulation() {
 
 // Génère les zones de repulsion pour les piétons (zones où ils ne doivent pas entrer)
 func (g *Game) generateRepulsionAreas() {
+
+	// définit les coordonnées correspondant aux zones de feux
+	crosswalks := []struct {
+		id     string
+		p1, p2 Point
+	}{
+		{"Ped_N", *NewPoint(300, 245), *NewPoint(450, 300)},
+		{"Ped_S", *NewPoint(300, 450), *NewPoint(450, 505)},
+		{"Ped_W", *NewPoint(245, 300), *NewPoint(300, 450)},
+		{"Ped_E", *NewPoint(450, 300), *NewPoint(505, 450)},
+		{"Ped_Diag", *NewPoint(305, 305), *NewPoint(445, 445)}, // Zone visuelle Diagonale (champs de force)
+	}
+
+	for _, cw := range crosswalks {
+		// Création de la zone. On la met visible pour voir le résultat
+		ra := environment.NewRepulsionArea(<-g.ObjectCountCh, cw.p1, cw.p2, 0.5, 0.0)
+		ra.SetPedestrian(true)
+		if cw.id == "Ped_Diag" {
+			ra.Hide()
+		} else {
+			ra.Show()
+		}
+		ra.Activate() // Par défaut bloqué (Rouge)
+
+		g.Objets = append(g.Objets, ra)
+		g.PersistentObjets = append(g.PersistentObjets, ra) // Indispensable pour la survie de l'objet
+		g.CrosswalkZones[cw.id] = ra
+	}
+
 	// Zones de répulsion des batiments
 	g.addRepulsionAreas(
 		[][2]Point{
@@ -193,7 +247,7 @@ func (g *Game) generateRepulsionAreas() {
 
 // Génère un ensemble cohérent de zones de répulsion et les ajoute au jeu
 func (g *Game) addRepulsionAreas(coords [][2]Point, forceStrength, bufferSize float64) []*environment.RepulsionArea {
-	ras := make([]*environment.RepulsionArea, len(coords))
+	ras := make([]*environment.RepulsionArea, 0, len(coords))
 
 	for _, coord := range coords {
 		ra := environment.NewRepulsionArea(<-g.ObjectCountCh, coord[0], coord[1], forceStrength, bufferSize)
@@ -201,6 +255,7 @@ func (g *Game) addRepulsionAreas(coords [][2]Point, forceStrength, bufferSize fl
 
 		ras = append(ras, ra)
 		g.Objets = append(g.Objets, ra)
+		g.PersistentObjets = append(g.PersistentObjets, ra)
 	}
 
 	return ras
