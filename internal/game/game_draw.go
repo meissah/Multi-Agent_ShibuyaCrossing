@@ -62,7 +62,7 @@ func init() {
 		log.Printf("✓ Image chargée: %s", filename)
 	}
 
-	// Charger les images des voitures (une par couleur)
+	// Charger les images des pietons (une par couleur)
 	pedColorNames = []string{"nil", "zero"}
 	for _, color := range pedColorNames {
 		filename := fmt.Sprintf("internal/assets/ped_%s.png", color)
@@ -527,6 +527,8 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 		}
 
 	}
+	// Dessiner le panneau de métriques (pour les statistiques en temps réel)
+	g.DrawMetricsPanel(screen)
 
 }
 

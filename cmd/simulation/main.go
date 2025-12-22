@@ -10,8 +10,8 @@ import (
 // Initialise quelques paramètres de la boucle du jeu, puis la lance
 func main() {
 
-	//Taille fenetre du jeu
-	ebiten.SetWindowSize(750, 750)
+	//Taille fenetre du jeu (750 pour simu + 400 pour stats)
+	ebiten.SetWindowSize(1150, 750)
 
 	//Titre de la fenetre du jeu
 	ebiten.SetWindowTitle("Crossing Simulator")

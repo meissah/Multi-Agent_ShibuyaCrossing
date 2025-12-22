@@ -14,6 +14,7 @@ import (
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
 	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
 	trafficmanger "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/traffic_manager"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -49,6 +50,9 @@ type Game struct {
 	ObjectCountCh <-chan ObjectID // recevoir le prochain ID d'agent disponible
 
 	step int
+
+	// Cote statistiques
+	saveButtonPressed bool // Pour éviter les clics multiples sur le bouton de sauvegarde des métriques
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -142,6 +146,10 @@ func NewGame() *Game {
 
 // InitSimulation initialise tous les handlers et spawners pour démarrer la simulation
 func (g *Game) InitSimulation() {
+
+	// Initialiser le système de métriques (pour les statistiques)
+	stats.InitMetrics(g.Config)
+
 	// Initialiser les channels des microservices
 	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount, &g.Objets)
 	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
@@ -208,5 +216,9 @@ func (g *Game) addRepulsionAreas(coords [][2]Point, forceStrength, bufferSize fl
 
 // Layout définit la taille de la fenêtre du jeu (appelé automatiquement par Ebiten)
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 750, 750
+	// Si on est en simulation, fenêtre plus large pour les métriques
+	if g.State == config.StateSimulation {
+		return 1150, 750 // 750 pour la simulation + 400 pour les métriques
+	}
+	return 750, 750 // Menu reste 750x750
 }
