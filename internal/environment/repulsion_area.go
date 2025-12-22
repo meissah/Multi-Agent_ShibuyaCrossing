@@ -139,3 +139,7 @@ func (ra RepulsionArea) ForceAtPoint(p utils.Point) utils.Vector {
 
 	return repulsion
 }
+
+func (ra *RepulsionArea) SetAttractorLine(p1, p2 utils.Point) {
+	ra.side = *utils.NewLineFromPoints(p1, p2)
+}

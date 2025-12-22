@@ -181,7 +181,7 @@ func (c *Car) Percept(env []Object) {
 
 		// Convertir en Car pour accéder aux propriétés
 		otherCar, ok := obj.(*Car)
-		if !ok {
+		if !ok || otherCar == nil { //Mini correction (pierrick) car découverte d'un bug rare si la voiture tente de percevoir une autre voiture qui n'existe plus (pointeur nil)
 			continue
 		}
 

@@ -52,7 +52,7 @@ type Game struct {
 	step int
 
 	// pour identifier les zones de repulsion pour les piétons
-	CrosswalkZones map[string]*environment.RepulsionArea
+	CrosswalkZones map[string][]*environment.RepulsionArea
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -65,7 +65,7 @@ func NewGame() *Game {
 		frenchRect:     ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption
 		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
 		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
-		CrosswalkZones: make(map[string]*environment.RepulsionArea),
+		CrosswalkZones: make(map[string][]*environment.RepulsionArea),
 	}
 	// permet d'éviter un deadlock
 	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount, &g.Objets)
@@ -145,9 +145,11 @@ func NewGame() *Game {
 
 		//abonnement de la zone au feu correspondant
 		if cfg.kind == "pedestrian" {
-			if zone, ok := g.CrosswalkZones[cfg.id]; ok {
+			if zones, ok := g.CrosswalkZones[cfg.id]; ok {
 				// Le feu va maintenant appeler Activate/Deactivate sur la zone
-				tlLogic.AddZone(zone)
+				for _, zone := range zones {
+					tlLogic.AddZone(zone)
+				}
 			}
 		}
 
@@ -182,35 +184,100 @@ func (g *Game) InitSimulation() {
 // Génère les zones de repulsion pour les piétons (zones où ils ne doivent pas entrer)
 func (g *Game) generateRepulsionAreas() {
 
-	// définit les coordonnées correspondant aux zones de feux
-	crosswalks := []struct {
-		id     string
-		p1, p2 Point
-	}{
-		{"Ped_N", *NewPoint(300, 245), *NewPoint(450, 300)},
-		{"Ped_S", *NewPoint(300, 450), *NewPoint(450, 505)},
-		{"Ped_W", *NewPoint(245, 300), *NewPoint(300, 450)},
-		{"Ped_E", *NewPoint(450, 300), *NewPoint(505, 450)},
-		{"Ped_Diag", *NewPoint(305, 305), *NewPoint(445, 445)}, // Zone visuelle Diagonale (champs de force)
+	// 1. Définition des sous-zones pour diviser les forces
+	type SubZone struct {
+		p1, p2       Point // Le rectangle de la sous-zone
+		lineA, lineB Point // La ligne vers laquelle on pousse (le trottoir)
 	}
 
-	for _, cw := range crosswalks {
-		// Création de la zone. On la met visible pour voir le résultat
-		ra := environment.NewRepulsionArea(<-g.ObjectCountCh, cw.p1, cw.p2, 0.5, 0.0)
-		ra.SetPedestrian(true)
-		if cw.id == "Ped_Diag" {
-			ra.Hide()
-		} else {
+	crosswalksSplit := map[string][]SubZone{
+		// PASSAGE NORD (Ped_N)
+		"Ped_N": {
+			// Moitié Gauche : Pousse vers l'Ouest (Trottoir gauche)
+			{
+				*NewPoint(300, 245), *NewPoint(375, 300),
+				*NewPoint(300, 245), *NewPoint(300, 300),
+			},
+			// Moitié Droite : Pousse vers l'Est (Trottoir droite)
+			{
+				*NewPoint(375, 245), *NewPoint(450, 300),
+				*NewPoint(450, 245), *NewPoint(450, 300),
+			},
+		},
+		// PASSAGE SUD (Ped_S) - Divisé Gauche/Droite
+		"Ped_S": {
+			// Moitié Gauche : Pousse vers l'Ouest
+			{
+				*NewPoint(300, 450), *NewPoint(375, 505),
+				*NewPoint(300, 450), *NewPoint(300, 505),
+			},
+			// Moitié Droite : Pousse vers l'Est
+			{
+				*NewPoint(375, 450), *NewPoint(450, 505),
+				*NewPoint(450, 450), *NewPoint(450, 505),
+			},
+		},
+		// PASSAGE OUEST (Ped_W) - Divisé Haut/Bas
+		"Ped_W": {
+			// Moitié Haute : Pousse vers le Nord
+			{
+				*NewPoint(245, 300), *NewPoint(300, 375),
+				*NewPoint(245, 300), *NewPoint(300, 300),
+			},
+			// Moitié Basse : Pousse vers le Sud
+			{
+				*NewPoint(245, 375), *NewPoint(300, 450),
+				*NewPoint(245, 450), *NewPoint(300, 450),
+			},
+		},
+		// PASSAGE EST (Ped_E) - Divisé Haut/Bas
+		"Ped_E": {
+			// Moitié Haute : Pousse vers le Nord
+			{
+				*NewPoint(450, 300), *NewPoint(505, 375),
+				*NewPoint(450, 300), *NewPoint(505, 300),
+			},
+			// Moitié Basse : Pousse vers le Sud
+			{
+				*NewPoint(450, 375), *NewPoint(505, 450),
+				*NewPoint(450, 450), *NewPoint(505, 450),
+			},
+		},
+	}
+
+	// 2. Génération des zones piétonnes divisées
+	for id, subs := range crosswalksSplit {
+		for _, sub := range subs {
+			// Création de la sous-zone
+			ra := environment.NewRepulsionArea(<-g.ObjectCountCh, sub.p1, sub.p2, 0.5, 0.0)
+			ra.SetPedestrian(true)
 			ra.Show()
+			ra.Activate()
+
+			ra.SetAttractorLine(sub.lineA, sub.lineB)
+
+			g.Objets = append(g.Objets, ra)
+			g.PersistentObjets = append(g.PersistentObjets, ra)
+
+			// On ajoute à la liste des zones pour cet ID de feu
+			g.CrosswalkZones[id] = append(g.CrosswalkZones[id], ra)
 		}
-		ra.Activate() // Par défaut bloqué (Rouge)
-
-		g.Objets = append(g.Objets, ra)
-		g.PersistentObjets = append(g.PersistentObjets, ra) // Indispensable pour la survie de l'objet
-		g.CrosswalkZones[cw.id] = ra
 	}
+	// ____________________________________Trouver une solution pour virer cette partie____________________________________
+	//
+	// 3. Gestion Spéciale de la Diagonale (Réintégrée pour éviter le crash)
+	diagP1, diagP2 := *NewPoint(305, 305), *NewPoint(445, 445)
+	raDiag := environment.NewRepulsionArea(<-g.ObjectCountCh, diagP1, diagP2, 0.5, 0.0)
+	raDiag.SetPedestrian(true)
+	raDiag.Hide()       // Invisible
+	raDiag.Deactivate() // Inactive (ne pousse pas)
 
-	// Zones de répulsion des batiments
+	g.Objets = append(g.Objets, raDiag)
+	g.PersistentObjets = append(g.PersistentObjets, raDiag)
+	g.CrosswalkZones["Ped_Diag"] = append(g.CrosswalkZones["Ped_Diag"], raDiag)
+	// ________________________________________________________________________________________________________________
+
+	// 4. Zones de répulsion des batiments
 	g.addRepulsionAreas(
 		[][2]Point{
 			{*NewPoint(245, -50), *NewPoint(-50, 245)}, // Bâtiment nord-ouest, direction est
@@ -225,7 +292,7 @@ func (g *Game) generateRepulsionAreas() {
 		0.2, 10.0,
 	)
 
-	// Zones de répulsion de la route
+	// 5. Zones de répulsion de la route
 	g.addRepulsionAreas(
 		[][2]Point{
 			{*NewPoint(-50, 300), *NewPoint(245, 375)}, // Route ouest, moitié haute
