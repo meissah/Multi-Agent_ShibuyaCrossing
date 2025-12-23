@@ -36,6 +36,10 @@ type Game struct {
 
 	// Composants UI du menu
 	validateButton ui.Button
+	backButton     ui.Button // Bouton de retour au menu principal quand on est en simulation
+	compareButton  ui.Button // Bouton pour comparer les résultats
+
+	// Zones cliquables du menu
 	shibuyaRect    ui.Rectangle
 	frenchRect     ui.Rectangle
 	carSpawnSlider ui.Slider
@@ -52,7 +56,9 @@ type Game struct {
 	step int
 
 	// Cote statistiques
-	saveButtonPressed bool // Pour éviter les clics multiples sur le bouton de sauvegarde des métriques
+	saveButtonPressed bool   // Pour éviter les clics multiples sur le bouton de sauvegarde des métriques
+	showComparison    bool   // Affiche l'écran de comparaison des résultats
+	comparisonText    string // Texte du rapport de comparaison
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -65,7 +71,9 @@ func NewGame() *Game {
 		frenchRect:     ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption
 		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
 		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
-
+		validateButton: ui.NewButton(600, 650, 120, 40, "Valider"),
+		backButton:     ui.NewButton(20, 20, 120, 40, "Retour"),
+		compareButton:  ui.NewButton(580, 700, 150, 40, "Comparer"), // En bas à droite, en dessous du bouton Valider
 	}
 
 	tm := &trafficmanger.TrafficManager{
@@ -78,8 +86,6 @@ func NewGame() *Game {
 		PedsNS: make([]*trafficlight.TrafficLight, 0),
 		PedsEW: make([]*trafficlight.TrafficLight, 0),
 	}
-
-	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
 
 	configs := []struct {
 		x, y, w, h float64

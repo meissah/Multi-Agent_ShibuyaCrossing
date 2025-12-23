@@ -98,6 +98,21 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 	// Fond dégradé  (bleu-gris foncé)
 	screen.Fill(color.RGBA{25, 30, 40, 255})
 
+	// ══════════════════════════════════════════════════════════
+	// Si on decide de comparer les simulations
+	// ══════════════════════════════════════════════════════════
+	// Si on affiche les résultats de comparaison
+	if g.showComparison {
+		g.DrawComparisonScreen(screen)
+		return
+	}
+
+	// ═══════════════════════════════════════════════════════════
+	// BOUTON COMPARER (en bas du menu)
+	// ═══════════════════════════════════════════════════════════
+
+	g.drawCompareButton(screen, g.compareButton)
+
 	// ═══════════════════════════════════════════════════════════
 	// TITRE PRINCIPAL centré
 	// ═══════════════════════════════════════════════════════════
@@ -527,9 +542,53 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 		}
 
 	}
+	// bouton retour au menu principal
+	g.drawBackButton(screen)
 	// Dessiner le panneau de métriques (pour les statistiques en temps réel)
 	g.DrawMetricsPanel(screen)
 
+}
+
+// drawBackButton dessine le bouton de retour au menu en haut à gauche
+func (g *Game) drawBackButton(screen *ebiten.Image) {
+	// Couleurs selon l'état - GRIS
+	var bgColor, textColor, borderColor color.Color
+
+	if g.backButton.IsMouseOver {
+		// Hover - gris plus clair
+		bgColor = color.RGBA{120, 120, 120, 255}
+		textColor = color.RGBA{255, 255, 255, 255}
+		borderColor = color.RGBA{180, 180, 180, 255}
+	} else {
+		// Normal - gris foncé
+		bgColor = color.RGBA{70, 70, 70, 255}
+		textColor = color.RGBA{220, 220, 220, 255}
+		borderColor = color.RGBA{100, 100, 100, 255}
+	}
+
+	// Fond du bouton
+	btnImg := ebiten.NewImage(int(g.backButton.Rect.W), int(g.backButton.Rect.H))
+	btnImg.Fill(bgColor)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(g.backButton.Rect.X, g.backButton.Rect.Y)
+	screen.DrawImage(btnImg, op)
+
+	// Bordure
+	g.drawRectBorder(screen, g.backButton.Rect, 2, borderColor)
+
+	// Texte centré
+	textX := int(g.backButton.Rect.X + g.backButton.Rect.W/2 - float64(len(g.backButton.Text)*7)/2)
+	textY := int(g.backButton.Rect.Y + g.backButton.Rect.H/2 + 5)
+	text.Draw(screen, g.backButton.Text, basicfont.Face7x13, textX, textY, textColor)
+
+	// Petit effet d'ombre si hover
+	if g.backButton.IsMouseOver {
+		shadowBtn := ebiten.NewImage(int(g.backButton.Rect.W+4), int(g.backButton.Rect.H+4))
+		shadowBtn.Fill(color.RGBA{0, 0, 0, 50})
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(g.backButton.Rect.X+2, g.backButton.Rect.Y+2)
+		screen.DrawImage(shadowBtn, op)
+	}
 }
 
 // drawShibuyaCrossing dessine le carrefour de type Shibuya (avec diagonale)

@@ -11,6 +11,10 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
+// ----------------------------------------------------------------
+// Affichage du panneau de métriques a droite de la simulation
+// ---------------------------------------------------------
+
 // DrawMetricsPanel dessine le panneau de métriques à droite de la simulation
 func (g *Game) DrawMetricsPanel(screen *ebiten.Image) {
 	if stats.GlobalMetrics == nil {

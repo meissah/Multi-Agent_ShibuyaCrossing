@@ -17,6 +17,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
 
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -40,8 +41,18 @@ func (g *Game) UpdateMenu() error {
 	mx, my := ebiten.CursorPosition()
 	mouseX, mouseY := float64(mx), float64(my)
 
-	// Mettre à jour l'état hover du bouton
+	// Gérer l'écran de comparaison si activé
+	if g.showComparison {
+		// Clic n'importe où pour fermer
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			g.showComparison = false
+		}
+		return nil
+	}
+
+	// Mettre à jour l'état hover des boutons
 	g.validateButton.UpdateHover(mouseX, mouseY)
+	g.compareButton.UpdateHover(mouseX, mouseY)
 
 	// Mettre à jour les sliders (récupère la position du curseur)
 	mousePressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
@@ -58,6 +69,17 @@ func (g *Game) UpdateMenu() error {
 		// Clic sur l'option French
 		if g.frenchRect.Contains(mouseX, mouseY) {
 			g.selectedCrossing = "French"
+		}
+
+		// Clic sur le bouton Comparer
+		if g.compareButton.IsMouseOver {
+			result, err := stats.CompareAllMetrics()
+			if err != nil {
+				g.comparisonText = fmt.Sprintf("Erreur lors de la comparaison:\n%v", err)
+			} else {
+				g.comparisonText = result.FormatComparisonReport()
+			}
+			g.showComparison = true
 		}
 
 		// Clic sur le bouton Valider
@@ -83,6 +105,11 @@ func (g *Game) UpdateMenu() error {
 
 // UpdateSimulation exécute un pas de simulation pour tous les agents vivants
 func (g *Game) UpdateSimulation() error {
+
+	// Vérifier le clic sur le bouton "Retour au menu"
+	if g.handleBackButton() {
+		return nil
+	}
 
 	// Incrémenter le compteur de pas
 	g.step++
@@ -159,4 +186,68 @@ func (g *Game) UpdateSimulation() error {
 	}
 
 	return nil
+}
+
+// handleBackButton gère le clic sur le bouton de retour au menu
+func (g *Game) handleBackButton() bool {
+	mx, my := ebiten.CursorPosition()
+	mouseX, mouseY := float64(mx), float64(my)
+
+	// Mettre à jour l'état hover du bouton retour
+	g.backButton.UpdateHover(mouseX, mouseY)
+
+	// Détecter le clic
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if g.backButton.IsMouseOver {
+			// Sauvegarder les métriques avant de retourner au menu
+			if stats.GlobalMetrics != nil {
+				stats.GlobalMetrics.SaveToFile()
+			}
+
+			// Sauvegarder les paramètres actuels avant de nettoyer ( objectif : les réutiliser ces au prochain pour la simu suivante  )
+			carRate := 1.0 / g.Config.CarSpawnRate.Seconds()
+			pedRate := 1.0 / g.Config.PedestrianSpawnRate.Seconds()
+
+			// Nettoyer la simulation actuelle
+			g.cleanupSimulation()
+
+			// Retourner au menu
+			g.State = config.StateMenu
+			g.selectedCrossing = ""
+
+			// On garde donc les mêmes valeurs en retournant au menu ( on garde meme nbr par seconde pour chaque type d'agent )
+			g.carSpawnSlider.Value = carRate
+			g.pedSpawnSlider.Value = pedRate
+			return true
+		}
+	}
+
+	return false
+}
+
+// cleanupSimulation nettoie les ressources de la simulation
+func (g *Game) cleanupSimulation() {
+	// Envoyer un signal de fin à tous les agents
+	for _, agt := range g.Agents {
+		select {
+		case agt.EndChan() <- 1:
+		default:
+		}
+	}
+
+	// Réinitialiser les slices
+	g.Agents = nil
+	g.Objets = nil
+
+	// Nettoyer les channels de synchronisation
+	g.syncChansAgt.Range(func(key, value interface{}) bool {
+		g.syncChansAgt.Delete(key)
+		return true
+	})
+
+	// Réinitialiser le compteur d'objets
+	g.ObjectCount = 0
+	g.step = 0
+
+	fmt.Println("Simulation finie + nettoyée")
 }
