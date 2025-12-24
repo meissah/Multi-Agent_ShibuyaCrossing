@@ -8,6 +8,7 @@ import (
 // par le renderer (`game.Draw`). Elle implémente l'interface `utils.Object`.
 type TrafficLightObject struct {
 	utils.Object
+	ID    string
 	X, Y  float64
 	W, H  float64
 	dir   utils.Direction
@@ -15,8 +16,9 @@ type TrafficLightObject struct {
 	kind  string // "car" ou "pedestrian"
 }
 
-func NewTrafficLightObject(x, y, w, h float64, dir utils.Direction, state string, kind string) *TrafficLightObject {
+func NewTrafficLightObject(id string, x, y, w, h float64, dir utils.Direction, state string, kind string) *TrafficLightObject {
 	return &TrafficLightObject{
+		ID:    id,
 		X:     x,
 		Y:     y,
 		W:     w,

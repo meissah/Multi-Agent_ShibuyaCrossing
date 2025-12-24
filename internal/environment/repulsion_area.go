@@ -24,6 +24,7 @@ type RepulsionArea struct {
 	bufferSize    float64
 	visible       bool
 	active        bool
+	isPedestrian  bool
 	side          utils.Line
 
 	minX, maxX, minY, maxY float64
@@ -38,6 +39,7 @@ func NewRepulsionArea(id utils.ObjectID, topLeft, bottomRight utils.Point, force
 		bufferSize:    bufferSize,
 		visible:       true,
 		active:        true,
+		isPedestrian:  false,
 	}
 
 	// Le côté désigné est le bord supérieur de la zone rectangulaire.
@@ -65,10 +67,11 @@ func NewRepulsionArea(id utils.ObjectID, topLeft, bottomRight utils.Point, force
 	return ra
 }
 
-func (ra *RepulsionArea) Hide()       { ra.visible = false }
-func (ra *RepulsionArea) Show()       { ra.visible = true }
-func (ra *RepulsionArea) Activate()   { ra.active = true }
-func (ra *RepulsionArea) Deactivate() { ra.active = false }
+func (ra *RepulsionArea) SetPedestrian(val bool) { ra.isPedestrian = val }
+func (ra *RepulsionArea) Hide()                  { ra.visible = false }
+func (ra *RepulsionArea) Show()                  { ra.visible = true }
+func (ra *RepulsionArea) Activate()              { ra.active = true }
+func (ra *RepulsionArea) Deactivate()            { ra.active = false }
 
 func (ra RepulsionArea) ObjectID() utils.ObjectID   { return ra.id }
 func (ra RepulsionArea) PositionX() float64         { return ra.topLeft.X() }
@@ -84,14 +87,25 @@ func (ra RepulsionArea) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	colorRed := color.RGBA{0, 255, 0, 100}
+	// Définition des couleurs selon l'état 'active'
+	var drawColor color.RGBA
+	if ra.active {
+		if ra.isPedestrian {
+			drawColor = color.RGBA{128, 0, 128, 100} // Violet transparent pour les piétons
+		} else {
+			drawColor = color.RGBA{255, 0, 0, 80} // Rouge pour les murs/routes
+		}
+	} else {
+		drawColor = color.RGBA{0, 255, 0, 80} // Vert pour le passage
+	}
+
 	vector.FillRect(
 		screen,
 		float32(math.Min(ra.topLeft.X(), ra.bottomRight.X())),
 		float32(math.Min(ra.topLeft.Y(), ra.bottomRight.Y())),
 		float32(math.Abs(ra.bottomRight.X()-ra.topLeft.X())),
 		float32(math.Abs(ra.bottomRight.Y()-ra.topLeft.Y())),
-		colorRed,
+		drawColor,
 		true,
 	)
 }
@@ -124,4 +138,8 @@ func (ra RepulsionArea) ForceAtPoint(p utils.Point) utils.Vector {
 	}
 
 	return repulsion
+}
+
+func (ra *RepulsionArea) SetAttractorLine(p1, p2 utils.Point) {
+	ra.side = *utils.NewLineFromPoints(p1, p2)
 }

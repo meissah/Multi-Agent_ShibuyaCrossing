@@ -87,20 +87,13 @@ func (g *Game) UpdateSimulation() error {
 	// Incrémenter le compteur de pas
 	g.step++
 
-	// // Récupérer les agents qui ont bougé
-	// currentAgtSlice := <-g.ReceiveAgtsCh
+	g.Objets = nil
 
-	// // --- CORRECTION CRUCIALE ICI ---
-	// // 1. On vide la liste de dessin
-	// g.Objets = nil
+	g.Objets = append(g.Objets, g.PersistentObjets...)
 
-	// // 2. On remet les objets fixes (les feux)
-	// g.Objets = append(g.Objets, g.PersistentObjets...)
-
-	// // 3. On ajoute les agents dynamiques (voitures/piétons)
-	// for _, agt := range currentAgtSlice {
-	// 	g.Objets = append(g.Objets, agt)
-	// }
+	for _, agt := range g.Agents {
+		g.Objets = append(g.Objets, agt)
+	}
 
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
