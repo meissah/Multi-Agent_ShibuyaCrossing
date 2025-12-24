@@ -41,6 +41,11 @@ func (v Vector) Norm() float64 {
 	return math.Sqrt(v.x*v.x + v.y*v.y)
 }
 
+// Calcul du carré de la norme du vecteur
+func (v Vector) NormSq() float64 {
+	return v.x*v.x + v.y*v.y
+}
+
 // Normalisation du vecteur.
 //
 // Retourne un nouveau vecteur unitaire dans la même direction que le vecteur
@@ -200,4 +205,115 @@ func (l Line) StartPoint() Point {
 // Point d'arrivée de la ligne.
 func (l Line) EndPoint() Point {
 	return Point{l.x2, l.y2}
+}
+
+// Forme géométrique quelconque.
+type Shape interface {
+	IsPointInside(p Point) bool
+	ClosestPointTo(p Point) Point
+}
+
+// Forme géométrique rectangulaire définie par son coin supérieur gauche,
+// sa largeur et sa hauteur.
+type Rectangle struct {
+	Shape
+
+	x, y          float64 // Coordonnées du coin supérieur gauche
+	width, height float64 // Largeur et hauteur du rectangle
+}
+
+// Constructeur pour créer un nouveau rectangle
+func NewRectangle(x, y, width, height float64) *Rectangle {
+	if !FloatIsFinite(x) || !FloatIsFinite(y) || !FloatIsFinite(width) || !FloatIsFinite(height) {
+		return nil
+	}
+
+	return &Rectangle{
+		x:      x,
+		y:      y,
+		width:  width,
+		height: height,
+	}
+}
+
+func (r Rectangle) X() float64      { return r.x }
+func (r Rectangle) Y() float64      { return r.y }
+func (r Rectangle) Width() float64  { return r.width }
+func (r Rectangle) Height() float64 { return r.height }
+
+// Vérifie si un point donné se trouve à l'intérieur du rectangle.
+func (r Rectangle) IsPointInside(p Point) bool {
+	isWithinX := p.X() >= r.x && p.X() <= r.x+r.width
+	isWithinY := p.Y() >= r.y && p.Y() <= r.y+r.height
+	return isWithinX && isWithinY
+}
+
+// Calcule le point le plus proche sur le rectangle par rapport à un point donné.
+func (r Rectangle) ClosestPointTo(p Point) Point {
+	closestX := Clamp(p.X(), r.x, r.x+r.width)
+	closestY := Clamp(p.Y(), r.y, r.y+r.height)
+	return Point{closestX, closestY}
+}
+
+type Triangle struct {
+	Shape
+
+	a, b, c Point // Sommets du triangle
+}
+
+func NewTriangle(a, b, c Point) *Triangle {
+	return &Triangle{a: a, b: b, c: c}
+}
+
+// Vérifie si un point donné se trouve à l'intérieur du triangle en utilisant
+// les determinants.
+func (t Triangle) IsPointInside(p Point) bool {
+	det := func(p1, p2, p3 Point) float64 {
+		return (p2.X()-p1.X())*(p3.Y()-p1.Y()) - (p3.X()-p1.X())*(p2.Y()-p1.Y())
+	}
+
+	d1 := det(p, t.a, t.b)
+	d2 := det(p, t.b, t.c)
+	d3 := det(p, t.c, t.a)
+
+	allPositive := (d1 > 0) && (d2 > 0) && (d3 > 0)
+	allNegative := (d1 < 0) && (d2 < 0) && (d3 < 0)
+
+	return allPositive || allNegative
+}
+
+// Calcule le point le plus proche sur le triangle par rapport à un point donné.
+func (t Triangle) ClosestPointTo(p Point) Point {
+	if t.IsPointInside(p) {
+		// Si le point est à l'intérieur du triangle, il est le plus proche de lui-même
+		return p
+	}
+
+	// Si le point est à l'extérieur, le point le plus proche sera sur un des côtés
+	edges := [3]Line{
+		*NewLineFromPoints(t.a, t.b),
+		*NewLineFromPoints(t.b, t.c),
+		*NewLineFromPoints(t.c, t.a),
+	}
+
+	var closestPoint Point
+	minDistanceSq := math.Inf(1)
+
+	for _, edge := range edges {
+		projectedPoint := p.ProjectOntoLine(edge)
+
+		// Ramener le point projeté sur le segment
+		clampedX := Clamp(projectedPoint.X(), math.Min(edge.x1, edge.x2), math.Max(edge.x1, edge.x2))
+		clampedY := Clamp(projectedPoint.Y(), math.Min(edge.y1, edge.y2), math.Max(edge.y1, edge.y2))
+		clampedPoint := Point{clampedX, clampedY}
+
+		distanceSq := NewVectorFromPoints(p, clampedPoint).NormSq()
+
+		if distanceSq < minDistanceSq {
+			minDistanceSq = distanceSq
+			closestPoint = clampedPoint
+		}
+	}
+
+	return closestPoint
 }
