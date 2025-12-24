@@ -41,6 +41,11 @@ func (v Vector) Norm() float64 {
 	return math.Sqrt(v.x*v.x + v.y*v.y)
 }
 
+// Calcul du carré de la norme du vecteur
+func (v Vector) NormSq() float64 {
+	return v.x*v.x + v.y*v.y
+}
+
 // Normalisation du vecteur.
 //
 // Retourne un nouveau vecteur unitaire dans la même direction que le vecteur
@@ -205,6 +210,7 @@ func (l Line) EndPoint() Point {
 // Forme géométrique quelconque.
 type Shape interface {
 	IsPointInside(p Point) bool
+	ClosestPointTo(p Point) Point
 }
 
 // Forme géométrique rectangulaire définie par son coin supérieur gauche,
@@ -242,6 +248,13 @@ func (r Rectangle) IsPointInside(p Point) bool {
 	return isWithinX && isWithinY
 }
 
+// Calcule le point le plus proche sur le rectangle par rapport à un point donné.
+func (r Rectangle) ClosestPointTo(p Point) Point {
+	closestX := Clamp(p.X(), r.x, r.x+r.width)
+	closestY := Clamp(p.Y(), r.y, r.y+r.height)
+	return Point{closestX, closestY}
+}
+
 type Triangle struct {
 	Shape
 
@@ -267,4 +280,40 @@ func (t Triangle) IsPointInside(p Point) bool {
 	allNegative := (d1 < 0) && (d2 < 0) && (d3 < 0)
 
 	return allPositive || allNegative
+}
+
+// Calcule le point le plus proche sur le triangle par rapport à un point donné.
+func (t Triangle) ClosestPointTo(p Point) Point {
+	if t.IsPointInside(p) {
+		// Si le point est à l'intérieur du triangle, il est le plus proche de lui-même
+		return p
+	}
+
+	// Si le point est à l'extérieur, le point le plus proche sera sur un des côtés
+	edges := [3]Line{
+		*NewLineFromPoints(t.a, t.b),
+		*NewLineFromPoints(t.b, t.c),
+		*NewLineFromPoints(t.c, t.a),
+	}
+
+	var closestPoint Point
+	minDistanceSq := math.Inf(1)
+
+	for _, edge := range edges {
+		projectedPoint := p.ProjectOntoLine(edge)
+
+		// Ramener le point projeté sur le segment
+		clampedX := Clamp(projectedPoint.X(), math.Min(edge.x1, edge.x2), math.Max(edge.x1, edge.x2))
+		clampedY := Clamp(projectedPoint.Y(), math.Min(edge.y1, edge.y2), math.Max(edge.y1, edge.y2))
+		clampedPoint := Point{clampedX, clampedY}
+
+		distanceSq := NewVectorFromPoints(p, clampedPoint).NormSq()
+
+		if distanceSq < minDistanceSq {
+			minDistanceSq = distanceSq
+			closestPoint = clampedPoint
+		}
+	}
+
+	return closestPoint
 }
