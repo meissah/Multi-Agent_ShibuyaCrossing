@@ -22,7 +22,9 @@ import (
 	"golang.org/x/image/font/basicfont"
 
 	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -440,9 +442,9 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 	for _, obj := range currentObjtSlice {
 		switch obj.Type() {
 		case "car":
-			g.drawCar(screen, obj)
+			g.drawCar(screen, obj.(Drawable))
 		case "pieton":
-			g.drawPedestrian(screen, obj)
+			g.drawPedestrian(screen, obj.(Drawable))
 		case "traffic_light_car":
 			X, Y := obj.PositionX(), obj.PositionY()
 			dir := obj.Direction()
@@ -520,7 +522,10 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 
 			// On dessine le rectangle coloré semi-transparent
 			vector.DrawFilledRect(screen, topLeftX, topLeftY, float32(w), float32(h), drawColor, false)
+		case "repulsion_area":
+			obj.(*environment.RepulsionArea).Draw(screen)
 		}
+
 	}
 
 }
@@ -681,7 +686,7 @@ func (g *Game) drawSidewalks(screen *ebiten.Image) {
 }
 
 // drawCar dessine une voiture avec rotation selon sa direction et son virage
-func (g *Game) drawCar(screen *ebiten.Image, c Object) {
+func (g *Game) drawCar(screen *ebiten.Image, c Drawable) {
 	assetIndex, op := c.Draw()
 
 	// Dessiner la voiture
@@ -689,10 +694,7 @@ func (g *Game) drawCar(screen *ebiten.Image, c Object) {
 
 	// VISUALISATION DU SYSTÈME DE RALENTISSEMENT
 	// Cast en *Car pour accéder aux méthodes spécifiques
-	if car, ok := c.(interface {
-		GetSpeed() float64
-		GetCarAhead() (interface{}, float64)
-	}); ok {
+	if car, ok := c.(*vehicule.Car); ok {
 		// 1. Afficher la vitesse au-dessus de la voiture
 		speed := car.GetSpeed()
 		speedText := fmt.Sprintf("%.1f", speed)
@@ -706,38 +708,40 @@ func (g *Game) drawCar(screen *ebiten.Image, c Object) {
 		}
 
 		text.Draw(screen, speedText, basicfont.Face7x13,
-			int(c.PositionX())-10, int(c.PositionY())-15, speedColor)
+			int(car.PositionX())-10, int(car.PositionY())-15, speedColor)
 
 		// 2. Dessiner une ligne vers la voiture détectée
 		carAhead, distance := car.GetCarAhead()
 		if carAhead != nil && distance > 0 {
 			// Récupérer la position de la voiture devant
-			if aheadObj, ok := carAhead.(Object); ok {
-				// Couleur de la ligne selon la distance
-				lineColor := color.RGBA{255, 255, 0, 180} // Jaune
-				if distance < 70 {
-					lineColor = color.RGBA{255, 0, 0, 200} // Rouge si trop proche
-				}
-
-				// Dessiner la ligne de détection
-				ebitenutil.DrawLine(screen,
-					c.PositionX(), c.PositionY(),
-					aheadObj.PositionX(), aheadObj.PositionY(),
-					lineColor)
-
-				// Afficher la distance
-				distText := fmt.Sprintf("%.0f", distance)
-				midX := (c.PositionX() + aheadObj.PositionX()) / 2
-				midY := (c.PositionY() + aheadObj.PositionY()) / 2
-				text.Draw(screen, distText, basicfont.Face7x13,
-					int(midX)-10, int(midY), color.RGBA{255, 255, 255, 255})
+			// Couleur de la ligne selon la distance
+			lineColor := color.RGBA{255, 255, 0, 180} // Jaune
+			if distance < 70 {
+				lineColor = color.RGBA{255, 0, 0, 200} // Rouge si trop proche
 			}
+
+			// Dessiner la ligne de détection
+			ebitenutil.DrawLine(screen,
+				car.PositionX(), car.PositionY(),
+				carAhead.PositionX(), carAhead.PositionY(),
+				lineColor)
+
+			// Afficher la distance
+			distText := fmt.Sprintf("%.0f", distance)
+			midX := (car.PositionX() + carAhead.PositionX()) / 2
+			midY := (car.PositionY() + carAhead.PositionY()) / 2
+			text.Draw(screen, distText, basicfont.Face7x13,
+				int(midX)-10, int(midY), color.RGBA{255, 255, 255, 255})
 		}
 	}
 }
 
 func (g *Game) drawPedestrian(screen *ebiten.Image, c Drawable) {
 	assetIndex, op := c.Draw()
+
+	// Centrer l'image sur la position
+	op.GeoM.Translate(-float64(pedImages[assetIndex].Bounds().Dx())/2,
+		-float64(pedImages[assetIndex].Bounds().Dy())/2)
 
 	// Dessiner
 	screen.DrawImage(pedImages[assetIndex], op)

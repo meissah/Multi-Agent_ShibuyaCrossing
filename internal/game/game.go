@@ -8,6 +8,7 @@ import (
 
 	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
@@ -144,12 +145,65 @@ func (g *Game) InitSimulation() {
 	// Initialiser les channels des microservices
 	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount, &g.Objets)
 	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
+	g.generateRepulsionAreas()
 
 	//lance les goroutines autonome de creation de voitures et pietons
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
 	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
 	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // initialise la structure de spawn de voiture
 	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
+}
+
+// Génère les zones de repulsion pour les piétons (zones où ils ne doivent pas entrer)
+func (g *Game) generateRepulsionAreas() {
+	// Zones de répulsion des batiments
+	g.addRepulsionAreas(
+		[][2]Point{
+			{*NewPoint(245, -50), *NewPoint(-50, 245)}, // Bâtiment nord-ouest, direction est
+			{*NewPoint(245, 245), *NewPoint(-50, -50)}, // Bâtiment nord-ouest, direction sud
+			{*NewPoint(505, 245), *NewPoint(800, -50)}, // Bâtiment nord-est, direction ouest
+			{*NewPoint(800, 245), *NewPoint(505, -50)}, // Bâtiment nord-est, direction ouest
+			{*NewPoint(245, 505), *NewPoint(-50, 800)}, // Bâtiment sud-ouest, direction est
+			{*NewPoint(-50, 505), *NewPoint(245, 800)}, // Bâtiment sud-ouest, direction nord
+			{*NewPoint(505, 800), *NewPoint(800, 505)}, // Bâtiment sud-est, direction ouest
+			{*NewPoint(505, 505), *NewPoint(800, 800)}, // Bâtiment sud-est, direction nord
+		},
+		0.2, 10.0,
+	)
+
+	// Zones de répulsion de la route
+	g.addRepulsionAreas(
+		[][2]Point{
+			{*NewPoint(-50, 300), *NewPoint(245, 375)}, // Route ouest, moitié haute
+			{*NewPoint(245, 450), *NewPoint(-50, 375)}, // Route ouest, moitié basse
+			{*NewPoint(505, 300), *NewPoint(800, 375)}, // Route est, moitié haute
+			{*NewPoint(800, 450), *NewPoint(505, 375)}, // Route est, moitié basse
+			{*NewPoint(300, 245), *NewPoint(375, -50)}, // Route nord, moitié gauche
+			{*NewPoint(450, -50), *NewPoint(375, 245)}, // Route nord, moitié droite
+			{*NewPoint(300, 800), *NewPoint(375, 505)}, // Route sud, moitié gauche
+			{*NewPoint(450, 505), *NewPoint(375, 800)}, // Route sud, moitié droite
+			{*NewPoint(300, 300), *NewPoint(450, 375)}, // Carrefour central, moitié haute
+			{*NewPoint(450, 450), *NewPoint(300, 375)}, // Carrefour central, moitié basse
+			{*NewPoint(300, 450), *NewPoint(375, 300)}, // Carrefour central, moitié gauche
+			{*NewPoint(450, 300), *NewPoint(375, 450)}, // Carrefour central, moitié droite
+		},
+		0.05, 0.0,
+	)
+}
+
+// Génère un ensemble cohérent de zones de répulsion et les ajoute au jeu
+func (g *Game) addRepulsionAreas(coords [][2]Point, forceStrength, bufferSize float64) []*environment.RepulsionArea {
+	ras := make([]*environment.RepulsionArea, len(coords))
+
+	for _, coord := range coords {
+		ra := environment.NewRepulsionArea(<-g.ObjectCountCh, coord[0], coord[1], forceStrength, bufferSize)
+		ra.Hide()
+
+		ras = append(ras, ra)
+		g.Objets = append(g.Objets, ra)
+	}
+
+	return ras
 }
 
 // Layout définit la taille de la fenêtre du jeu (appelé automatiquement par Ebiten)

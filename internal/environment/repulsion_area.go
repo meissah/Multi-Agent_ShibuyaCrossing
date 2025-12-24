@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 
@@ -16,16 +17,21 @@ import (
 type RepulsionArea struct {
 	utils.Object
 
+	id            utils.ObjectID
 	topLeft       utils.Point
 	bottomRight   utils.Point
 	forceStrength float64
 	bufferSize    float64
 	visible       bool
 	active        bool
+	side          utils.Line
+
+	minX, maxX, minY, maxY float64
 }
 
-func NewRepulsionArea(topLeft, bottomRight utils.Point, forceStrength, bufferSize float64) *RepulsionArea {
-	return &RepulsionArea{
+func NewRepulsionArea(id utils.ObjectID, topLeft, bottomRight utils.Point, forceStrength, bufferSize float64) *RepulsionArea {
+	ra := &RepulsionArea{
+		id:            id,
 		topLeft:       topLeft,
 		bottomRight:   bottomRight,
 		forceStrength: forceStrength,
@@ -33,6 +39,30 @@ func NewRepulsionArea(topLeft, bottomRight utils.Point, forceStrength, bufferSiz
 		visible:       true,
 		active:        true,
 	}
+
+	// Le côté désigné est le bord supérieur de la zone rectangulaire.
+	// On prend ici en compte les cas où les points topLeft et bottomRight
+	// impliquent une rotation de la zone.
+	deltaX := bottomRight.X() - topLeft.X()
+	deltaY := bottomRight.Y() - topLeft.Y()
+
+	var topRight utils.Point
+	if deltaX*deltaY >= 0 {
+		topRight = *utils.NewPoint(bottomRight.X(), topLeft.Y())
+	} else {
+		topRight = *utils.NewPoint(topLeft.X(), bottomRight.Y())
+	}
+
+	ra.side = *utils.NewLineFromPoints(topLeft, topRight)
+	fmt.Println(ra.side)
+
+	// Calcul des bornes pour optimiser IsPointInside
+	ra.minX = math.Min(topLeft.X(), bottomRight.X())
+	ra.maxX = math.Max(topLeft.X(), bottomRight.X())
+	ra.minY = math.Min(topLeft.Y(), bottomRight.Y())
+	ra.maxY = math.Max(topLeft.Y(), bottomRight.Y())
+
+	return ra
 }
 
 func (ra *RepulsionArea) Hide()       { ra.visible = false }
@@ -40,15 +70,13 @@ func (ra *RepulsionArea) Show()       { ra.visible = true }
 func (ra *RepulsionArea) Activate()   { ra.active = true }
 func (ra *RepulsionArea) Deactivate() { ra.active = false }
 
+func (ra RepulsionArea) ObjectID() utils.ObjectID   { return ra.id }
+func (ra RepulsionArea) PositionX() float64         { return ra.topLeft.X() }
+func (ra RepulsionArea) PositionY() float64         { return ra.topLeft.Y() }
 func (ra RepulsionArea) Direction() utils.Direction { return utils.North }      // placeholder
 func (ra RepulsionArea) State() string              { return "active" }         // placeholder
 func (ra RepulsionArea) Type() string               { return "repulsion_area" } // placeholder
-
-func (ra RepulsionArea) Position() (float64, float64) {
-	centerX := (ra.topLeft.X() + ra.bottomRight.X()) / 2
-	centerY := (ra.topLeft.Y() + ra.bottomRight.Y()) / 2
-	return centerX, centerY
-}
+func (ra RepulsionArea) TheAngle() float64          { return 0.0 }              // placeholder
 
 // Dessine la zone de répulsion si elle est marquée comme visible.
 func (ra RepulsionArea) Draw(screen *ebiten.Image) {
@@ -56,7 +84,7 @@ func (ra RepulsionArea) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	colorRed := color.RGBA{255, 0, 0, 100}
+	colorRed := color.RGBA{0, 255, 0, 100}
 	vector.FillRect(
 		screen,
 		float32(math.Min(ra.topLeft.X(), ra.bottomRight.X())),
@@ -70,8 +98,8 @@ func (ra RepulsionArea) Draw(screen *ebiten.Image) {
 
 // Vérifie si un point donné se trouve à l'intérieur de la zone de répulsion.
 func (ra RepulsionArea) IsPointInside(p utils.Point) bool {
-	isWithinX := p.X() >= ra.topLeft.X() && p.X() <= ra.bottomRight.X()
-	isWithinY := p.Y() >= ra.topLeft.Y() && p.Y() <= ra.bottomRight.Y()
+	isWithinX := p.X() >= ra.minX && p.X() <= ra.maxX
+	isWithinY := p.Y() >= ra.minY && p.Y() <= ra.maxY
 	return isWithinX && isWithinY
 }
 
@@ -81,13 +109,9 @@ func (ra RepulsionArea) ForceAtPoint(p utils.Point) utils.Vector {
 		return utils.VectorZero
 	}
 
-	topLeft := ra.topLeft
-	topRight := utils.NewPoint(ra.bottomRight.X(), ra.topLeft.Y())
-	side := utils.NewLineFromPoints(topLeft, *topRight)
-
 	// Le point le plus proche sur le côté désigné est son projeté orthogonal.
 	// On l'utilise pour calculer la distance et la direction de la force de répulsion.
-	projection := p.ProjectOntoLine(*side)
+	projection := p.ProjectOntoLine(ra.side)
 	repulsion := *utils.NewVectorFromPoints(p, projection)
 	distance := repulsion.Norm()
 
