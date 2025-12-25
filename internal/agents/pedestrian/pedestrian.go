@@ -12,6 +12,7 @@ type Pedestrian struct {
 	utils.Agent
 
 	Coords            utils.Point
+	OldCoords         utils.Point
 	MaxSpeed          float64
 	DesiredDirection  utils.Vector
 	DesiredSeparation float64
@@ -152,6 +153,6 @@ func (p *Pedestrian) Deliberate() {
 // Action du piéton
 func (p *Pedestrian) Act() {
 	// Met à jour la position du piéton en fonction de sa vélocité
-	// fmt.Println(p.DesiredDirection)
+	p.OldCoords = p.Coords
 	p.Coords = p.Coords.Translate(p.velocity)
 }

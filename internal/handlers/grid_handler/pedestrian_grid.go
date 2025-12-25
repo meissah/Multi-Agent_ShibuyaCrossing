@@ -103,3 +103,42 @@ func (req UpdatePedestrianRequest) handle(grid *PedestrianGrid) {
 		grid.CellAt(cellX, cellY).Add(req.Pedestrian)
 	}
 }
+
+// Requête pour obtenir les piétons voisins d'un piéton donné.
+type GetNeighborsRequest struct {
+	Request
+
+	Pedestrian *pedestrian.Pedestrian
+	OldX, OldY float64
+	ReplyChan  chan []*pedestrian.Pedestrian
+}
+
+// Récupère les piétons voisins du piéton donné.
+func (req GetNeighborsRequest) handle(grid *PedestrianGrid) {
+	cellX, cellY := grid.CoordsToCellIdx(req.Pedestrian.Coords)
+	neighbors := []*pedestrian.Pedestrian{}
+
+	// Parcourir les cellules voisines
+	for dx := -1; dx <= 1; dx++ {
+		for dy := -1; dy <= 1; dy++ {
+			neighborCell := grid.CellAt(cellX+dx, cellY+dy)
+			if neighborCell == nil {
+				continue
+			}
+
+			if dx == 0 && dy == 0 {
+				// Exclure le piéton lui-même de sa propre cellule
+				for _, p := range *neighborCell {
+					if p != req.Pedestrian {
+						neighbors = append(neighbors, p)
+					}
+				}
+			} else {
+				// Ajouter tous les piétons des cellules voisines
+				neighbors = append(neighbors, *neighborCell...)
+			}
+		}
+	}
+
+	req.ReplyChan <- neighbors
+}
