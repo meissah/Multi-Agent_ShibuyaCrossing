@@ -11,7 +11,8 @@ import (
 func main() {
 
 	//Taille fenetre du jeu (750 pour simu + 400 pour stats)
-	ebiten.SetWindowSize(1150, 750)
+	// Fenêtre agrandie pour afficher correctement l'écran de comparaison
+	ebiten.SetWindowSize(1400, 900)
 
 	//Titre de la fenetre du jeu
 	ebiten.SetWindowTitle("Crossing Simulator")

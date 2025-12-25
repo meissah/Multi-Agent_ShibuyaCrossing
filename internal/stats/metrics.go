@@ -6,7 +6,7 @@ package stats
    - Structures de données pour les métriques des agents et de la simulation
    -> Enregistrement des spawns/destructions d'agents
    - Calcul des statistiques finales (moyennes, min, max)
-   - Sauvegarde des métriques dans un fichier JSON avec nom automatique
+   - Sauvegarde des métriques dans un fichier JSON avec nom automatique ( dans le dossier metrics_data/ )
 */
 
 import (

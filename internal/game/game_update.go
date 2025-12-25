@@ -43,9 +43,12 @@ func (g *Game) UpdateMenu() error {
 
 	// Gérer l'écran de comparaison si activé
 	if g.showComparison {
-		// Clic n'importe où pour fermer
+		// Mettre à jour le hover du bouton refresh
+		g.UpdateComparisonHover(mouseX, mouseY)
+
+		// Gérer les clics
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			g.showComparison = false
+			g.HandleComparisonClick(mouseX, mouseY)
 		}
 		return nil
 	}
@@ -75,9 +78,11 @@ func (g *Game) UpdateMenu() error {
 		if g.compareButton.IsMouseOver {
 			result, err := stats.CompareAllMetrics()
 			if err != nil {
-				g.comparisonText = fmt.Sprintf("Erreur lors de la comparaison:\n%v", err)
+				// Créer un résultat vide avec le message d'erreur
+				g.comparisonResult = &stats.ComparisonResult{}
+				fmt.Printf("Erreur lors de la comparaison: %v\n", err)
 			} else {
-				g.comparisonText = result.FormatComparisonReport()
+				g.comparisonResult = result
 			}
 			g.showComparison = true
 		}

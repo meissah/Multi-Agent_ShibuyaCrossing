@@ -237,3 +237,27 @@ func (cr *ComparisonResult) FormatComparisonReport() string {
 
 	return report
 }
+
+// ClearMetricsFolder vide le dossier metrics_data
+func ClearMetricsFolder() error {
+	metricsDir := "metrics_data"
+
+	// Lire tous les fichiers JSON
+	files, err := filepath.Glob(filepath.Join(metricsDir, "metrics_*.json"))
+	if err != nil {
+		return fmt.Errorf("erreur lecture dossier: %v", err)
+	}
+
+	// Supprimer chaque fichier
+	deletedCount := 0
+	for _, file := range files {
+		if err := os.Remove(file); err != nil {
+			fmt.Printf("⚠️  Erreur suppression %s: %v\n", file, err)
+		} else {
+			deletedCount++
+		}
+	}
+
+	fmt.Printf("✓ %d fichiers de métriques supprimés\n", deletedCount)
+	return nil
+}

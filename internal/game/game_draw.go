@@ -317,10 +317,10 @@ func (g *Game) drawButton(screen *ebiten.Image, btn ui.Button, enabled bool) {
 		textColor = color.RGBA{255, 255, 255, 255}
 
 		// Effet de lueur au survol
-		glowBtn := ebiten.NewImage(int(btn.Rect.W+10), int(btn.Rect.H+10))
+		glowBtn := ebiten.NewImage(int(btn.Rect.W+4), int(btn.Rect.H+4))
 		glowBtn.Fill(color.RGBA{0, 255, 150, 40})
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(btn.Rect.X-5, btn.Rect.Y-5)
+		op.GeoM.Translate(btn.Rect.X-2, btn.Rect.Y-2)
 		screen.DrawImage(glowBtn, op)
 	} else {
 		// Normal activé
