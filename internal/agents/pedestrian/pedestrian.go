@@ -21,8 +21,8 @@ type Pedestrian struct {
 	velocity            utils.Vector
 	syncChan            chan int
 	endChan             chan int
-	pedestriansAround   []Pedestrian
-	repulsionAreasUnder []environment.RepulsionArea
+	pedestriansAround   []*Pedestrian
+	repulsionAreasUnder []*environment.RepulsionArea
 }
 
 // Constructeur de piéton
@@ -92,7 +92,8 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 // Perception du piéton
 // Garde en mémoire les objets environnants pertinents
 func (p *Pedestrian) Percept(env []utils.Object) {
-	p.pedestriansAround = []Pedestrian{}
+	p.pedestriansAround = []*Pedestrian{}
+	p.repulsionAreasUnder = []*environment.RepulsionArea{}
 
 	for _, obj := range env {
 		// Ajouter les piétons proches
@@ -103,13 +104,13 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 				continue
 			}
 
-			p.pedestriansAround = append(p.pedestriansAround, *otherPedestrian)
+			p.pedestriansAround = append(p.pedestriansAround, otherPedestrian)
 		}
 
 		// Ajouter les routes sous le piéton
 		if ra, ok := obj.(*environment.RepulsionArea); ok {
 			if ra.IsPointInside(p.Coords) {
-				p.repulsionAreasUnder = append(p.repulsionAreasUnder, *ra)
+				p.repulsionAreasUnder = append(p.repulsionAreasUnder, ra)
 			}
 		}
 	}
