@@ -84,3 +84,22 @@ func (grid *PedestrianGrid) Start() {
 type Request interface {
 	handle(*PedestrianGrid)
 }
+
+// Requête pour mettre à jour la position d'un piéton dans la grille.
+type UpdatePedestrianRequest struct {
+	Request
+
+	Pedestrian *pedestrian.Pedestrian
+}
+
+// Met à jour la position du piéton dans la grille.
+func (req UpdatePedestrianRequest) handle(grid *PedestrianGrid) {
+	cellX, cellY := grid.CoordsToCellIdx(req.Pedestrian.Coords)
+	oldCellX, oldCellY := grid.CoordsToCellIdx(req.Pedestrian.OldCoords)
+
+	// Changer de cellule si nécessaire
+	if cellX != oldCellX || cellY != oldCellY {
+		grid.CellAt(oldCellX, oldCellY).Remove(req.Pedestrian)
+		grid.CellAt(cellX, cellY).Add(req.Pedestrian)
+	}
+}
