@@ -41,21 +41,8 @@ func (g *Game) UpdateMenu() error {
 	mx, my := ebiten.CursorPosition()
 	mouseX, mouseY := float64(mx), float64(my)
 
-	// Gérer l'écran de comparaison si activé
-	if g.showComparison {
-		// Mettre à jour le hover du bouton refresh
-		g.UpdateComparisonHover(mouseX, mouseY)
-
-		// Gérer les clics
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			g.HandleComparisonClick(mouseX, mouseY)
-		}
-		return nil
-	}
-
 	// Mettre à jour l'état hover des boutons
 	g.validateButton.UpdateHover(mouseX, mouseY)
-	g.compareButton.UpdateHover(mouseX, mouseY)
 
 	// Mettre à jour les sliders (récupère la position du curseur)
 	mousePressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
@@ -72,19 +59,6 @@ func (g *Game) UpdateMenu() error {
 		// Clic sur l'option French
 		if g.frenchRect.Contains(mouseX, mouseY) {
 			g.selectedCrossing = "French"
-		}
-
-		// Clic sur le bouton Comparer
-		if g.compareButton.IsMouseOver {
-			result, err := stats.CompareAllMetrics()
-			if err != nil {
-				// Créer un résultat vide avec le message d'erreur
-				g.comparisonResult = &stats.ComparisonResult{}
-				fmt.Printf("Erreur lors de la comparaison: %v\n", err)
-			} else {
-				g.comparisonResult = result
-			}
-			g.showComparison = true
 		}
 
 		// Clic sur le bouton Valider

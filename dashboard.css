@@ -1,0 +1,189 @@
+/* ========================================
+   RESET & BASE STYLES
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* ========================================
+   LAYOUT CONTAINER
+   ======================================== */
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    font-size: 2.5em;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    color: #aaa;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+button {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+/* ========================================
+   STATS GRID - Cartes de statistiques
+   ======================================== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-card h3 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Rangée de statistiques (Shibuya vs French) */
+.stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.stat-item {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.stat-sub {
+    font-size: 0.8em;
+    color: #999;
+    margin-top: 5px;
+}
+
+/* ========================================
+   COMPARISON CARDS - Cartes de comparaison
+   ======================================== */
+
+.comparison-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-card h2 {
+    margin-bottom: 20px;
+    color: #00d4ff;
+}
+
+/* ========================================
+   CHARTS - Conteneurs de graphiques
+   ======================================== */
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    margin: 20px 0;
+}
+
+/* ========================================
+   STATES - États de chargement et erreurs
+   ======================================== */
+
+.loading {
+    text-align: center;
+    padding: 50px;
+    font-size: 1.2em;
+    color: #00d4ff;
+}
+
+.error {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
+    padding: 20px;
+    border-radius: 8px;
+    color: #ff6b6b;
+    text-align: center;
+}
+
+/* ========================================
+   UTILITIES - Classes utilitaires
+   ======================================== */
+
+.icon {
+    font-size: 1.2em;
+}

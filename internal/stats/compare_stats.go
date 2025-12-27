@@ -252,7 +252,7 @@ func ClearMetricsFolder() error {
 	deletedCount := 0
 	for _, file := range files {
 		if err := os.Remove(file); err != nil {
-			fmt.Printf("⚠️  Erreur suppression %s: %v\n", file, err)
+			fmt.Printf(" Erreur suppression %s: %v\n", file, err)
 		} else {
 			deletedCount++
 		}

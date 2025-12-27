@@ -98,21 +98,6 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 	// Fond dégradé  (bleu-gris foncé)
 	screen.Fill(color.RGBA{25, 30, 40, 255})
 
-	// ══════════════════════════════════════════════════════════
-	// Si on decide de comparer les simulations
-	// ══════════════════════════════════════════════════════════
-	// Si on affiche les résultats de comparaison
-	if g.showComparison {
-		g.DrawComparisonScreen(screen)
-		return
-	}
-
-	// ═══════════════════════════════════════════════════════════
-	// BOUTON COMPARER (en bas du menu)
-	// ═══════════════════════════════════════════════════════════
-
-	g.drawCompareButton(screen, g.compareButton)
-
 	// ═══════════════════════════════════════════════════════════
 	// TITRE PRINCIPAL centré
 	// ═══════════════════════════════════════════════════════════

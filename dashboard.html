@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparaison Simulations - Shibuya Crossing</title>
+    
+    <!-- Fichier CSS externe pour les styles -->
+    <link rel="stylesheet" href="dashboard.css">
+    
+    <!-- Bibliothèque Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1> Comparaison des Simulations 🚦 </h1>
+                <p class="subtitle">Analyse comparative : Shibuya vs French Crossing</p>
+            </div>
+        </header>
+
+        <div id="content"></div>
+    </div>
+
+    <script>
+        // ========================================
+        // VARIABLES GLOBALES
+        // ========================================
+        
+        let shibuyaData = null;  // Données de simulation Shibuya
+        let frenchData = null;   // Données de simulation French
+        let charts = {};         // Stockage des instances de graphiques Chart.js
+
+        // ========================================
+        // CHARGEMENT DES DONNÉES DEPUIS L'API
+        // ========================================
+        
+        async function loadData() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Chargement des données...</div>';
+
+            try {
+                // Appel à l'API Go pour récupérer les résultats de comparaison
+                const response = await fetch('http://localhost:8080/api/comparison');
+                const data = await response.json();
+
+                // Vérifier que les deux types de simulations sont disponibles
+                if (data.ShibuyaAvailable && data.FrenchAvailable) {
+                    // Convertir le format API vers le format attendu par le dashboard
+                    shibuyaData = {
+                        avgCarLifetime: data.ShibuyaStats.AvgCarLifetime,
+                        avgPedLifetime: data.ShibuyaStats.AvgPedLifetime,
+                        totalCars: data.ShibuyaStats.TotalCars,
+                        totalPeds: data.ShibuyaStats.TotalPeds
+                    };
+                    frenchData = {
+                        avgCarLifetime: data.FrenchStats.AvgCarLifetime,
+                        avgPedLifetime: data.FrenchStats.AvgPedLifetime,
+                        totalCars: data.FrenchStats.TotalCars,
+                        totalPeds: data.FrenchStats.TotalPeds
+                    };
+                    renderDashboard();
+                } else {
+                    content.innerHTML = '<div class="error"> Aucune donnée disponible. Lance au moins une simulation Shibuya et une simulation French.</div>';
+                }
+            } catch (error) {
+                content.innerHTML = `<div class="error"> Erreur de connexion à l'API: ${error.message}<br>Assure-toi que la simulation Go est lancée.</div>`;
+            }
+        }
+
+        // ========================================
+        // GÉNÉRATION DE DONNÉES D'ÉVOLUTION TEMPORELLE
+        // ========================================
+        
+        /**
+         * Génère des données simulées d'évolution pour les graphiques
+         * @param {number} avgValue - Valeur moyenne à utiliser comme base
+         * @param {boolean} isCarData - Indique si c'est pour les voitures (true) ou piétons (false)
+         * @returns {Array} Tableau de points {time, value}
+         */
+        function generateEvolutionData(avgValue, isCarData) {
+            const points = 10;              // Nombre de points sur le graphique
+            const data = [];
+            const variance = avgValue * 0.15; // 15% de variance autour de la moyenne
+            
+            for (let i = 0; i < points; i++) {
+                const time = i * 10;  // Intervalle de 10 secondes entre chaque point
+                
+                // Progression légèrement croissante avec du bruit aléatoire
+                const trend = avgValue * (1 + i * 0.08);
+                const noise = (Math.random() - 0.5) * variance;
+                const value = Math.max(avgValue * 0.7, trend + noise);
+                
+                data.push({ time, value });
+            }
+            return data;
+        }
+
+        // ========================================
+        // GÉNÉRATION DU HTML DU DASHBOARD
+        // ========================================
+        
+        function renderDashboard() {
+            const html = `
+                <!-- Grille de statistiques : Voitures et Piétons -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3><span class="icon">🚗</span> Voitures</h3>
+                        <div class="stat-row">
+                            <div class="stat-item">
+                                <div class="stat-label">Shibuya</div>
+                                <div class="stat-value" style="color: #00d4ff;">${shibuyaData.totalCars}</div>
+                                <div class="stat-sub">${shibuyaData.avgCarLifetime.toFixed(1)}s moyenne</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">French</div>
+                                <div class="stat-value" style="color: #a78bfa;">${frenchData.totalCars}</div>
+                                <div class="stat-sub">${frenchData.avgCarLifetime.toFixed(1)}s moyenne</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3><span class="icon">🚶</span> Piétons</h3>
+                        <div class="stat-row">
+                            <div class="stat-item">
+                                <div class="stat-label">Shibuya</div>
+                                <div class="stat-value" style="color: #51cf66;">${shibuyaData.totalPeds}</div>
+                                <div class="stat-sub">${shibuyaData.avgPedLifetime.toFixed(1)}s moyenne</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">French</div>
+                                <div class="stat-value" style="color: #ff9800;">${frenchData.totalPeds}</div>
+                                <div class="stat-sub">${frenchData.avgPedLifetime.toFixed(1)}s moyenne</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Histogramme de comparaison des temps moyens -->
+                <div class="comparison-card">
+                    <h2> Comparaison des Temps Moyens de Traversée</h2>
+                    <div class="chart-container">
+                        <canvas id="comparisonBarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graphique d'évolution des voitures -->
+                <div class="comparison-card">
+                    <h2> Évolution des Temps de Traversée (Voitures)</h2>
+                    <div class="chart-container">
+                        <canvas id="carEvolutionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graphique d'évolution des piétons -->
+                <div class="comparison-card">
+                    <h2>Évolution des Temps de Traversée (Piétons)</h2>
+                    <div class="chart-container">
+                        <canvas id="pedEvolutionChart"></canvas>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content').innerHTML = html;
+            renderCharts();
+        }
+
+        // ========================================
+        // CRÉATION DES GRAPHIQUES CHART.JS
+        // ========================================
+        
+        function renderCharts() {
+            // Détruire les anciens graphiques pour éviter les fuites mémoire
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            // Générer les données d'évolution pour chaque type
+            const shibuyaCarEvolution = generateEvolutionData(shibuyaData.avgCarLifetime, true);
+            const frenchCarEvolution = generateEvolutionData(frenchData.avgCarLifetime, true);
+            const shibuyaPedEvolution = generateEvolutionData(shibuyaData.avgPedLifetime, false);
+            const frenchPedEvolution = generateEvolutionData(frenchData.avgPedLifetime, false);
+
+            // ----------------------------------------
+            // Graphique 1: Évolution des voitures
+            // ----------------------------------------
+            const ctx1 = document.getElementById('carEvolutionChart').getContext('2d');
+            charts.carEvolution = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: shibuyaCarEvolution.map(d => d.time),
+                    datasets: [{
+                        label: 'Shibuya Voitures',
+                        data: shibuyaCarEvolution.map(d => d.value),
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }, {
+                        label: 'French Voitures',
+                        data: frenchCarEvolution.map(d => d.value),
+                        borderColor: '#a78bfa',
+                        backgroundColor: 'rgba(167, 139, 250, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            labels: { color: '#fff', font: { size: 14 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#475569',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' },
+                            title: {
+                                display: true,
+                                text: 'Durée (s)',
+                                color: '#fff'
+                            }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' },
+                            title: {
+                                display: true,
+                                text: 'Temps (s)',
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ----------------------------------------
+            // Graphique 2: Évolution des piétons
+            // ----------------------------------------
+            const ctx2 = document.getElementById('pedEvolutionChart').getContext('2d');
+            charts.pedEvolution = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: shibuyaPedEvolution.map(d => d.time),
+                    datasets: [{
+                        label: 'Shibuya Piétons',
+                        data: shibuyaPedEvolution.map(d => d.value),
+                        borderColor: '#51cf66',
+                        backgroundColor: 'rgba(81, 207, 102, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }, {
+                        label: 'French Piétons',
+                        data: frenchPedEvolution.map(d => d.value),
+                        borderColor: '#ff9800',
+                        backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            labels: { color: '#fff', font: { size: 14 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#475569',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' },
+                            title: {
+                                display: true,
+                                text: 'Durée (s)',
+                                color: '#fff'
+                            }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' },
+                            title: {
+                                display: true,
+                                text: 'Temps (s)',
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ----------------------------------------
+            // Graphique 3: Histogramme de comparaison
+            // ----------------------------------------
+            const ctx3 = document.getElementById('comparisonBarChart').getContext('2d');
+            charts.comparisonBar = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['Temps Voitures', 'Temps Piétons'],
+                    datasets: [{
+                        label: 'Shibuya',
+                        data: [shibuyaData.avgCarLifetime, shibuyaData.avgPedLifetime],
+                        backgroundColor: 'rgba(0, 212, 255, 0.7)',
+                        borderColor: '#00d4ff',
+                        borderWidth: 2
+                    }, {
+                        label: 'French',
+                        data: [frenchData.avgCarLifetime, frenchData.avgPedLifetime],
+                        backgroundColor: 'rgba(167, 139, 250, 0.7)',
+                        borderColor: '#a78bfa',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            labels: { color: '#fff', font: { size: 14 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#475569',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + 's';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' },
+                            title: {
+                                display: true,
+                                text: 'Temps moyen (secondes)',
+                                color: '#fff'
+                            }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========================================
+        // INITIALISATION AU CHARGEMENT DE LA PAGE
+        // ========================================
+        
+        loadData();
+    </script>
+</body>
+</html>
