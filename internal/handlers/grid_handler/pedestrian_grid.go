@@ -1,12 +1,12 @@
 package grid_handler
 
 import (
-	"fmt"
-
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
+// Cellule contenant des piétons.
 type PedestrianCell []*pedestrian.Pedestrian
 
 // Ajoute un piéton à la cellule.
@@ -28,7 +28,7 @@ func (pc *PedestrianCell) Remove(p *pedestrian.Pedestrian) {
 type PedestrianGrid struct {
 	cellSize    float64
 	cells       [][]PedestrianCell
-	requestChan chan utils.Request
+	requestChan chan messaging.GridRequest
 }
 
 // Constructeur de la grille des piétons.
@@ -44,25 +44,24 @@ func NewPedestrianGrid(width, height, cellSize float64) *PedestrianGrid {
 		}
 	}
 
-	fmt.Println(cells)
-
 	return &PedestrianGrid{
 		cellSize:    cellSize,
 		cells:       cells,
-		requestChan: make(chan utils.Request),
+		requestChan: make(chan messaging.GridRequest),
 	}
 }
 
-func (grid PedestrianGrid) RequestChan() chan utils.Request {
+// Channel permettant de communiquer avec la grille, via des requêtes.
+func (grid PedestrianGrid) RequestChan() chan messaging.GridRequest {
 	return grid.requestChan
 }
 
-// Récupère la taille des cellules.
+// Taille des cellules.
 func (grid PedestrianGrid) CellSize() float64 {
 	return grid.cellSize
 }
 
-// Récupère la cellule aux indices donnés.
+// Cellule aux indices donnés.
 func (grid PedestrianGrid) CellAt(cellX, cellY int) *PedestrianCell {
 	if cellX < 0 || cellX >= len(grid.cells) || cellY < 0 || cellY >= len(grid.cells[0]) {
 		return nil
@@ -82,20 +81,14 @@ func (grid PedestrianGrid) CoordsToCellIdx(p utils.Point) (int, int) {
 func (grid *PedestrianGrid) Start() {
 	go func() {
 		for req := range grid.requestChan {
-			if updateReq, ok := req.(utils.UpdateObjectRequest); ok {
-				grid.handleUpdateRequest(updateReq)
-			} else if addReq, ok := req.(utils.AddObjectRequest); ok {
-				grid.handleAddObjectRequest(addReq)
-			} else if neighborsReq, ok := req.(utils.GetNeighborsRequest); ok {
-				grid.handleNeighborRequest(neighborsReq)
-			}
+			req.Handle(grid)
 		}
 	}()
 }
 
 // Ajoute un piéton à la grille.
-func (grid *PedestrianGrid) handleAddObjectRequest(req utils.AddObjectRequest) {
-	ped, ok := req.Object.(*pedestrian.Pedestrian)
+func (grid *PedestrianGrid) AddObject(obj utils.Object) {
+	ped, ok := obj.(*pedestrian.Pedestrian)
 	if !ok {
 		return
 	}
@@ -110,9 +103,8 @@ func (grid *PedestrianGrid) handleAddObjectRequest(req utils.AddObjectRequest) {
 }
 
 // Met à jour la position du piéton dans la grille.
-func (grid *PedestrianGrid) handleUpdateRequest(req utils.UpdateObjectRequest) {
-	// Extraire le piéton de la requête
-	ped, ok := req.Object.(*pedestrian.Pedestrian)
+func (grid *PedestrianGrid) UpdateObject(obj utils.Object) {
+	ped, ok := obj.(*pedestrian.Pedestrian)
 	if !ok {
 		return
 	}
@@ -134,13 +126,13 @@ func (grid *PedestrianGrid) handleUpdateRequest(req utils.UpdateObjectRequest) {
 }
 
 // Récupère les piétons voisins aux coordonnées données.
-func (grid *PedestrianGrid) handleNeighborRequest(req utils.GetNeighborsRequest) {
-	cellX, cellY := grid.CoordsToCellIdx(req.Coords)
+func (grid PedestrianGrid) GetNeighbors(coords utils.Point, radius int) []utils.Object {
+	cellX, cellY := grid.CoordsToCellIdx(coords)
 	neighbors := []utils.Object{}
 
-	// Parcourir les cellules voisines
-	for dx := -1; dx <= 1; dx++ {
-		for dy := -1; dy <= 1; dy++ {
+	// Parcourir les cellules voisines (jusqu'au rayon spécifié)
+	for dx := -radius; dx <= radius; dx++ {
+		for dy := -radius; dy <= radius; dy++ {
 			neighborCell := grid.CellAt(cellX+dx, cellY+dy)
 			if neighborCell == nil {
 				continue
@@ -152,5 +144,5 @@ func (grid *PedestrianGrid) handleNeighborRequest(req utils.GetNeighborsRequest)
 		}
 	}
 
-	req.ReplyChan <- neighbors
+	return neighbors
 }

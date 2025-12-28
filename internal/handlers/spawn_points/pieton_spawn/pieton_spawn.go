@@ -7,6 +7,7 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -19,7 +20,7 @@ type PietonSpawn struct {
 func (g *PietonSpawn) spawnPieton(
 	AgentCountCh <-chan utils.ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
-	gridChan chan utils.Request,
+	gridChan chan messaging.GridRequest,
 	env *[]utils.Object,
 	spawns environment.SpawnAreaCollection,
 	unitVectors []utils.Vector,
@@ -37,7 +38,7 @@ func (g *PietonSpawn) spawnPieton(
 	p.Start(env)
 
 	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: p, SyncChan: syncChan}
-	gridChan <- utils.AddObjectRequest{Object: p}
+	gridChan <- messaging.AddObjectRequest{Object: p}
 }
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
@@ -63,7 +64,6 @@ func (g *PietonSpawn) Start(
 		*utils.NewVector(0, -1),
 		*utils.NewVector(1, 0),
 		*utils.NewVector(-1, 0),
-		*utils.NewVector(0, 0),
 	}
 
 	go func() {

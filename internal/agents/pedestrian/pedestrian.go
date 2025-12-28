@@ -3,6 +3,7 @@ package pedestrian
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -21,13 +22,13 @@ type Pedestrian struct {
 	velocity            utils.Vector
 	syncChan            chan int
 	endChan             chan int
-	gridChan            chan utils.Request
+	gridChan            chan messaging.GridRequest
 	pedestriansAround   []*Pedestrian
 	repulsionAreasUnder []*environment.RepulsionArea
 }
 
 // Constructeur de piéton
-func NewPedestrian(id utils.ObjectID, syncChan chan int, gridChan chan utils.Request) *Pedestrian {
+func NewPedestrian(id utils.ObjectID, syncChan chan int, gridChan chan messaging.GridRequest) *Pedestrian {
 	return &Pedestrian{
 		id:       id,
 		syncChan: syncChan,
@@ -81,7 +82,7 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 
 				p.Act()
 
-				p.gridChan <- utils.UpdateObjectRequest{Object: p}
+				p.gridChan <- messaging.UpdateObjectRequest{Object: p}
 				p.syncChan <- step
 			case <-p.endChan:
 				close(p.endChan)
@@ -109,8 +110,9 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 
 	// Obtenir les piétons voisins via la grille
 	replyChan := make(chan []utils.Object)
-	p.gridChan <- utils.GetNeighborsRequest{
+	p.gridChan <- messaging.GetNeighborsRequest{
 		Coords:    p.Coords,
+		Radius:    1,
 		ReplyChan: replyChan,
 	}
 	neighbors := <-replyChan
