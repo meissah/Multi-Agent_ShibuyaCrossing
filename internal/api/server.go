@@ -1,5 +1,8 @@
 package api
 
+// Serveur API REST pour exposer les métriques de simulation
+// Permet au dashboard HTML de récupérer les stats des simulations
+
 import (
 	"encoding/json"
 	"fmt"
@@ -11,138 +14,158 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
 )
 
-// Server gère l'API HTTP pour exposer les métriques
+// Structure du serveur API
 type Server struct {
 	port int
 }
 
-// NewServer crée un nouveau serveur API
+// Créer un nouveau serveur avec le port spécifié
 func NewServer(port int) *Server {
 	return &Server{port: port}
 }
 
-// Start démarre le serveur HTTP
+// Démarrage du serveur HTTP
 func (s *Server) Start() {
-	// Configuration CORS pour permettre les requêtes depuis React
-	http.HandleFunc("/api/metrics", s.enableCORS(s.handleGetMetrics))
-	http.HandleFunc("/api/comparison", s.enableCORS(s.handleGetComparison))
-	http.HandleFunc("/api/clear", s.enableCORS(s.handleClearMetrics))
+	// Routes disponibles
+	http.HandleFunc("/api/metrics", s.ajouterCORS(s.recupererMetriques))
+	http.HandleFunc("/api/comparison", s.ajouterCORS(s.recupererComparaison))
+	http.HandleFunc("/api/clear", s.ajouterCORS(s.supprimerMetriques))
 
-	addr := fmt.Sprintf(":%d", s.port)
-	log.Printf(" Serveur API démarré sur http://localhost%s", addr)
-	log.Printf(" Endpoints disponibles:")
-	log.Printf("   - GET  http://localhost%s/api/metrics", addr)
-	log.Printf("   - GET  http://localhost%s/api/comparison", addr)
-	log.Printf("   - POST http://localhost%s/api/clear", addr)
+	adresse := fmt.Sprintf(":%d", s.port)
+	log.Printf(" Serveur API lancé sur http://localhost%s", adresse)
+	log.Printf("  Routes API :")
+	log.Printf("    GET  /api/metrics      - Toutes les métriques")
+	log.Printf("    GET  /api/comparison   - Comparaison Shibuya vs French")
+	log.Printf("    POST /api/clear        - Supprimer les métriques")
 
-	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Fatalf("Erreur serveur API: %v", err)
+	if err := http.ListenAndServe(adresse, nil); err != nil {
+		log.Fatalf("Erreur serveur: %v", err)
 	}
 }
 
-// enableCORS ajoute les headers CORS
-func (s *Server) enableCORS(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// Ajouter les headers CORS pour autoriser les requêtes depuis le dashboard
+func (s *Server) ajouterCORS(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-		if r.Method == "OPTIONS" {
+		// Gérer les requêtes OPTIONS (preflight)
+		if req.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		next(w, r)
+		handler(w, req)
 	}
 }
 
-// handleGetMetrics retourne toutes les métriques disponibles
-func (s *Server) handleGetMetrics(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+// ----------------------------------------------------------------
+// Route GET /api/metrics - Récupère toutes les métriques
+// ----------------------------------------------------------------
+func (s *Server) recupererMetriques(w http.ResponseWriter, req *http.Request) {
+	// Vérifier que c'est bien une requête GET
+	if req.Method != "GET" {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Lire tous les fichiers de métriques
-	metricsDir := "metrics_data"
-	files, err := os.ReadDir(metricsDir)
+	// Lire les fichiers de métriques
+	dossierMetrics := "metrics_data"
+	fichiers, err := os.ReadDir(dossierMetrics)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Erreur lecture métriques: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	type MetricFile struct {
-		Filename string              `json:"filename"`
-		Type     string              `json:"type"`
-		Data     stats.AnalysisStats `json:"data"`
+	// Structure pour renvoyer les données
+	type FichierMetrique struct {
+		Nom  string              `json:"filename"`
+		Type string              `json:"type"`
+		Data stats.AnalysisStats `json:"data"`
 	}
 
-	var metrics []MetricFile
+	metriques := []FichierMetrique{}
 
-	for _, file := range files {
-		if filepath.Ext(file.Name()) != ".json" {
+	// Parcourir tous les fichiers JSON
+	for _, fichier := range fichiers {
+		if filepath.Ext(fichier.Name()) != ".json" {
 			continue
 		}
 
-		data, err := os.ReadFile(filepath.Join(metricsDir, file.Name()))
+		chemin := filepath.Join(dossierMetrics, fichier.Name())
+		contenu, err := os.ReadFile(chemin)
 		if err != nil {
 			continue
 		}
 
-		var analysisStats stats.AnalysisStats
-		if err := json.Unmarshal(data, &analysisStats); err != nil {
+		var statsAnalyse stats.AnalysisStats
+		if err := json.Unmarshal(contenu, &statsAnalyse); err != nil {
 			continue
 		}
 
-		// Déterminer le type (shibuya ou french)
-		metricType := "shibuya"
-		if filepath.Base(file.Name())[:len("metrics_French")] == "metrics_French" {
-			metricType = "french"
+		// Identifier le type de crossing
+		typeSimu := "shibuya"
+		if len(fichier.Name()) >= len("metrics_French") {
+			if fichier.Name()[:len("metrics_French")] == "metrics_French" {
+				typeSimu = "french"
+			}
 		}
 
-		metrics = append(metrics, MetricFile{
-			Filename: file.Name(),
-			Type:     metricType,
-			Data:     analysisStats,
+		metriques = append(metriques, FichierMetrique{
+			Nom:  fichier.Name(),
+			Type: typeSimu,
+			Data: statsAnalyse,
 		})
 	}
 
+	// Renvoyer la réponse JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(metrics)
+	json.NewEncoder(w).Encode(metriques)
 }
 
-// handleGetComparison retourne la comparaison entre Shibuya et French
-func (s *Server) handleGetComparison(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+// ----------------------------------------------------------------
+// Route GET /api/comparison - Compare Shibuya et French
+// ----------------------------------------------------------------
+func (s *Server) recupererComparaison(w http.ResponseWriter, req *http.Request) {
+	// Vérifier que c'est bien une requête GET
+	if req.Method != "GET" {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
-	comparison, err := stats.CompareAllMetrics()
+	// Appeler la fonction de comparaison
+	comparaison, err := stats.CompareAllMetrics()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Erreur comparaison: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Renvoyer la comparaison en JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(comparison)
+	json.NewEncoder(w).Encode(comparaison)
 }
 
-// handleClearMetrics supprime toutes les métriques
-func (s *Server) handleClearMetrics(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+// ----------------------------------------------------------------
+// Route POST /api/clear - Supprime toutes les métriques
+// ----------------------------------------------------------------
+func (s *Server) supprimerMetriques(w http.ResponseWriter, req *http.Request) {
+	// Vérifier que c'est bien une requête POST
+	if req.Method != "POST" {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// Supprimer le dossier de métriques
 	if err := stats.ClearMetricsFolder(); err != nil {
 		http.Error(w, fmt.Sprintf("Erreur suppression: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Confirmation de succès
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"status":  "success",
-		"message": "Métriques supprimées avec succès",
+		"message": "Métriques supprimées",
 	})
 }

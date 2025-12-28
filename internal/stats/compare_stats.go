@@ -24,11 +24,11 @@ type ComparisonResult struct {
 
 // AnalysisStats contient les statistiques moyennes
 type AnalysisStats struct {
-	AvgCarLifetime  float64
-	AvgPedLifetime  float64
-	TotalCars       int
-	TotalPeds       int
-	SimulationCount int
+	AvgCarLifetime  float64 `json:"AvgCarLifetime"` // json tags pour les reponses API
+	AvgPedLifetime  float64 `json:"AvgPedLifetime"`
+	TotalCars       int     `json:"TotalCars"`
+	TotalPeds       int     `json:"TotalPeds"`
+	SimulationCount int     `json:"SimulationCount"`
 }
 
 // CompareAllMetrics compare toutes les simulations Shibuya vs French
