@@ -21,16 +21,18 @@ type Pedestrian struct {
 	velocity            utils.Vector
 	syncChan            chan int
 	endChan             chan int
+	gridChan            chan utils.Request
 	pedestriansAround   []*Pedestrian
 	repulsionAreasUnder []*environment.RepulsionArea
 }
 
 // Constructeur de piéton
-func NewPedestrian(id utils.ObjectID, syncChan chan int) *Pedestrian {
+func NewPedestrian(id utils.ObjectID, syncChan chan int, gridChan chan utils.Request) *Pedestrian {
 	return &Pedestrian{
 		id:       id,
 		syncChan: syncChan,
 		endChan:  make(chan int),
+		gridChan: gridChan,
 	}
 }
 
@@ -79,6 +81,7 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 
 				p.Act()
 
+				p.gridChan <- utils.UpdateObjectRequest{Object: p}
 				p.syncChan <- step
 			case <-p.endChan:
 				close(p.endChan)
@@ -96,7 +99,23 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 	p.repulsionAreasUnder = []*environment.RepulsionArea{}
 
 	for _, obj := range env {
-		// Ajouter les piétons proches
+		// Ajouter les routes sous le piéton
+		if ra, ok := obj.(*environment.RepulsionArea); ok {
+			if ra.IsPointInside(p.Coords) {
+				p.repulsionAreasUnder = append(p.repulsionAreasUnder, ra)
+			}
+		}
+	}
+
+	// Obtenir les piétons voisins via la grille
+	replyChan := make(chan []utils.Object)
+	p.gridChan <- utils.GetNeighborsRequest{
+		Coords:    p.Coords,
+		ReplyChan: replyChan,
+	}
+	neighbors := <-replyChan
+
+	for _, obj := range neighbors {
 		if otherPedestrian, ok := obj.(*Pedestrian); ok && otherPedestrian.id != p.id {
 			diff := utils.NewVectorFromPoints(otherPedestrian.Coords, p.Coords)
 			distance := diff.Norm()
@@ -105,13 +124,6 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 			}
 
 			p.pedestriansAround = append(p.pedestriansAround, otherPedestrian)
-		}
-
-		// Ajouter les routes sous le piéton
-		if ra, ok := obj.(*environment.RepulsionArea); ok {
-			if ra.IsPointInside(p.Coords) {
-				p.repulsionAreasUnder = append(p.repulsionAreasUnder, ra)
-			}
 		}
 	}
 }

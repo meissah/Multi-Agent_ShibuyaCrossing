@@ -1,6 +1,8 @@
 package grid_handler
 
 import (
+	"fmt"
+
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -26,7 +28,7 @@ func (pc *PedestrianCell) Remove(p *pedestrian.Pedestrian) {
 type PedestrianGrid struct {
 	cellSize    float64
 	cells       [][]PedestrianCell
-	requestChan chan Request
+	requestChan chan utils.Request
 }
 
 // Constructeur de la grille des piétons.
@@ -42,11 +44,17 @@ func NewPedestrianGrid(width, height, cellSize float64) *PedestrianGrid {
 		}
 	}
 
+	fmt.Println(cells)
+
 	return &PedestrianGrid{
 		cellSize:    cellSize,
 		cells:       cells,
-		requestChan: make(chan Request),
+		requestChan: make(chan utils.Request),
 	}
+}
+
+func (grid PedestrianGrid) RequestChan() chan utils.Request {
+	return grid.requestChan
 }
 
 // Récupère la taille des cellules.
@@ -65,58 +73,52 @@ func (grid PedestrianGrid) CellAt(cellX, cellY int) *PedestrianCell {
 
 // Convertit des coordonnées en indices de cellule.
 func (grid PedestrianGrid) CoordsToCellIdx(p utils.Point) (int, int) {
-	cellX := int(p.X() / grid.cellSize)
-	cellY := int(p.Y() / grid.cellSize)
+	cellX := int((p.X() + 50) / grid.cellSize)
+	cellY := int((p.Y() + 50) / grid.cellSize)
 	return cellX, cellY
 }
 
 // Démarre le gestionnaire de la grille des piétons.
 func (grid *PedestrianGrid) Start() {
-
 	go func() {
 		for req := range grid.requestChan {
-			req.handle(grid)
+			if updateReq, ok := req.(utils.UpdateObjectRequest); ok {
+				grid.handleUpdateRequest(updateReq)
+			} else if neighborsReq, ok := req.(utils.GetNeighborsRequest); ok {
+				grid.handleNeighborRequest(neighborsReq)
+			}
 		}
 	}()
 }
 
-// Requête agissant sur la grille des piétons.
-type Request interface {
-	handle(*PedestrianGrid)
-}
-
-// Requête pour mettre à jour la position d'un piéton dans la grille.
-type UpdatePedestrianRequest struct {
-	Request
-
-	Pedestrian *pedestrian.Pedestrian
-}
-
 // Met à jour la position du piéton dans la grille.
-func (req UpdatePedestrianRequest) handle(grid *PedestrianGrid) {
-	cellX, cellY := grid.CoordsToCellIdx(req.Pedestrian.Coords)
-	oldCellX, oldCellY := grid.CoordsToCellIdx(req.Pedestrian.OldCoords)
+func (grid *PedestrianGrid) handleUpdateRequest(req utils.UpdateObjectRequest) {
+	// Extraire le piéton de la requête
+	ped, ok := req.Object.(*pedestrian.Pedestrian)
+	if !ok {
+		return
+	}
+
+	newCellX, newCellY := grid.CoordsToCellIdx(ped.Coords)
+	oldCellX, oldCellY := grid.CoordsToCellIdx(ped.OldCoords)
 
 	// Changer de cellule si nécessaire
-	if cellX != oldCellX || cellY != oldCellY {
-		grid.CellAt(oldCellX, oldCellY).Remove(req.Pedestrian)
-		grid.CellAt(cellX, cellY).Add(req.Pedestrian)
+	if newCellX != oldCellX || newCellY != oldCellY {
+		oldCell := grid.CellAt(oldCellX, oldCellY)
+		newCell := grid.CellAt(newCellX, newCellY)
+		if oldCell == nil || newCell == nil {
+			return
+		}
+
+		oldCell.Remove(ped)
+		newCell.Add(ped)
 	}
 }
 
-// Requête pour obtenir les piétons voisins d'un piéton donné.
-type GetNeighborsRequest struct {
-	Request
-
-	Pedestrian *pedestrian.Pedestrian
-	OldX, OldY float64
-	ReplyChan  chan []*pedestrian.Pedestrian
-}
-
-// Récupère les piétons voisins du piéton donné.
-func (req GetNeighborsRequest) handle(grid *PedestrianGrid) {
-	cellX, cellY := grid.CoordsToCellIdx(req.Pedestrian.Coords)
-	neighbors := []*pedestrian.Pedestrian{}
+// Récupère les piétons voisins aux coordonnées données.
+func (grid *PedestrianGrid) handleNeighborRequest(req utils.GetNeighborsRequest) {
+	cellX, cellY := grid.CoordsToCellIdx(req.Coords)
+	neighbors := []utils.Object{}
 
 	// Parcourir les cellules voisines
 	for dx := -1; dx <= 1; dx++ {
@@ -126,16 +128,8 @@ func (req GetNeighborsRequest) handle(grid *PedestrianGrid) {
 				continue
 			}
 
-			if dx == 0 && dy == 0 {
-				// Exclure le piéton lui-même de sa propre cellule
-				for _, p := range *neighborCell {
-					if p != req.Pedestrian {
-						neighbors = append(neighbors, p)
-					}
-				}
-			} else {
-				// Ajouter tous les piétons des cellules voisines
-				neighbors = append(neighbors, *neighborCell...)
+			for _, ped := range *neighborCell {
+				neighbors = append(neighbors, ped)
 			}
 		}
 	}
