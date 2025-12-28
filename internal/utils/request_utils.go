@@ -7,6 +7,10 @@ type GetNeighborsRequest struct {
 	ReplyChan chan []Object
 }
 
+type AddObjectRequest struct {
+	Object Object
+}
+
 type UpdateObjectRequest struct {
 	Object Object
 }

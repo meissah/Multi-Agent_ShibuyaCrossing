@@ -84,11 +84,29 @@ func (grid *PedestrianGrid) Start() {
 		for req := range grid.requestChan {
 			if updateReq, ok := req.(utils.UpdateObjectRequest); ok {
 				grid.handleUpdateRequest(updateReq)
+			} else if addReq, ok := req.(utils.AddObjectRequest); ok {
+				grid.handleAddObjectRequest(addReq)
 			} else if neighborsReq, ok := req.(utils.GetNeighborsRequest); ok {
 				grid.handleNeighborRequest(neighborsReq)
 			}
 		}
 	}()
+}
+
+// Ajoute un piéton à la grille.
+func (grid *PedestrianGrid) handleAddObjectRequest(req utils.AddObjectRequest) {
+	ped, ok := req.Object.(*pedestrian.Pedestrian)
+	if !ok {
+		return
+	}
+
+	cellX, cellY := grid.CoordsToCellIdx(ped.Coords)
+	cell := grid.CellAt(cellX, cellY)
+	if cell == nil {
+		return
+	}
+
+	cell.Add(ped)
 }
 
 // Met à jour la position du piéton dans la grille.

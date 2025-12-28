@@ -37,6 +37,7 @@ func (g *PietonSpawn) spawnPieton(
 	p.Start(env)
 
 	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: p, SyncChan: syncChan}
+	gridChan <- utils.AddObjectRequest{Object: p}
 }
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
