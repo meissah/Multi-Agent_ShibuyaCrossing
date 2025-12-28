@@ -6,6 +6,8 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -18,6 +20,7 @@ type PietonSpawn struct {
 func (g *PietonSpawn) spawnPieton(
 	AgentCountCh <-chan utils.ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
+	gridChan chan messaging.GridRequest,
 	env *[]utils.Object,
 	spawns environment.SpawnAreaCollection,
 	unitVectors []utils.Vector,
@@ -26,14 +29,16 @@ func (g *PietonSpawn) spawnPieton(
 	syncChan := make(chan int)
 
 	//cree un nouveau piéton
-	p := pedestrian.NewPedestrian(<-AgentCountCh, syncChan)
+	p := pedestrian.NewPedestrian(<-AgentCountCh, syncChan, gridChan)
 	p.DesiredSeparation = utils.RandomFloatInRange(10.0, 20.0)
 	p.MaxSpeed = .8
 	p.Coords = spawns.RandomPoint()
+	p.OldCoords = p.Coords
 	p.DesiredDirection = unitVectors[utils.RandomIntInRange(0, len(unitVectors)-1)]
 	p.Start(env)
 
 	AgtsSliceCh <- agentslicehandler.AddAgtRequest{Agent: p, SyncChan: syncChan}
+	gridChan <- messaging.AddObjectRequest{Object: p}
 }
 
 // commence la goroutine carspawn, qui introduit des nouvelles voitures de manière autonome au tick du jeu.
@@ -59,15 +64,18 @@ func (g *PietonSpawn) Start(
 		*utils.NewVector(0, -1),
 		*utils.NewVector(1, 0),
 		*utils.NewVector(-1, 0),
-		*utils.NewVector(0, 0),
 	}
 
 	go func() {
+		pedGrid := grid_handler.NewPedestrianGrid(850, 850, 20)
+		pedGrid.Start()
+		gridChan := pedGrid.RequestChan()
+
 		ticker := time.NewTicker(g.SpawnInterval)
 		defer ticker.Stop()
 
 		for range ticker.C {
-			g.spawnPieton(AgentCountCh, AgtsSliceCh, env, spawns, unitVectors)
+			g.spawnPieton(AgentCountCh, AgtsSliceCh, gridChan, env, spawns, unitVectors)
 		}
 	}()
 }

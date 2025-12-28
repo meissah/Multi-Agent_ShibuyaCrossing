@@ -3,6 +3,7 @@ package pedestrian
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -12,6 +13,7 @@ type Pedestrian struct {
 	utils.Agent
 
 	Coords            utils.Point
+	OldCoords         utils.Point
 	MaxSpeed          float64
 	DesiredDirection  utils.Vector
 	DesiredSeparation float64
@@ -20,16 +22,18 @@ type Pedestrian struct {
 	velocity            utils.Vector
 	syncChan            chan int
 	endChan             chan int
-	pedestriansAround   []Pedestrian
-	repulsionAreasUnder []environment.RepulsionArea
+	gridChan            chan messaging.GridRequest
+	pedestriansAround   []*Pedestrian
+	repulsionAreasUnder []*environment.RepulsionArea
 }
 
 // Constructeur de piéton
-func NewPedestrian(id utils.ObjectID, syncChan chan int) *Pedestrian {
+func NewPedestrian(id utils.ObjectID, syncChan chan int, gridChan chan messaging.GridRequest) *Pedestrian {
 	return &Pedestrian{
 		id:       id,
 		syncChan: syncChan,
 		endChan:  make(chan int),
+		gridChan: gridChan,
 	}
 }
 
@@ -78,6 +82,7 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 
 				p.Act()
 
+				p.gridChan <- messaging.UpdateObjectRequest{Object: p}
 				p.syncChan <- step
 			case <-p.endChan:
 				close(p.endChan)
@@ -91,10 +96,28 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 // Perception du piéton
 // Garde en mémoire les objets environnants pertinents
 func (p *Pedestrian) Percept(env []utils.Object) {
-	p.pedestriansAround = []Pedestrian{}
+	p.pedestriansAround = []*Pedestrian{}
+	p.repulsionAreasUnder = []*environment.RepulsionArea{}
 
 	for _, obj := range env {
-		// Ajouter les piétons proches
+		// Ajouter les routes sous le piéton
+		if ra, ok := obj.(*environment.RepulsionArea); ok {
+			if ra.IsPointInside(p.Coords) {
+				p.repulsionAreasUnder = append(p.repulsionAreasUnder, ra)
+			}
+		}
+	}
+
+	// Obtenir les piétons voisins via la grille
+	replyChan := make(chan []utils.Object)
+	p.gridChan <- messaging.GetNeighborsRequest{
+		Coords:    p.Coords,
+		Radius:    1,
+		ReplyChan: replyChan,
+	}
+	neighbors := <-replyChan
+
+	for _, obj := range neighbors {
 		if otherPedestrian, ok := obj.(*Pedestrian); ok && otherPedestrian.id != p.id {
 			diff := utils.NewVectorFromPoints(otherPedestrian.Coords, p.Coords)
 			distance := diff.Norm()
@@ -102,14 +125,7 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 				continue
 			}
 
-			p.pedestriansAround = append(p.pedestriansAround, *otherPedestrian)
-		}
-
-		// Ajouter les routes sous le piéton
-		if ra, ok := obj.(*environment.RepulsionArea); ok {
-			if ra.IsPointInside(p.Coords) {
-				p.repulsionAreasUnder = append(p.repulsionAreasUnder, *ra)
-			}
+			p.pedestriansAround = append(p.pedestriansAround, otherPedestrian)
 		}
 	}
 }
@@ -152,6 +168,6 @@ func (p *Pedestrian) Deliberate() {
 // Action du piéton
 func (p *Pedestrian) Act() {
 	// Met à jour la position du piéton en fonction de sa vélocité
-	// fmt.Println(p.DesiredDirection)
+	p.OldCoords = p.Coords
 	p.Coords = p.Coords.Translate(p.velocity)
 }
