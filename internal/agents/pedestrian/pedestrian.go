@@ -101,6 +101,10 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 	p.repulsionAreasUnder = []*environment.RepulsionArea{}
 
 	for _, obj := range env {
+		if obj == nil || obj.ObjectID() == p.id {
+			continue
+		}
+
 		// Ajouter les routes sous le piéton
 		if ra, ok := obj.(*environment.RepulsionArea); ok {
 			if ra.IsPointInside(p.Coords) {
