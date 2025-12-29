@@ -87,6 +87,7 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 			case <-p.endChan:
 				close(p.endChan)
 				close(p.syncChan)
+				p.gridChan <- messaging.DeleteObjectRequest{Object: p}
 				return
 			}
 		}
