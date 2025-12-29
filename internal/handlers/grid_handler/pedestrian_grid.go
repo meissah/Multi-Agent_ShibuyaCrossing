@@ -162,3 +162,31 @@ func (grid PedestrianGrid) GetNeighbors(coords utils.Point, radius int) []utils.
 
 	return neighbors
 }
+
+// Récupère les piétons dans un rectangle défini par deux points.
+func (grid PedestrianGrid) GetInRect(topLeft utils.Point, bottomRight utils.Point) []utils.Object {
+	startCellX, startCellY := grid.CoordsToCellIdx(topLeft)
+	endCellX, endCellY := grid.CoordsToCellIdx(bottomRight)
+	objects := []utils.Object{}
+
+	// Assurer que les indices sont dans le bon ordre
+	minCellX := utils.IntMin(startCellX, endCellX)
+	maxCellX := utils.IntMax(startCellX, endCellX)
+	minCellY := utils.IntMin(startCellY, endCellY)
+	maxCellY := utils.IntMax(startCellY, endCellY)
+
+	for cellX := minCellX; cellX <= maxCellX; cellX++ {
+		for cellY := minCellY; cellY <= maxCellY; cellY++ {
+			cell := grid.CellAt(cellX, cellY)
+			if cell == nil {
+				continue
+			}
+
+			for _, ped := range *cell {
+				objects = append(objects, ped)
+			}
+		}
+	}
+
+	return objects
+}
