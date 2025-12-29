@@ -1,6 +1,5 @@
-// Ce fichier gère l'affichage de la comparaison des statistiques
-// entre les différentes simulations (Shibuya vs French crossing).
-// Il gère également l'affichage du panneau de métriques en temps réel.
+// Ce fichier gère l'affichage des statistiques
+// Il gère également l'affichage du panneau de métriques en temps réel ( a droite de la simu ).
 package game
 
 import (
@@ -12,47 +11,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
 	"golang.org/x/image/font/basicfont"
 )
-
-// drawCompareButton dessine le bouton de comparaison dans le menu principal
-func (g *Game) drawCompareButton(screen *ebiten.Image, btn ui.Button) {
-	var bgColor, textColor color.Color
-
-	if btn.IsMouseOver {
-		// Hover - gris clair
-		bgColor = color.RGBA{120, 120, 120, 255}
-		textColor = color.RGBA{255, 255, 255, 255}
-
-		// Effet de lueur
-		glowBtn := ebiten.NewImage(int(btn.Rect.W+4), int(btn.Rect.H+4))
-		glowBtn.Fill(color.RGBA{120, 120, 120, 60})
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(btn.Rect.X-2, btn.Rect.Y-2)
-		screen.DrawImage(glowBtn, op)
-	} else {
-		// Normal - gris foncé
-		bgColor = color.RGBA{80, 80, 80, 255}
-		textColor = color.RGBA{255, 255, 255, 255}
-	}
-
-	// Fond du bouton
-	btnImg := ebiten.NewImage(int(btn.Rect.W), int(btn.Rect.H))
-	btnImg.Fill(bgColor)
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(btn.Rect.X, btn.Rect.Y)
-	screen.DrawImage(btnImg, op)
-
-	// Bordure
-	borderColor := color.RGBA{100, 100, 100, 255}
-	g.drawRectBorder(screen, btn.Rect, 3, borderColor)
-
-	// Texte centré
-	textX := int(btn.Rect.X + btn.Rect.W/2 - float64(len(btn.Text)*7)/2)
-	textY := int(btn.Rect.Y + btn.Rect.H/2 + 7)
-	text.Draw(screen, btn.Text, basicfont.Face7x13, textX, textY, textColor)
-}
 
 // drawWrappedText dessine du texte avec retour à la ligne automatique
 func (g *Game) drawWrappedText(screen *ebiten.Image, content string, x, y float64, maxWidth int, col color.Color) {
@@ -161,7 +121,7 @@ func (g *Game) DrawMetricsPanel(screen *ebiten.Image) {
 	currentStats := stats.GlobalMetrics.GetCurrentStats()
 
 	// Position Y courante pour l'affichage
-	currentY := panelY + 55
+	currentY := panelY + 65
 
 	// Section: Informations générales
 	currentY = g.drawMetricSection(screen, panelX+15, currentY, "INFORMATIONS GENERALES")
@@ -202,6 +162,12 @@ func (g *Game) DrawMetricsPanel(screen *ebiten.Image) {
 	currentY = g.drawMetricLine(screen, panelX+20, currentY,
 		"Temps moy. vie:", fmt.Sprintf("%.2f s", avgCarLife), color.RGBA{255, 255, 100, 255})
 
+	// Vitesse moyenne des voitures
+	avgCarSpeed := currentStats["avg_car_speed"].(float64)
+	currentY = g.drawMetricLine(screen, panelX+20, currentY,
+		"Vitesse moyenne:", fmt.Sprintf("%.2f px/s", avgCarSpeed),
+		color.RGBA{255, 200, 100, 255})
+
 	currentY += 15 // Espacement avant la section piétons
 
 	// Section: Piétons
@@ -222,15 +188,6 @@ func (g *Game) DrawMetricsPanel(screen *ebiten.Image) {
 	avgPedLife := currentStats["avg_ped_lifetime"].(float64)
 	currentY = g.drawMetricLine(screen, panelX+20, currentY,
 		"Temps moy. vie:", fmt.Sprintf("%.2f s", avgPedLife), color.RGBA{255, 255, 100, 255})
-
-	// Vitesse maximale d'un piéton
-	maxPedSpeed := currentStats["max_ped_speed"].(float64)
-	maxPedID := currentStats["max_ped_speed_id"].(uint)
-	if maxPedSpeed > 0 {
-		currentY = g.drawMetricLine(screen, panelX+20, currentY,
-			"Vitesse max:", fmt.Sprintf("%.2f px/s (ID:%d)", maxPedSpeed, maxPedID),
-			color.RGBA{255, 100, 255, 255})
-	}
 
 	// Bouton de sauvegarde en bas
 	g.drawSaveButton(screen, panelX+10, panelY+panelHeight-50, panelWidth-20, 40)

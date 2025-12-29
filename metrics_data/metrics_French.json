@@ -1,0 +1,2087 @@
+{
+  "CrossingType": "French",
+  "CarSpawnRate": 9.000000009,
+  "PedestrianSpawnRate": 9.000000009,
+  "StartTime": "2025-12-29T21:39:32.225273+01:00",
+  "EndTime": "2025-12-29T21:39:50.088804+01:00",
+  "CarMetrics": [
+    {
+      "AgentID": 28,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:32.337615+01:00",
+      "DestroyTime": "2025-12-29T21:39:41.29447+01:00",
+      "LifeDuration": 8.956870709,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 30,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:32.448018+01:00",
+      "DestroyTime": "2025-12-29T21:39:40.53187+01:00",
+      "LifeDuration": 8.083867166,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 32,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:32.559122+01:00",
+      "DestroyTime": "2025-12-29T21:39:41.189003+01:00",
+      "LifeDuration": 8.629896458,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 34,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:32.67094+01:00",
+      "DestroyTime": "2025-12-29T21:39:41.574721+01:00",
+      "LifeDuration": 8.903797167,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 38,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:33.004268+01:00",
+      "DestroyTime": "2025-12-29T21:39:41.382369+01:00",
+      "LifeDuration": 8.378117,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 40,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:33.115342+01:00",
+      "DestroyTime": "2025-12-29T21:39:42.296235+01:00",
+      "LifeDuration": 9.18091,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 48,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:33.893099+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.527517+01:00",
+      "LifeDuration": 9.634435458,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 50,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:34.004221+01:00",
+      "DestroyTime": "2025-12-29T21:39:42.778995+01:00",
+      "LifeDuration": 8.774789791,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 52,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:34.115331+01:00",
+      "DestroyTime": "2025-12-29T21:39:42.814401+01:00",
+      "LifeDuration": 8.699086041,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 59,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:34.781393+01:00",
+      "DestroyTime": "2025-12-29T21:39:42.778998+01:00",
+      "LifeDuration": 7.997618875,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 62,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:35.004278+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.877961+01:00",
+      "LifeDuration": 8.873699458,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 65,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:35.226105+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.421451+01:00",
+      "LifeDuration": 8.195361667,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 71,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:35.781405+01:00",
+      "DestroyTime": "2025-12-29T21:39:44.178646+01:00",
+      "LifeDuration": 8.397256334,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 73,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:35.893+01:00",
+      "DestroyTime": "2025-12-29T21:39:44.466475+01:00",
+      "LifeDuration": 8.573490708,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 75,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:36.003791+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.421459+01:00",
+      "LifeDuration": 7.417681625,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 80,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:36.448734+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.638469+01:00",
+      "LifeDuration": 9.189751333,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 82,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:36.559102+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.522319+01:00",
+      "LifeDuration": 8.96323325,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 85,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:36.782066+01:00",
+      "DestroyTime": "2025-12-29T21:39:44.072342+01:00",
+      "LifeDuration": 7.290289333,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 90,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:37.226481+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.883693+01:00",
+      "LifeDuration": 8.657226875,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 92,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:37.336911+01:00",
+      "DestroyTime": "2025-12-29T21:39:47.034097+01:00",
+      "LifeDuration": 9.697203125,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 95,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:37.559802+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.094474+01:00",
+      "LifeDuration": 8.534687209,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 101,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:38.11539+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.441693+01:00",
+      "LifeDuration": 8.326318084,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 104,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:38.337084+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.106689+01:00",
+      "LifeDuration": 9.769622083,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 109,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:38.782047+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.494774+01:00",
+      "LifeDuration": 7.712740917,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 112,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:39.00405+01:00",
+      "DestroyTime": "2025-12-29T21:39:47.502535+01:00",
+      "LifeDuration": 8.498500625,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 116,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:39.337575+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.52288+01:00",
+      "LifeDuration": 9.185321458,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 118,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:39.448188+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.430872+01:00",
+      "LifeDuration": 8.982700084,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 121,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:39.670911+01:00",
+      "DestroyTime": "2025-12-29T21:39:47.086177+01:00",
+      "LifeDuration": 7.415280042,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 127,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:40.225725+01:00",
+      "DestroyTime": "2025-12-29T21:39:49.055206+01:00",
+      "LifeDuration": 8.829497084,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 130,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:40.4487+01:00",
+      "DestroyTime": "2025-12-29T21:39:49.583449+01:00",
+      "LifeDuration": 9.134765459,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 132,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:40.560192+01:00",
+      "DestroyTime": "2025-12-29T21:39:49.705089+01:00",
+      "LifeDuration": 9.144918959,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 134,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:40.670903+01:00",
+      "DestroyTime": "2025-12-29T21:39:49.105247+01:00",
+      "LifeDuration": 8.434359417,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 140,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:41.22562+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 142,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:41.337387+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 144,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:41.447879+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 148,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:41.781266+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 155,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:42.337167+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 157,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:42.447958+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 159,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:42.559808+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 165,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:43.115393+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 167,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:43.226469+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 169,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:43.337137+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 173,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:43.781987+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 175,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:43.892421+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 180,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:44.337251+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 184,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:44.670894+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 187,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:44.892473+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 191,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:45.115184+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 193,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:45.225584+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 197,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:45.670898+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 200,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:45.781442+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 202,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:46.003676+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 205,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:46.226509+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 210,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:46.670446+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 213,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:46.782072+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 218,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:47.337336+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 221,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:47.448715+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 223,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:47.558803+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 228,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:48.00365+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 229,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:48.115319+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 234,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:48.448714+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 237,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:48.670873+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 239,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:48.782031+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 243,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:49.226178+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 246,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:49.337597+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 247,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:49.448658+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 252,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:49.893334+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 255,
+      "AgentType": "car",
+      "SpawnTime": "2025-12-29T21:39:50.004258+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0
+    }
+  ],
+  "PedestrianMetrics": [
+    {
+      "AgentID": 29,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:32.33764+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 31,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:32.448027+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 33,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:32.559126+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 35,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:32.67095+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 36,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:32.782034+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.112473+01:00",
+      "LifeDuration": 13.330463125,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 37,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:32.892461+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.534247+01:00",
+      "LifeDuration": 13.641810375,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 39,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.004288+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 41,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.115352+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.778029+01:00",
+      "LifeDuration": 12.662700708,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 42,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.225838+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 43,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.336854+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 44,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.448767+01:00",
+      "DestroyTime": "2025-12-29T21:39:34.117791+01:00",
+      "LifeDuration": 0.669025291,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 45,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.559112+01:00",
+      "DestroyTime": "2025-12-29T21:39:47.887834+01:00",
+      "LifeDuration": 14.328748708,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 46,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.67092+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 47,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.78201+01:00",
+      "DestroyTime": "2025-12-29T21:39:34.501458+01:00",
+      "LifeDuration": 0.719449,
+      "Direction": "South",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 49,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:33.893108+01:00",
+      "DestroyTime": "2025-12-29T21:39:38.404122+01:00",
+      "LifeDuration": 4.511022375,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 51,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.004228+01:00",
+      "DestroyTime": "2025-12-29T21:39:34.621995+01:00",
+      "LifeDuration": 0.617768,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 53,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.115352+01:00",
+      "DestroyTime": "2025-12-29T21:39:35.01057+01:00",
+      "LifeDuration": 0.895219708,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 54,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.225845+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 55,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.337594+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 56,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.448145+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 57,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.559175+01:00",
+      "DestroyTime": "2025-12-29T21:39:35.454747+01:00",
+      "LifeDuration": 0.895573333,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 58,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.670978+01:00",
+      "DestroyTime": "2025-12-29T21:39:47.625755+01:00",
+      "LifeDuration": 12.954801125,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 60,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.781489+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 61,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:34.892707+01:00",
+      "DestroyTime": "2025-12-29T21:39:34.975543+01:00",
+      "LifeDuration": 0.082835625,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 63,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.004282+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 64,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.115093+01:00",
+      "DestroyTime": "2025-12-29T21:39:40.206984+01:00",
+      "LifeDuration": 5.091900083,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 66,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.226115+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 67,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.337255+01:00",
+      "DestroyTime": "2025-12-29T21:39:49.190033+01:00",
+      "LifeDuration": 13.852803250000001,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 68,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.448704+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 69,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.559819+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 70,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.670464+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 72,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.781422+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 74,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:35.89301+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 76,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.003802+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.432412+01:00",
+      "LifeDuration": 12.428633167,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 77,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.115328+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 78,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.225646+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 79,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.337442+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 81,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.448748+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 83,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.559147+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 84,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.670502+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 86,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.782089+01:00",
+      "DestroyTime": "2025-12-29T21:39:38.174572+01:00",
+      "LifeDuration": 1.392485041,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 87,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:36.893216+01:00",
+      "DestroyTime": "2025-12-29T21:39:37.514515+01:00",
+      "LifeDuration": 0.621300292,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 88,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.004262+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 89,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.114971+01:00",
+      "DestroyTime": "2025-12-29T21:39:38.315748+01:00",
+      "LifeDuration": 1.200779,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 91,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.226492+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 93,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.336932+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 94,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.448209+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 96,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.559808+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 97,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.670892+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 98,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.782018+01:00",
+      "DestroyTime": "2025-12-29T21:39:38.016548+01:00",
+      "LifeDuration": 0.234530375,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 99,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:37.892146+01:00",
+      "DestroyTime": "2025-12-29T21:39:37.998829+01:00",
+      "LifeDuration": 0.106684916,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 100,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.003888+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 102,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.11541+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 103,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.226524+01:00",
+      "DestroyTime": "2025-12-29T21:39:38.68032+01:00",
+      "LifeDuration": 0.4537975,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 105,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.337093+01:00",
+      "DestroyTime": "2025-12-29T21:39:39.671999+01:00",
+      "LifeDuration": 1.334908917,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 106,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.448691+01:00",
+      "DestroyTime": "2025-12-29T21:39:38.556959+01:00",
+      "LifeDuration": 0.108268459,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 107,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.55917+01:00",
+      "DestroyTime": "2025-12-29T21:39:38.891162+01:00",
+      "LifeDuration": 0.331992667,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 108,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.670864+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 110,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.782061+01:00",
+      "DestroyTime": "2025-12-29T21:39:39.872341+01:00",
+      "LifeDuration": 1.0902815829999999,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 111,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:38.892082+01:00",
+      "DestroyTime": "2025-12-29T21:39:39.796142+01:00",
+      "LifeDuration": 0.904061458,
+      "Direction": "South",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 113,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.004059+01:00",
+      "DestroyTime": "2025-12-29T21:39:44.414474+01:00",
+      "LifeDuration": 5.410424541,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 114,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.11539+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 115,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.225812+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 117,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.337581+01:00",
+      "DestroyTime": "2025-12-29T21:39:40.39911+01:00",
+      "LifeDuration": 1.0615307920000001,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 119,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.448197+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 120,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.559781+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.6909453409657554
+    },
+    {
+      "AgentID": 122,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.670922+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 123,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.781385+01:00",
+      "DestroyTime": "2025-12-29T21:39:40.153463+01:00",
+      "LifeDuration": 0.372078292,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 124,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:39.892463+01:00",
+      "DestroyTime": "2025-12-29T21:39:40.04873+01:00",
+      "LifeDuration": 0.156267125,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 125,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.003737+01:00",
+      "DestroyTime": "2025-12-29T21:39:40.452843+01:00",
+      "LifeDuration": 0.449107042,
+      "Direction": "South",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 126,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.115355+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 128,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.225735+01:00",
+      "DestroyTime": "2025-12-29T21:39:40.486021+01:00",
+      "LifeDuration": 0.260285875,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 129,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.336829+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 131,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.448715+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 133,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.56021+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 135,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.670918+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 136,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.781575+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 137,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:40.893144+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 138,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.00426+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 139,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.11472+01:00",
+      "DestroyTime": "2025-12-29T21:39:41.312447+01:00",
+      "LifeDuration": 0.197727541,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 141,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.225631+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 143,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.337396+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 145,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.447897+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 146,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.558991+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 147,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.670834+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.242317+01:00",
+      "LifeDuration": 3.571489791,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 149,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.781297+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 150,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:41.893181+01:00",
+      "DestroyTime": "2025-12-29T21:39:41.963645+01:00",
+      "LifeDuration": 0.070464,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 151,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.003823+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 152,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.115345+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.15665+01:00",
+      "LifeDuration": 1.041306875,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 153,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.226508+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 154,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.337153+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 156,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.447921+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.156651+01:00",
+      "LifeDuration": 0.708731792,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 158,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.559787+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.02728275160765966
+    },
+    {
+      "AgentID": 160,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.670911+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.297816+01:00",
+      "LifeDuration": 0.626906542,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 161,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.781237+01:00",
+      "DestroyTime": "2025-12-29T21:39:43.930766+01:00",
+      "LifeDuration": 1.149531,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 162,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:42.893117+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 163,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.004248+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 164,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.115346+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 166,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.226456+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 168,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.337115+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 170,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.448676+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 171,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.559791+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 172,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.669881+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 174,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.782012+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 176,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:43.892446+01:00",
+      "DestroyTime": "2025-12-29T21:39:44.001758+01:00",
+      "LifeDuration": 0.109312083,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 177,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.003439+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.27773+01:00",
+      "LifeDuration": 1.274294208,
+      "Direction": "South",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 178,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.115143+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0
+    },
+    {
+      "AgentID": 179,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.226458+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 181,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.337283+01:00",
+      "DestroyTime": "2025-12-29T21:39:44.696515+01:00",
+      "LifeDuration": 0.359232,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 182,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.448673+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 183,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.559279+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 185,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.670907+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.13704+01:00",
+      "LifeDuration": 0.466133625,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 186,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.782031+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 188,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:44.892519+01:00",
+      "DestroyTime": "2025-12-29T21:39:47.244714+01:00",
+      "LifeDuration": 2.352199917,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 189,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.003644+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 190,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.115144+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 192,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.225573+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 194,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.337433+01:00",
+      "DestroyTime": "2025-12-29T21:39:45.760384+01:00",
+      "LifeDuration": 0.422951583,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 195,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.448686+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.638858+01:00",
+      "LifeDuration": 3.1901777080000002,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.6271177300212566
+    },
+    {
+      "AgentID": 196,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.558785+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.477428+01:00",
+      "LifeDuration": 0.918644709,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 198,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.670912+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 199,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.781414+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 201,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:45.893108+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 203,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.003691+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 204,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.114578+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 206,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.226533+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 207,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.33659+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 208,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.44844+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.635378+01:00",
+      "LifeDuration": 0.186937584,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 209,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.559075+01:00",
+      "DestroyTime": "2025-12-29T21:39:46.946139+01:00",
+      "LifeDuration": 0.387065292,
+      "Direction": "West",
+      "MaxSpeed": 0.7384102946778875
+    },
+    {
+      "AgentID": 211,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.670457+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 212,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.782024+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 214,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:46.892576+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 215,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.003751+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 216,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.115327+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.3124062833706358
+    },
+    {
+      "AgentID": 217,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.225799+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 219,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.337354+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.017994+01:00",
+      "LifeDuration": 0.680640958,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 220,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.448677+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "stationnaire",
+      "MaxSpeed": 0.1052970032867135
+    },
+    {
+      "AgentID": 222,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.558784+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000003
+    },
+    {
+      "AgentID": 224,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.670864+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.955379+01:00",
+      "LifeDuration": 1.284517375,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 225,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.781486+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 226,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:47.892714+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 227,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.003633+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.035467+01:00",
+      "LifeDuration": 0.031834084,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 230,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.115343+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 231,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.225617+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 232,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.336543+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 233,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.448695+01:00",
+      "DestroyTime": "2025-12-29T21:39:48.688918+01:00",
+      "LifeDuration": 0.24022375,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 235,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.559763+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 236,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.670856+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 238,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.781985+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 240,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:48.89316+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 241,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.004231+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 242,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.115313+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "East",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 244,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.226193+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 245,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.337552+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 248,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.448675+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 249,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.559779+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8000000000000002
+    },
+    {
+      "AgentID": 250,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.670909+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 251,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.781969+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "North",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 253,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:49.893369+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "South",
+      "MaxSpeed": 0.8
+    },
+    {
+      "AgentID": 254,
+      "AgentType": "pedestrian",
+      "SpawnTime": "2025-12-29T21:39:50.004226+01:00",
+      "DestroyTime": "0001-01-01T00:00:00Z",
+      "LifeDuration": 0,
+      "Direction": "West",
+      "MaxSpeed": 0.5531042169722863
+    }
+  ],
+  "AvgCarLifetime": 8.6394779310625,
+  "AvgPedestrianLife": 2.6687143427358486,
+  "TotalCars": 68,
+  "TotalPedestrians": 160,
+  "MinCarLifetime": 7.290289333,
+  "MaxCarLifetime": 9.769622083,
+  "MinPedestrianLife": 0.031834084,
+  "MaxPedestrianLife": 14.328748708,
+  "MaxPedestrianSpeed": 0.8000000000000003,
+  "MaxPedestrianSpeedID": 37,
+  "AvgCarSpeed": 1.7653600357767096,
+  "MaxCarSpeed": 2,
+  "MinCarSpeed": 0.20253150309876236,
+  "CarsByDirection": {
+    "North": 37,
+    "South": 31
+  },
+  "PedestriansByDirection": {
+    "East": 31,
+    "North": 40,
+    "South": 24,
+    "West": 37,
+    "stationnaire": 28
+  }
+}

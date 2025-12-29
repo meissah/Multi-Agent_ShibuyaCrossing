@@ -12,6 +12,7 @@ import (
 // on a besoin d'une durée pour connaitre la frequence d'introduction d'une voiture
 type PietonSpawn struct {
 	SpawnInterval time.Duration
+	stopChan      chan bool // pour arrêter proprement le spawner ( quand on cliquer sur le bouton retour au menu )
 }
 
 // fonction permettant de creer une seule nouvelle voiture
@@ -41,7 +42,10 @@ func (g *PietonSpawn) Start(
 	AgentCountCh <-chan utils.ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
 	env *[]utils.Object,
-) {
+) chan bool {
+	// Créer le channel d'arrêt
+	g.stopChan = make(chan bool)
+
 	spawns := environment.SpawnAreaCollection{
 		&environment.SpawnArea{X: 245, Y: -50, Width: 55, Height: 50},
 		&environment.SpawnArea{X: 450, Y: -50, Width: 55, Height: 50},
@@ -66,8 +70,18 @@ func (g *PietonSpawn) Start(
 		ticker := time.NewTicker(g.SpawnInterval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			g.spawnPieton(AgentCountCh, AgtsSliceCh, env, spawns, unitVectors)
+		for {
+			select {
+			case <-ticker.C:
+				// Spawn normal d'un piéton
+				g.spawnPieton(AgentCountCh, AgtsSliceCh, env, spawns, unitVectors)
+			case <-g.stopChan:
+				// Signal d'arrêt reçu, on termine la goroutine
+				return
+			}
 		}
 	}()
+
+	// Retourner le channel pour que Game puisse l'arrêter
+	return g.stopChan
 }

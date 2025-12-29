@@ -204,29 +204,72 @@ func (g *Game) handleBackButton() bool {
 	return false
 }
 
-// cleanupSimulation nettoie les ressources de la simulation
+// cleanupSimulation nettoie complètement les ressources de la simulation ( quand on retourne au menu avec le bouton retour )
 func (g *Game) cleanupSimulation() {
-	// Envoyer un signal de fin à tous les agents
+	fmt.Println("Nettoyage de la simulation ")
+
+	// Arrêter tous les spawners
+	// Cela empêche la création de nouveaux agents pendant le nettoyage
+
+	if g.carSpawnerStop != nil {
+		close(g.carSpawnerStop)
+		g.carSpawnerStop = nil
+	}
+	if g.pedSpawnerStop != nil {
+		close(g.pedSpawnerStop)
+		g.pedSpawnerStop = nil
+	}
+	fmt.Println(" Spawners arrêtés")
+
+	// Attendre un peu que les derniers spawns se terminent ( pour etre sur nettoyer proprement )
+	time.Sleep(200 * time.Millisecond)
+
+	// Envoyer signal de fin à tous les agents existants
 	for _, agt := range g.Agents {
 		select {
 		case agt.EndChan() <- 1:
+			// Signal envoyé avec succès
 		default:
+			// Le channel est peut-être déjà fermé, on ignore
 		}
 	}
 
-	// Réinitialiser les slices
-	g.Agents = nil
-	g.Objets = nil
+	// Attendre un peu que les goroutines se terminent proprement
+	time.Sleep(100 * time.Millisecond)
 
 	// Nettoyer les channels de synchronisation
 	g.syncChansAgt.Range(func(key, value interface{}) bool {
+		// Fermer le channel si possible
+		if ch, ok := value.(chan int); ok {
+			select {
+			case <-ch: // Vider le channel
+			default:
+			}
+		}
 		g.syncChansAgt.Delete(key)
 		return true
 	})
 
-	// Réinitialiser le compteur d'objets
-	g.ObjectCount = 0
+	// Réinitialiser complètement les slices
+	g.Agents = make([]Agent, 0)
+	g.Objets = make([]Object, 0)
+
+	// Remettre les objets persistants (feux de circulation)
+	// Important : on recrée une nouvelle slice, pas de réutilisation
+	for _, obj := range g.PersistentObjets {
+		g.Objets = append(g.Objets, obj)
+	}
+
+	// Réinitialiser les compteurs
+	g.ObjectCount = ObjectID(len(g.Objets))
 	g.step = 0
 
-	fmt.Println("Simulation finie + nettoyée")
+	// Force le garbage collector à nettoyer
+	runtime.GC() // permet de libérer la mémoire des goroutines terminées
+
+	// test debug
+	fmt.Println("Simulation nettoyée complètement")
+	fmt.Printf(" Agents actifs: %d\n", len(g.Agents))
+	fmt.Printf("  Objets dans la scène: %d\n", len(g.Objets))
+	fmt.Printf("  Goroutines restantes: %d\n", runtime.NumGoroutine())
 }

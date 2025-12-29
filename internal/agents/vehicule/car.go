@@ -414,6 +414,10 @@ func (c *Car) Deliberate() {
 }
 
 func (c *Car) Act() {
+	// Enregistrer la vitesse pour les statistiques
+	if c.Speed > 0 {
+		stats.RecordCarSpeed(uint(c.ID), c.Speed)
+	}
 }
 
 func (c *Car) Type() string {

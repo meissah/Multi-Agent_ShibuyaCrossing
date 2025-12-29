@@ -55,10 +55,10 @@ h1 {
 }
 
 /* ========================================
-   BUTTONS
+   BOUTON DE TÉLÉCHARGEMENT PDF
    ======================================== */
 
-button {
+.download-btn {
     background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
     color: #fff;
     border: none;
@@ -67,15 +67,84 @@ button {
     font-size: 1em;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
 }
 
-button:hover {
+.download-btn:hover {
     transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
+}
+
+.download-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* ========================================
-   STATS GRID - Cartes de statistiques
+   PANNEAU DES PARAMÈTRES
+   ======================================== */
+
+.parameters-panel {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.parameters-panel h2 {
+    color: #00d4ff;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.parameters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.param-card {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.param-card h3 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.param-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.param-item:last-child {
+    border-bottom: none;
+}
+
+.param-label {
+    color: #aaa;
+    font-size: 0.9em;
+}
+
+.param-value {
+    color: #00d4ff;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* ========================================
+   STATS GRID
    ======================================== */
 
 .stats-grid {
@@ -101,7 +170,6 @@ button:hover {
     gap: 10px;
 }
 
-/* Rangée de statistiques (Shibuya vs French) */
 .stat-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -133,7 +201,7 @@ button:hover {
 }
 
 /* ========================================
-   COMPARISON CARDS - Cartes de comparaison
+   COMPARISON CARDS
    ======================================== */
 
 .comparison-card {
@@ -151,7 +219,7 @@ button:hover {
 }
 
 /* ========================================
-   CHARTS - Conteneurs de graphiques
+   CHARTS
    ======================================== */
 
 .chart-container {
@@ -161,7 +229,7 @@ button:hover {
 }
 
 /* ========================================
-   STATES - États de chargement et erreurs
+   ÉTATS (LOADING/ERROR)
    ======================================== */
 
 .loading {
@@ -181,7 +249,7 @@ button:hover {
 }
 
 /* ========================================
-   UTILITIES - Classes utilitaires
+   UTILITIES
    ======================================== */
 
 .icon {

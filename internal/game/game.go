@@ -25,7 +25,7 @@ type Game struct {
 	Agents []Agent
 	Objets []Object
 
-	//PersistentObjets []Object // pour l'affichage persistent des feux
+	PersistentObjets []Object // pour l'affichage persistent des feux
 
 	// État actuel (menu ou simulation)
 	State  config.GameState        // État actuel du jeu si menu ou simulation
@@ -56,6 +56,10 @@ type Game struct {
 
 	// Cote statistiques
 	saveButtonPressed bool // Pour éviter les clics multiples sur le bouton de sauvegarde des métriques
+
+	// pour arreter les spawners à la fin de la simulation ( c'est a dire quand on clique sur le bouton retour au menu )
+	carSpawnerStop chan bool
+	pedSpawnerStop chan bool
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -109,7 +113,7 @@ func NewGame() *Game {
 		tlVisu := trafficlight.NewTrafficLightObject(cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
 
 		g.Objets = append(g.Objets, tlVisu)
-		//g.PersistentObjets = append(g.PersistentObjets, tlVisu)
+		g.PersistentObjets = append(g.PersistentObjets, tlVisu)
 
 		// 2. Logique
 		tlLogic := trafficlight.NewTrafficLight(cfg.id, 1*time.Hour, 1*time.Hour)
@@ -157,11 +161,12 @@ func (g *Game) InitSimulation() {
 	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
 	g.generateRepulsionAreas()
 
-	//lance les goroutines autonome de creation de voitures et pietons
+	// Lancer les spawners et GARDER leurs channels d'arrêt
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
-	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
-	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // initialise la structure de spawn de voiture
-	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
+	g.pedSpawnerStop = pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
+
+	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate}
+	g.carSpawnerStop = carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
 }
 
 // Génère les zones de repulsion pour les piétons (zones où ils ne doivent pas entrer)

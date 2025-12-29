@@ -7,6 +7,7 @@ package stats
    -> Enregistrement des spawns/destructions d'agents
    - Calcul des statistiques finales (moyennes, min, max)
    - Sauvegarde des métriques dans un fichier JSON avec nom automatique ( dans le dossier metrics_data/ )
+   ( pour une meme simu l'ancien json est écrasé, le nouveau prend la place )
 */
 
 import (
@@ -28,7 +29,6 @@ type AgentMetrics struct {
 	DestroyTime  time.Time
 	LifeDuration float64 // en secondes
 	Direction    string
-	MaxSpeed     float64 // Vitesse maximale atteinte (surtout pour piétons)
 }
 
 // SimulationMetrics contient toutes les métriques de la simulation
@@ -49,8 +49,10 @@ type SimulationMetrics struct {
 	// Statistiques globales (calculées à la fin)
 	AvgCarLifetime    float64
 	AvgPedestrianLife float64
-	TotalCars         int
-	TotalPedestrians  int
+
+	TotalCars        int
+	TotalPedestrians int
+
 	MinCarLifetime    float64
 	MaxCarLifetime    float64
 	MinPedestrianLife float64
@@ -59,6 +61,15 @@ type SimulationMetrics struct {
 	// Vitesse maximale des piétons
 	MaxPedestrianSpeed   float64
 	MaxPedestrianSpeedID uint
+
+	// Pour calculer la vitesse moyenne des voitures
+	AvgCarSpeed float64 // Vitesse moyenne des voitures
+	MaxCarSpeed float64 // Vitesse maximale atteinte
+	MinCarSpeed float64 // Vitesse minimale enregistrée
+
+	// Pour calculer la moyenne progressivement
+	totalCarSpeedSum    float64
+	carSpeedSampleCount int
 
 	// Métriques par direction
 	CarsByDirection        map[string]int
@@ -164,20 +175,37 @@ func RecordPedestrianSpeed(pedID uint, speed float64) {
 	GlobalMetrics.mu.Lock()
 	defer GlobalMetrics.mu.Unlock()
 
-	// Trouver le piéton et mettre à jour sa vitesse max
-	for i := range GlobalMetrics.PedestrianMetrics {
-		if GlobalMetrics.PedestrianMetrics[i].AgentID == pedID {
-			if speed > GlobalMetrics.PedestrianMetrics[i].MaxSpeed {
-				GlobalMetrics.PedestrianMetrics[i].MaxSpeed = speed
-			}
-			break
-		}
-	}
-
 	// Mettre à jour le record global
 	if speed > GlobalMetrics.MaxPedestrianSpeed {
 		GlobalMetrics.MaxPedestrianSpeed = speed
 		GlobalMetrics.MaxPedestrianSpeedID = pedID
+	}
+}
+
+// RecordCarSpeed enregistre la vitesse d'une voiture
+// À appeler régulièrement depuis car.Act()
+func RecordCarSpeed(carID uint, speed float64) {
+	if GlobalMetrics == nil {
+		return
+	}
+	GlobalMetrics.mu.Lock()
+	defer GlobalMetrics.mu.Unlock()
+
+	// Mettre à jour les statistiques de vitesse
+	GlobalMetrics.totalCarSpeedSum += speed
+	GlobalMetrics.carSpeedSampleCount++
+
+	// Mettre à jour min/max
+	if GlobalMetrics.carSpeedSampleCount == 1 {
+		GlobalMetrics.MinCarSpeed = speed
+		GlobalMetrics.MaxCarSpeed = speed
+	} else {
+		if speed < GlobalMetrics.MinCarSpeed {
+			GlobalMetrics.MinCarSpeed = speed
+		}
+		if speed > GlobalMetrics.MaxCarSpeed {
+			GlobalMetrics.MaxCarSpeed = speed
+		}
 	}
 }
 
@@ -187,6 +215,11 @@ func (sm *SimulationMetrics) CalculateStatistics() {
 	defer sm.mu.Unlock()
 
 	sm.EndTime = time.Now()
+
+	// Calculer la vitesse moyenne des voitures
+	if sm.carSpeedSampleCount > 0 {
+		sm.AvgCarSpeed = sm.totalCarSpeedSum / float64(sm.carSpeedSampleCount)
+	}
 
 	// Calculer les statistiques des voitures
 	var totalCarLife float64
@@ -240,6 +273,12 @@ func (sm *SimulationMetrics) GetCurrentStats() map[string]interface{} {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
+	// Calculer la vitesse moyenne actuelle
+	avgCarSpeed := 0.0
+	if sm.carSpeedSampleCount > 0 {
+		avgCarSpeed = sm.totalCarSpeedSum / float64(sm.carSpeedSampleCount)
+	}
+
 	// Calculer les moyennes actuelles
 	var totalCarLife float64
 	validCars := 0
@@ -279,23 +318,21 @@ func (sm *SimulationMetrics) GetCurrentStats() map[string]interface{} {
 		"simulation_duration":   time.Since(sm.StartTime).Seconds(),
 		"max_ped_speed":         sm.MaxPedestrianSpeed,
 		"max_ped_speed_id":      sm.MaxPedestrianSpeedID,
+		"avg_car_speed":         avgCarSpeed,
+		"max_car_speed":         sm.MaxCarSpeed,
+		"min_car_speed":         sm.MinCarSpeed,
 	}
 }
 
 // SaveToFile sauvegarde les métriques dans un fichier JSON
+// Écrase l'ancien fichier du même type de crossing s'il existe
 func (sm *SimulationMetrics) SaveToFile() error {
 	sm.CalculateStatistics()
 
-	// Créer le nom de fichier avec timestamp
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	filename := fmt.Sprintf("metrics_%s_cars%.1f_peds%.1f_%s.json",
-		sm.CrossingType,
-		sm.CarSpawnRate,
-		sm.PedestrianSpawnRate,
-		timestamp,
-	)
+	// Nom de fichier simplifié : un seul fichier par type de crossing
+	filename := fmt.Sprintf("metrics_%s.json", sm.CrossingType)
 
-	// Créer le dossier metrics s'il n'existe pas
+	// Créer le dossier metrics_data s'il n'existe pas
 	metricsDir := "metrics_data"
 	if err := os.MkdirAll(metricsDir, 0755); err != nil {
 		return fmt.Errorf("erreur création dossier metrics: %v", err)
@@ -303,13 +340,13 @@ func (sm *SimulationMetrics) SaveToFile() error {
 
 	filepath := filepath.Join(metricsDir, filename)
 
-	// Sérialiser en JSON
+	// Sérialiser en JSON avec indentation pour lisibilité
 	data, err := json.MarshalIndent(sm, "", "  ")
 	if err != nil {
 		return fmt.Errorf("erreur sérialisation JSON: %v", err)
 	}
 
-	// Écrire dans le fichier
+	// Écrire dans le fichier (écrase l'ancien s'il existe)
 	if err := os.WriteFile(filepath, data, 0644); err != nil {
 		return fmt.Errorf("erreur écriture fichier: %v", err)
 	}

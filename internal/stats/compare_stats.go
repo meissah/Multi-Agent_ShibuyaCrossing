@@ -24,11 +24,15 @@ type ComparisonResult struct {
 
 // AnalysisStats contient les statistiques moyennes
 type AnalysisStats struct {
-	AvgCarLifetime  float64 `json:"AvgCarLifetime"` // json tags pour les reponses API
-	AvgPedLifetime  float64 `json:"AvgPedLifetime"`
-	TotalCars       int     `json:"TotalCars"`
-	TotalPeds       int     `json:"TotalPeds"`
-	SimulationCount int     `json:"SimulationCount"`
+	AvgCarLifetime      float64 `json:"AvgCarLifetime"` // json tags pour les reponses API
+	AvgPedLifetime      float64 `json:"AvgPedLifetime"`
+	TotalCars           int     `json:"TotalCars"`
+	TotalPeds           int     `json:"TotalPeds"`
+	SimulationCount     int     `json:"SimulationCount"`
+	AvgCarSpeed         float64 `json:"AvgCarSpeed"`
+	CarSpawnRate        float64 `json:"CarSpawnRate"` // Paramètre d'entrée
+	PedestrianSpawnRate float64 `json:"PedestrianSpawnRate"`
+	Duration            float64 `json:"Duration"` // Durée de la simulation
 }
 
 // CompareAllMetrics compare toutes les simulations Shibuya vs French
@@ -107,8 +111,9 @@ func CompareAllMetrics() (*ComparisonResult, error) {
 
 // calculateAverageStats calcule les statistiques moyennes sur plusieurs simulations
 func calculateAverageStats(metricsList []*SimulationMetrics) AnalysisStats {
-	var totalCarLife, totalPedLife float64
+	var totalCarLife, totalPedLife, totalCarSpeed, totalDuration float64
 	var totalCars, totalPeds int
+	var totalCarSpawnRate, totalPedSpawnRate float64
 	validCars, validPeds := 0, 0
 
 	for _, m := range metricsList {
@@ -129,6 +134,12 @@ func calculateAverageStats(metricsList []*SimulationMetrics) AnalysisStats {
 			}
 		}
 		totalPeds += m.TotalPedestrians
+
+		// Nouvelles métriques
+		totalCarSpeed += m.AvgCarSpeed
+		totalCarSpawnRate += m.CarSpawnRate
+		totalPedSpawnRate += m.PedestrianSpawnRate
+		totalDuration += m.EndTime.Sub(m.StartTime).Seconds()
 	}
 
 	avgCarLife := 0.0
@@ -141,12 +152,18 @@ func calculateAverageStats(metricsList []*SimulationMetrics) AnalysisStats {
 		avgPedLife = totalPedLife / float64(validPeds)
 	}
 
+	numMetrics := float64(len(metricsList))
+
 	return AnalysisStats{
-		AvgCarLifetime:  avgCarLife,
-		AvgPedLifetime:  avgPedLife,
-		TotalCars:       totalCars / len(metricsList),
-		TotalPeds:       totalPeds / len(metricsList),
-		SimulationCount: len(metricsList),
+		AvgCarLifetime:      avgCarLife,
+		AvgPedLifetime:      avgPedLife,
+		TotalCars:           totalCars / len(metricsList),
+		TotalPeds:           totalPeds / len(metricsList),
+		SimulationCount:     len(metricsList),
+		AvgCarSpeed:         totalCarSpeed / numMetrics,
+		CarSpawnRate:        totalCarSpawnRate / numMetrics,
+		PedestrianSpawnRate: totalPedSpawnRate / numMetrics,
+		Duration:            totalDuration / numMetrics,
 	}
 }
 
