@@ -28,3 +28,17 @@ func RandomFloatInRange(min, max float64) float64 {
 func RandomIntInRange(min, max int) int {
 	return rand.Intn(max-min+1) + min
 }
+
+func IntMin(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func IntMax(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}

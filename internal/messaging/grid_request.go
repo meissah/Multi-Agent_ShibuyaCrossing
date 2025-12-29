@@ -8,6 +8,7 @@ type Grid interface {
 	UpdateObject(obj utils.Object)
 	DeleteObject(obj utils.Object)
 	GetNeighbors(coords utils.Point, radius int) []utils.Object
+	GetInRect(topLeft utils.Point, bottomRight utils.Point) []utils.Object
 }
 
 // Requête agissant sur une grille.
@@ -56,4 +57,17 @@ type GetNeighborsRequest struct {
 func (req GetNeighborsRequest) Handle(grid Grid) {
 	neighbors := grid.GetNeighbors(req.Coords, req.Radius)
 	req.ReplyChan <- neighbors
+}
+
+// Requête de récupération des objets dans un rectangle défini par deux points.
+type GetInRectRequest struct {
+	GridRequest
+	TopLeft     utils.Point
+	BottomRight utils.Point
+	ReplyChan   chan []utils.Object
+}
+
+func (req GetInRectRequest) Handle(grid Grid) {
+	objects := grid.GetInRect(req.TopLeft, req.BottomRight)
+	req.ReplyChan <- objects
 }
