@@ -6,6 +6,7 @@ import "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 type Grid interface {
 	AddObject(obj utils.Object)
 	UpdateObject(obj utils.Object)
+	DeleteObject(obj utils.Object)
 	GetNeighbors(coords utils.Point, radius int) []utils.Object
 }
 
@@ -32,6 +33,16 @@ type UpdateObjectRequest struct {
 
 func (req UpdateObjectRequest) Handle(grid Grid) {
 	grid.UpdateObject(req.Object)
+}
+
+// Requête de suppression d'un objet de la grille.
+type DeleteObjectRequest struct {
+	GridRequest
+	Object utils.Object
+}
+
+func (req DeleteObjectRequest) Handle(grid Grid) {
+	grid.DeleteObject(req.Object)
 }
 
 // Requête de récupération des voisins autour de coordonnées données.

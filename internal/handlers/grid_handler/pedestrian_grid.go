@@ -125,6 +125,22 @@ func (grid *PedestrianGrid) UpdateObject(obj utils.Object) {
 	}
 }
 
+// Supprime un piéton de la grille.
+func (grid *PedestrianGrid) DeleteObject(obj utils.Object) {
+	ped, ok := obj.(*pedestrian.Pedestrian)
+	if !ok {
+		return
+	}
+
+	cellX, cellY := grid.CoordsToCellIdx(ped.Coords)
+	cell := grid.CellAt(cellX, cellY)
+	if cell == nil {
+		return
+	}
+
+	cell.Remove(ped)
+}
+
 // Récupère les piétons voisins aux coordonnées données.
 func (grid PedestrianGrid) GetNeighbors(coords utils.Point, radius int) []utils.Object {
 	cellX, cellY := grid.CoordsToCellIdx(coords)

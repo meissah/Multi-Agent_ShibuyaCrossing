@@ -170,7 +170,7 @@ func (c *Car) Percept(env []Object) {
 	// Parcourir tous les objets pour trouver les voitures
 	for _, obj := range env {
 		// Ignorer la voiture elle-meme (soi-même)
-		if obj.ObjectID() == c.ObjectID() {
+		if obj == nil || obj.ObjectID() == c.ObjectID() {
 			continue
 		}
 

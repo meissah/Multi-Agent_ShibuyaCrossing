@@ -140,7 +140,7 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 
 	var occupied bool = false
 	for _, pC := range *env {
-		if pC.Type() != "car" {
+		if pC == nil || pC.Type() != "car" {
 			continue
 		}
 		switch dir {
