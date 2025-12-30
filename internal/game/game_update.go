@@ -95,6 +95,10 @@ func (g *Game) UpdateSimulation() error {
 		g.Objets = append(g.Objets, agt)
 	}
 
+	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
+		g.DebugMode = !g.DebugMode
+	}
+
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
 	currentAgtSlice := g.Agents

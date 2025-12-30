@@ -14,6 +14,7 @@ import (
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
 	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
 	trafficmanger "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/traffic_manager"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -43,6 +44,8 @@ type Game struct {
 
 	syncChansAgt sync.Map
 	ObjectCount  ObjectID
+
+	DebugMode bool // true pour voir les lignes d'attraction
 
 	//Channels des differents microservices
 	AddAgtSlice   chan<- agentslicehandler.AddAgtRequest
@@ -89,6 +92,7 @@ func NewGame() *Game {
 	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
 
 	g.generateRepulsionAreas()
+	pathfinding.InitNavigationGrid()
 
 	configs := []struct {
 		x, y, w, h float64

@@ -17,7 +17,14 @@ type Pedestrian struct {
 	MaxSpeed          float64
 	DesiredDirection  utils.Vector
 	DesiredSeparation float64
+	// ---champs pour le Pathfinding ---
+	Path             []utils.Point // Liste des points du chemin A*
+	CurrentNodeIndex int           // Index du noeud que l'on vise actuellement
+	FinalDestLine    *utils.Line   // La ligne d'arrivée (pour l'anti-entonnoir final)
+	WanderOffset     utils.Vector  // Un décalage aléatoire unique à ce piéton pour ne pas marcher au centre
 
+	DebugTarget utils.Point // Le point exact que le piéton vise
+	//-----------------------------------
 	id                  utils.ObjectID
 	velocity            utils.Vector
 	syncChan            chan int
@@ -34,6 +41,12 @@ func NewPedestrian(id utils.ObjectID, syncChan chan int, gridChan chan messaging
 		syncChan: syncChan,
 		endChan:  make(chan int),
 		gridChan: gridChan,
+		// Initialiser un offset aléatoire léger (+/- 5px
+		// va permetre d'éviter des comportements trop uniformes (file indienne genre)
+		WanderOffset: *utils.NewVector(
+			utils.RandomFloatInRange(-5, 5),
+			utils.RandomFloatInRange(-5, 5),
+		),
 	}
 }
 
@@ -58,11 +71,8 @@ func (p Pedestrian) OutOfBounds() bool {
 
 // Méthode de dessin du piéton.
 func (c *Pedestrian) Draw() (utils.Asset, *ebiten.DrawImageOptions) {
-
 	X, Y := c.Coords.X(), c.Coords.Y()
-
 	op := &ebiten.DrawImageOptions{}
-
 	op.GeoM.Translate(X, Y)
 	return utils.Asset(1), op
 }
@@ -101,11 +111,6 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 	p.repulsionAreasUnder = []*environment.RepulsionArea{}
 
 	for _, obj := range env {
-		if obj == nil || obj.ObjectID() == p.id {
-			continue
-		}
-
-		// Ajouter les routes sous le piéton
 		if ra, ok := obj.(*environment.RepulsionArea); ok {
 			if ra.IsPointInside(p.Coords) {
 				p.repulsionAreasUnder = append(p.repulsionAreasUnder, ra)
@@ -138,10 +143,37 @@ func (p *Pedestrian) Percept(env []utils.Object) {
 // Délibération du piéton
 func (p *Pedestrian) Deliberate() {
 	p.velocity = utils.VectorZero
+	target := p.Coords
 
-	// Le piéton se dirige vers sa direction désirée, à sa vitesse maximale
-	goalVelocity := p.DesiredDirection.Normalize().Scale(p.MaxSpeed)
-	p.velocity = goalVelocity.Add(p.velocity)
+	// Navigation le long du chemin A*
+	if len(p.Path) > 0 { //&& p.CurrentNodeIndex < len(p.Path)
+		// Si on est à la dernière étape et qu'on a une ligne d'arrivée définie
+		if p.CurrentNodeIndex >= len(p.Path)-1 && p.FinalDestLine != nil {
+			//force le piéton à aller "tout droit" vers la sortie
+			target = p.Coords.ProjectOntoLine(*p.FinalDestLine)
+		} else if p.CurrentNodeIndex < len(p.Path) {
+			// STRATÉGIE OFFSET : vise le noeud A* avec un petit décalage personnel
+			baseTarget := p.Path[p.CurrentNodeIndex]
+			target = baseTarget.Translate(p.WanderOffset)
+		}
+
+		// Calcul de la force d'attraction (Seek)
+		desiredDir := utils.NewVectorFromPoints(p.Coords, target)
+		dist := desiredDir.Norm()
+
+		if dist > 0 {
+			steering := desiredDir.Normalize().Scale(p.MaxSpeed)
+			p.velocity = p.velocity.Add(steering)
+		}
+
+		// Si on est assez proche du nœud intermédiaire (5px), on passe au suivant
+		// On ne le fait pas pour le dernier nœud (la sortie), car on veut sortir de l'écran
+		if dist < 15.0 && p.CurrentNodeIndex < len(p.Path)-1 {
+			p.CurrentNodeIndex++
+		}
+	}
+	// le debug (Visualisation)
+	p.DebugTarget = target
 
 	// Le piéton s'éloigne des autres piétons autour de lui
 	for _, otherPedestrian := range p.pedestriansAround {
@@ -150,18 +182,32 @@ func (p *Pedestrian) Deliberate() {
 
 		// La force de répulsion est telle que les piétons mettent
 		// plus d'effort à s'éloigner qu'à se diriger vers leur objectif
-		repulsionFactor := 3.0
+		repulsionFactor := 3.0 // ajustable
 		repulsionDirection := diff.Normalize()
-		repulsionForce := (p.DesiredSeparation - distance) / p.DesiredSeparation
-		repulsion := repulsionDirection.Scale(repulsionForce * repulsionFactor * p.MaxSpeed)
+		if distance < 0.1 {
+			distance = 0.1
+		} // Éviter division par zéro
+		forceStrength := (p.DesiredSeparation / distance) - 1
 
-		p.velocity = p.velocity.Add(repulsion)
+		if forceStrength > 0 {
+			repulsion := repulsionDirection.Scale(forceStrength * repulsionFactor)
+			p.velocity = p.velocity.Add(repulsion)
+		}
 	}
 
 	// Appliquer les forces de l'environnement (zones de répulsion)
+	// for _, ra := range p.repulsionAreasUnder {
+	// 	force := ra.ForceAtPoint(p.Coords)
+	// 	p.velocity = p.velocity.Add(force)
+	// }
+
+	// vérifier que la correction soit bonne
+
+	// Répulsion Environnementale (Feux/Murs)
 	for _, ra := range p.repulsionAreasUnder {
 		force := ra.ForceAtPoint(p.Coords)
-		p.velocity = p.velocity.Add(force)
+		// Les murs ont priorité absolue sur le pathfinding
+		p.velocity = p.velocity.Add(force.Scale(2.0))
 	}
 
 	// Limiter la vitesse
