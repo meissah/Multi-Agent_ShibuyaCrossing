@@ -285,15 +285,10 @@ func (g *Game) drawSaveButton(screen *ebiten.Image, x, y, w, h float64) {
 
 	// Gérer le clic
 	if isHover && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		if !g.saveButtonPressed {
-			g.saveButtonPressed = true
-			// Sauvegarder les métriques
-			if err := stats.GlobalMetrics.SaveToFile(); err != nil {
-				fmt.Printf("Erreur sauvegarde métriques: %v\n", err)
-			}
+		// Sauvegarder les métriques
+		if err := stats.GlobalMetrics.SaveToFile(); err != nil {
+			fmt.Printf("Erreur sauvegarde métriques: %v\n", err)
 		}
-	} else {
-		g.saveButtonPressed = false
 	}
 }
 

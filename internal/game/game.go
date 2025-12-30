@@ -54,9 +54,6 @@ type Game struct {
 
 	step int
 
-	// Cote statistiques
-	saveButtonPressed bool // Pour éviter les clics multiples sur le bouton de sauvegarde des métriques
-
 	// pour arreter les spawners à la fin de la simulation ( c'est a dire quand on clique sur le bouton retour au menu )
 	carSpawnerStop chan bool
 	pedSpawnerStop chan bool

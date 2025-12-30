@@ -200,10 +200,4 @@ func (p *Pedestrian) Act() {
 	// Met à jour la position du piéton en fonction de sa vélocité
 	// fmt.Println(p.DesiredDirection)
 	p.Coords = p.Coords.Translate(p.velocity)
-
-	// Enregistrer la vitesse pour les statistiques
-	currentSpeed := p.velocity.Norm()
-	if p.spawnRecorded && currentSpeed > 0 {
-		stats.RecordPedestrianSpeed(uint(p.id), currentSpeed)
-	}
 }

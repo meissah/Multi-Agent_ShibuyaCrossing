@@ -36,13 +36,13 @@ func (s *Server) Start() {
 	}
 }
 
-// Ajouter les headers CORS pour autoriser les requêtes depuis le dashboard
+// Ajouter les headers CORS pour autoriser les requêtes depuis le dashboard ( a recup les données depuis l'api)
 func (s *Server) ajouterCORS(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		// Headers CORS nécessaires pour les requêtes depuis le navigateur
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Origin", "*")             // Autorise toutes les origines (pour le dashboard local)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS") // Autorise GET et OPTIONS
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type") // Autorise l'en-tête Content-Type
 
 		// Gérer les requêtes OPTIONS (preflight)
 		if req.Method == "OPTIONS" {

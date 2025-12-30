@@ -53,27 +53,12 @@ type SimulationMetrics struct {
 	TotalCars        int
 	TotalPedestrians int
 
-	MinCarLifetime    float64
-	MaxCarLifetime    float64
-	MinPedestrianLife float64
-	MaxPedestrianLife float64
-
-	// Vitesse maximale des piétons
-	MaxPedestrianSpeed   float64
-	MaxPedestrianSpeedID uint
-
 	// Pour calculer la vitesse moyenne des voitures
 	AvgCarSpeed float64 // Vitesse moyenne des voitures
-	MaxCarSpeed float64 // Vitesse maximale atteinte
-	MinCarSpeed float64 // Vitesse minimale enregistrée
 
 	// Pour calculer la moyenne progressivement
 	totalCarSpeedSum    float64
 	carSpeedSampleCount int
-
-	// Métriques par direction
-	CarsByDirection        map[string]int
-	PedestriansByDirection map[string]int
 }
 
 // Global metrics collector
@@ -82,14 +67,12 @@ var GlobalMetrics *SimulationMetrics
 // InitMetrics initialise le collecteur de métriques
 func InitMetrics(cfg config.SimulationConfig) {
 	GlobalMetrics = &SimulationMetrics{
-		CrossingType:           cfg.CrossingType,
-		CarSpawnRate:           1.0 / cfg.CarSpawnRate.Seconds(),
-		PedestrianSpawnRate:    1.0 / cfg.PedestrianSpawnRate.Seconds(),
-		StartTime:              time.Now(),
-		CarMetrics:             make([]AgentMetrics, 0),
-		PedestrianMetrics:      make([]AgentMetrics, 0),
-		CarsByDirection:        make(map[string]int),
-		PedestriansByDirection: make(map[string]int),
+		CrossingType:        cfg.CrossingType,
+		CarSpawnRate:        1.0 / cfg.CarSpawnRate.Seconds(),
+		PedestrianSpawnRate: 1.0 / cfg.PedestrianSpawnRate.Seconds(),
+		StartTime:           time.Now(),
+		CarMetrics:          make([]AgentMetrics, 0),
+		PedestrianMetrics:   make([]AgentMetrics, 0),
 	}
 }
 
@@ -108,7 +91,6 @@ func RecordCarSpawn(carID uint, direction string) {
 		Direction: direction,
 	})
 	GlobalMetrics.TotalCars++
-	GlobalMetrics.CarsByDirection[direction]++
 }
 
 // RecordPedestrianSpawn enregistre l'apparition d'un piéton
@@ -126,7 +108,6 @@ func RecordPedestrianSpawn(pedID uint, direction string) {
 		Direction: direction,
 	})
 	GlobalMetrics.TotalPedestrians++
-	GlobalMetrics.PedestriansByDirection[direction]++
 }
 
 // RecordCarDestroy enregistre la destruction d'une voiture
@@ -167,21 +148,6 @@ func RecordPedestrianDestroy(pedID uint) {
 	}
 }
 
-// RecordPedestrianSpeed enregistre la vitesse d'un piéton et met à jour le max si nécessaire
-func RecordPedestrianSpeed(pedID uint, speed float64) {
-	if GlobalMetrics == nil {
-		return
-	}
-	GlobalMetrics.mu.Lock()
-	defer GlobalMetrics.mu.Unlock()
-
-	// Mettre à jour le record global
-	if speed > GlobalMetrics.MaxPedestrianSpeed {
-		GlobalMetrics.MaxPedestrianSpeed = speed
-		GlobalMetrics.MaxPedestrianSpeedID = pedID
-	}
-}
-
 // RecordCarSpeed enregistre la vitesse d'une voiture
 // À appeler régulièrement depuis car.Act()
 func RecordCarSpeed(carID uint, speed float64) {
@@ -194,19 +160,6 @@ func RecordCarSpeed(carID uint, speed float64) {
 	// Mettre à jour les statistiques de vitesse
 	GlobalMetrics.totalCarSpeedSum += speed
 	GlobalMetrics.carSpeedSampleCount++
-
-	// Mettre à jour min/max
-	if GlobalMetrics.carSpeedSampleCount == 1 {
-		GlobalMetrics.MinCarSpeed = speed
-		GlobalMetrics.MaxCarSpeed = speed
-	} else {
-		if speed < GlobalMetrics.MinCarSpeed {
-			GlobalMetrics.MinCarSpeed = speed
-		}
-		if speed > GlobalMetrics.MaxCarSpeed {
-			GlobalMetrics.MaxCarSpeed = speed
-		}
-	}
 }
 
 // CalculateStatistics calcule les statistiques finales
@@ -223,20 +176,12 @@ func (sm *SimulationMetrics) CalculateStatistics() {
 
 	// Calculer les statistiques des voitures
 	var totalCarLife float64
-	sm.MinCarLifetime = 999999.0
-	sm.MaxCarLifetime = 0.0
 	validCars := 0
 
 	for _, car := range sm.CarMetrics {
 		if car.LifeDuration > 0 {
 			totalCarLife += car.LifeDuration
 			validCars++
-			if car.LifeDuration < sm.MinCarLifetime {
-				sm.MinCarLifetime = car.LifeDuration
-			}
-			if car.LifeDuration > sm.MaxCarLifetime {
-				sm.MaxCarLifetime = car.LifeDuration
-			}
 		}
 	}
 
@@ -246,20 +191,12 @@ func (sm *SimulationMetrics) CalculateStatistics() {
 
 	// Calculer les statistiques des piétons
 	var totalPedLife float64
-	sm.MinPedestrianLife = 999999.0
-	sm.MaxPedestrianLife = 0.0
 	validPeds := 0
 
 	for _, ped := range sm.PedestrianMetrics {
 		if ped.LifeDuration > 0 {
 			totalPedLife += ped.LifeDuration
 			validPeds++
-			if ped.LifeDuration < sm.MinPedestrianLife {
-				sm.MinPedestrianLife = ped.LifeDuration
-			}
-			if ped.LifeDuration > sm.MaxPedestrianLife {
-				sm.MaxPedestrianLife = ped.LifeDuration
-			}
 		}
 	}
 
@@ -316,11 +253,7 @@ func (sm *SimulationMetrics) GetCurrentStats() map[string]interface{} {
 		"avg_car_lifetime":      avgCarLife,
 		"avg_ped_lifetime":      avgPedLife,
 		"simulation_duration":   time.Since(sm.StartTime).Seconds(),
-		"max_ped_speed":         sm.MaxPedestrianSpeed,
-		"max_ped_speed_id":      sm.MaxPedestrianSpeedID,
 		"avg_car_speed":         avgCarSpeed,
-		"max_car_speed":         sm.MaxCarSpeed,
-		"min_car_speed":         sm.MinCarSpeed,
 	}
 }
 
@@ -353,28 +286,4 @@ func (sm *SimulationMetrics) SaveToFile() error {
 
 	fmt.Printf("✓ Métriques sauvegardées: %s\n", filepath)
 	return nil
-}
-
-// GetLifetimeDistribution retourne la distribution des durées de vie pour les graphiques
-func (sm *SimulationMetrics) GetLifetimeDistribution(agentType string) []float64 {
-	sm.mu.Lock()
-	defer sm.mu.Unlock()
-
-	var durations []float64
-
-	if agentType == "car" {
-		for _, car := range sm.CarMetrics {
-			if car.LifeDuration > 0 {
-				durations = append(durations, car.LifeDuration)
-			}
-		}
-	} else {
-		for _, ped := range sm.PedestrianMetrics {
-			if ped.LifeDuration > 0 {
-				durations = append(durations, ped.LifeDuration)
-			}
-		}
-	}
-
-	return durations
 }
