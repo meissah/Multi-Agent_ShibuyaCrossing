@@ -140,6 +140,8 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 	x, y, dir, lane := ChoisirPointSpawn()
 
 	var occupied bool = false
+
+	// Vérifier la présence de voitures proches du point de spawn
 	for _, pC := range *env {
 		if pC.Type() != "car" {
 			continue

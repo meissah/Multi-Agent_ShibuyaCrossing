@@ -219,6 +219,19 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 		text.Draw(screen, helpText, basicfont.Face7x13,
 			helpX, 700, color.RGBA{255, 100, 100, 255})
 	}
+
+	// ═══════════════════════════════════════════════════════════
+	// BOUTON DASHBOARD (en bas à droite )
+	// ═══════════════════════════════════════════════════════════
+
+	// Le bouton dashboard est actif seulement si les 2 fichiers metrics existent
+	g.dashboardButton.Rect.X = 620
+	g.dashboardButton.Rect.Y = 700
+	g.dashboardButton.Rect.W = 110
+	g.dashboardButton.Rect.H = 30
+
+	dashboardEnabled := g.checkBothMetricsExist()
+	g.drawDashboardButton(screen, g.dashboardButton, dashboardEnabled)
 }
 
 // drawCrossingOption dessine une option de crossing
@@ -286,6 +299,62 @@ func (g *Game) drawCrossingOption(screen *ebiten.Image, name string, rect ui.Rec
 	textX := int(rect.X + rect.W/2 - float64(len(name)*7)/2)
 	text.Draw(screen, name, basicfont.Face7x13,
 		textX, int(rect.Y+rect.H+25), labelColor)
+}
+
+// drawDashboardButton dessine le bouton dashboard avec un style gris spécifique
+func (g *Game) drawDashboardButton(screen *ebiten.Image, btn ui.Button, enabled bool) {
+	var bgColor, textColor color.Color
+
+	if !enabled {
+		// Désactivé (gris foncé)
+		bgColor = color.RGBA{50, 55, 60, 255}
+		textColor = color.RGBA{90, 95, 100, 255}
+	} else if btn.IsMouseOver {
+		// Hover (gris clair avec bordure bleu clair)
+		bgColor = color.RGBA{90, 100, 110, 255}
+		textColor = color.RGBA{255, 255, 255, 255}
+
+		// Petit effet de lueur au survol
+		glowBtn := ebiten.NewImage(int(btn.Rect.W+4), int(btn.Rect.H+4))
+		glowBtn.Fill(color.RGBA{100, 150, 200, 40})
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(btn.Rect.X-2, btn.Rect.Y-2)
+		screen.DrawImage(glowBtn, op)
+	} else {
+		// Normal (gris moyen)
+		bgColor = color.RGBA{70, 80, 90, 255}
+		textColor = color.RGBA{220, 220, 220, 255}
+	}
+
+	// Fond du bouton
+	btnImg := ebiten.NewImage(int(btn.Rect.W), int(btn.Rect.H))
+	btnImg.Fill(bgColor)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(btn.Rect.X, btn.Rect.Y)
+	screen.DrawImage(btnImg, op)
+
+	// Bordure du bouton
+	var borderColor color.Color
+	if enabled {
+		borderColor = color.RGBA{100, 150, 200, 255} // Bleu gris
+	} else {
+		borderColor = color.RGBA{60, 65, 70, 255} // Gris très foncé
+	}
+	g.drawRectBorder(screen, btn.Rect, 2, borderColor)
+
+	// Texte centré
+	textX := int(btn.Rect.X + btn.Rect.W/2 - float64(len(btn.Text)*7)/2)
+	textY := int(btn.Rect.Y + btn.Rect.H/2 + 5)
+	text.Draw(screen, btn.Text, basicfont.Face7x13, textX, textY, textColor)
+
+	// Petit message sous le bouton si désactivé
+	if !enabled {
+		infoText := "Lancez les 2 simulations d'abord"
+		textX := int(btn.Rect.X + 5)
+		textY := int(btn.Rect.Y + btn.Rect.H + 15)
+		text.Draw(screen, infoText, basicfont.Face7x13,
+			textX, textY, color.RGBA{150, 160, 170, 255})
+	}
 }
 
 // drawButton dessine un bouton avec état hover (bouton validé dans le menu par exemple)

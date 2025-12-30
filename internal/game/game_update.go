@@ -9,6 +9,9 @@ package game
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -43,6 +46,7 @@ func (g *Game) UpdateMenu() error {
 
 	// Mettre à jour l'état hover des boutons
 	g.validateButton.UpdateHover(mouseX, mouseY)
+	g.dashboardButton.UpdateHover(mouseX, mouseY)
 
 	// Mettre à jour les sliders (récupère la position du curseur)
 	mousePressed := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
@@ -59,6 +63,11 @@ func (g *Game) UpdateMenu() error {
 		// Clic sur l'option French
 		if g.frenchRect.Contains(mouseX, mouseY) {
 			g.selectedCrossing = "French"
+		}
+
+		// Clic sur le bouton Dashboard
+		if g.dashboardButton.IsMouseOver && g.checkBothMetricsExist() { // vérifier que les métriques ( a la fois french et shibuya ) existent avant d'ouvrir le dashboard
+			g.openDashboard()
 		}
 
 		// Clic sur le bouton Valider
@@ -93,27 +102,14 @@ func (g *Game) UpdateSimulation() error {
 	// Incrémenter le compteur de pas
 	g.step++
 
-	// // Récupérer les agents qui ont bougé
-	// currentAgtSlice := <-g.ReceiveAgtsCh
-
-	// // --- CORRECTION CRUCIALE ICI ---
-	// // 1. On vide la liste de dessin
-	// g.Objets = nil
-
-	// // 2. On remet les objets fixes (les feux)
-	// g.Objets = append(g.Objets, g.PersistentObjets...)
-
-	// // 3. On ajoute les agents dynamiques (voitures/piétons)
-	// for _, agt := range currentAgtSlice {
-	// 	g.Objets = append(g.Objets, agt)
-	// }
-
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
 	currentAgtSlice := g.Agents
 	var agentsToRemove []Agent
 
 	//fmt.Println("THE AGENT SLICE: ", currentAgtSlice)
+
+	// phase de perception et delibération
 	for _, agt := range currentAgtSlice {
 		if agt.Alive() {
 			wg.Add(1)
@@ -136,6 +132,7 @@ func (g *Game) UpdateSimulation() error {
 	}
 	wg.Wait()
 
+	// Action des agents
 	var wg2 sync.WaitGroup
 
 	for _, agt := range currentAgtSlice {
@@ -160,6 +157,7 @@ func (g *Game) UpdateSimulation() error {
 	// Attendre que tous les agents aient terminé leur pas
 	wg2.Wait()
 
+	// Supprimer les agents =>   ceux qui ont terminé leur trajet
 	for _, agt := range agentsToRemove {
 		g.DelAgtSlice <- agt
 	}
@@ -183,7 +181,7 @@ func (g *Game) handleBackButton() bool {
 				stats.GlobalMetrics.SaveToFile()
 			}
 
-			// Sauvegarder les paramètres actuels avant de nettoyer ( objectif : les réutiliser ces au prochain pour la simu suivante  )
+			// Sauvegarder les paramètres actuels avant de nettoyer ( objectif = les réutiliser pour la prochaine simu pour garder la meme config de spawn )
 			carRate := 1.0 / g.Config.CarSpawnRate.Seconds()
 			pedRate := 1.0 / g.Config.PedestrianSpawnRate.Seconds()
 
@@ -204,13 +202,11 @@ func (g *Game) handleBackButton() bool {
 	return false
 }
 
-// cleanupSimulation nettoie complètement les ressources de la simulation ( quand on retourne au menu avec le bouton retour )
+// cleanupSimulation nettoie complètement les ressources de la simulation ( quand on retourne au menu avec le bouton retour, idée de relancé une simu mais donc de partir d'une base propre )
 func (g *Game) cleanupSimulation() {
 	fmt.Println("Nettoyage de la simulation ")
 
-	// Arrêter tous les spawners
-	// Cela empêche la création de nouveaux agents pendant le nettoyage
-
+	// Il faut arreter tous les spawners avant de nettoyer
 	if g.carSpawnerStop != nil {
 		close(g.carSpawnerStop)
 		g.carSpawnerStop = nil
@@ -272,4 +268,49 @@ func (g *Game) cleanupSimulation() {
 	fmt.Printf(" Agents actifs: %d\n", len(g.Agents))
 	fmt.Printf("  Objets dans la scène: %d\n", len(g.Objets))
 	fmt.Printf("  Goroutines restantes: %d\n", runtime.NumGoroutine())
+}
+
+// Objectif d'avoir un bouton dashboard qui ouvre le dashboard HTML dans le navigateur lorsqu'on clique dessus ( s'active uniquement si les deux fichiers de métriques (french et shibuya ) existent )
+// checkBothMetricsExist vérifie si les deux fichiers de métriques existent
+func (g *Game) checkBothMetricsExist() bool {
+	metricsDir := "metrics_data"
+
+	shibuyaFile := filepath.Join(metricsDir, "metrics_shibuya.json")
+	frenchFile := filepath.Join(metricsDir, "metrics_French.json")
+
+	_, errShibuya := os.Stat(shibuyaFile)
+	_, errFrench := os.Stat(frenchFile)
+
+	return errShibuya == nil && errFrench == nil
+}
+
+// openDashboard ouvre le fichier HTML du dashboard dans le navigateur
+func (g *Game) openDashboard() {
+	dashboardPath := "dashboard.html" // Le fichier est à la racine du projet
+
+	// Obtenir le chemin absolu
+	absPath, err := filepath.Abs(dashboardPath)
+	if err != nil {
+		fmt.Printf("Erreur lors de l'ouverture du dashboard: %v\n", err)
+		return
+	}
+
+	// Ouvrir dans le navigateur selon l'OS
+	var cmd string
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "start"
+	case "darwin": // macOS
+		cmd = "open"
+	default: // linux et autres
+		cmd = "xdg-open"
+	}
+
+	// Utiliser la commande système pour ouvrir le fichier
+	err = exec.Command(cmd, absPath).Start()
+	if err != nil {
+		fmt.Printf("Erreur lors de l'ouverture du dashboard: %v\n", err)
+	} else {
+		fmt.Println("Dashboard ouvert dans le navigateur")
+	}
 }

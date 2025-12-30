@@ -22,9 +22,8 @@ import (
 // Game représente l'état complet de l'application
 type Game struct {
 	//New Game Env
-	Agents []Agent
-	Objets []Object
-
+	Agents           []Agent
+	Objets           []Object
 	PersistentObjets []Object // pour l'affichage persistent des feux
 
 	// État actuel (menu ou simulation)
@@ -35,8 +34,9 @@ type Game struct {
 	selectedCrossing string // "shibuya" ou "french"
 
 	// Composants UI du menu
-	validateButton ui.Button
-	backButton     ui.Button // Bouton de retour au menu principal quand on est en simulation
+	validateButton  ui.Button
+	backButton      ui.Button // Bouton de retour au menu principal quand on est en simulation
+	dashboardButton ui.Button // Bouton pour ouvrir le dashboard dans le navigateur
 
 	// Zones cliquables du menu
 	shibuyaRect    ui.Rectangle
@@ -63,23 +63,24 @@ type Game struct {
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
-
 func NewGame() *Game {
 	g := &Game{
-		State:          config.StateMenu,                                // commencer dans le menu
-		Config:         config.DefaultConfig(),                          // configuration par défaut si l'utilisateur ne choisit rien
-		shibuyaRect:    ui.Rectangle{X: 150, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption -> regler le probleme de click sur les images
-		frenchRect:     ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption
-		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
-		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
-		validateButton: ui.NewButton(600, 650, 120, 40, "Valider"),
-		backButton:     ui.NewButton(20, 20, 120, 40, "Retour"),
+		State:           config.StateMenu,                                // commencer dans le menu
+		Config:          config.DefaultConfig(),                          // configuration par défaut si l'utilisateur ne choisit rien
+		shibuyaRect:     ui.Rectangle{X: 150, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption -> regler le probleme de click sur les images
+		frenchRect:      ui.Rectangle{X: 400, Y: 360, W: 200, H: 200},    // Correspondance exacte avec drawCrossingOption
+		carSpawnSlider:  ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
+		pedSpawnSlider:  ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
+		validateButton:  ui.NewButton(600, 650, 120, 40, "Valider"),
+		backButton:      ui.NewButton(20, 20, 120, 40, "Retour"),
+		dashboardButton: ui.NewButton(620, 700, 110, 30, "Dashboard"),
 	}
 
+	// Initialiser le traffic manager et les feux de circulation
 	tm := &trafficmanger.TrafficManager{
-		IsShibuyaMode: true,            // tester les modes (true/false)
-		StepDuration:  5 * time.Second, // Temps de feu vert
-		RedDuration:   2 * time.Second, // Temps de sécurité
+		IsShibuyaMode: true,            // Par défaut en mode Shibuya
+		StepDuration:  5 * time.Second, // Durée du feu vert
+		RedDuration:   2 * time.Second, // Temps de sécurité entre les changements
 
 		CarsNS: make([]*trafficlight.TrafficLight, 0),
 		CarsEW: make([]*trafficlight.TrafficLight, 0),
@@ -87,13 +88,15 @@ func NewGame() *Game {
 		PedsEW: make([]*trafficlight.TrafficLight, 0),
 	}
 
+	// Configuration des feux de circulation (positions et types)
+	// Pour chaque feu on définit : position, direction, type (voiture/piéton), et groupe (NS/EW)
 	configs := []struct {
 		x, y, w, h float64
 		dir        Direction
 		id         string
 		kind       string // "car" ou "pedestrian"
 		group      string // "NS" (Nord/Sud) ou "EW" (Est/Ouest)
-	}{ // --- VOITURES ---
+	}{ // --- FEUX VOITURES ---
 
 		{325, 525, 0, 0, East, "Car_Sud", "car", "NS"},
 		{225, 325, 0, 0, North, "Car_Ouest", "car", "EW"},
@@ -109,17 +112,18 @@ func NewGame() *Game {
 		{477.5, 375, 55, 150, East, "Ped_E", "pedestrian", "EW"},
 	}
 
+	// Créer les feux de circulation
 	for _, cfg := range configs {
+		// 1. Créer l'objet visuel du feu
 		tlVisu := trafficlight.NewTrafficLightObject(cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
-
 		g.Objets = append(g.Objets, tlVisu)
 		g.PersistentObjets = append(g.PersistentObjets, tlVisu)
 
-		// 2. Logique
+		// 2. Créer la logique du feu
 		tlLogic := trafficlight.NewTrafficLight(cfg.id, 1*time.Hour, 1*time.Hour)
 		tlLogic.Start()
 
-		// C. Classement dans le Manager
+		// 3. Classer le feu dans le manager selon son type et son groupe
 		if cfg.kind == "car" {
 			if cfg.group == "NS" {
 				tm.CarsNS = append(tm.CarsNS, tlLogic)

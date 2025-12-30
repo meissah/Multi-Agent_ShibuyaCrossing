@@ -55,7 +55,6 @@ func (g *PietonSpawn) Start(
 		&environment.SpawnArea{X: 450, Y: 750, Width: 55, Height: 50},
 		&environment.SpawnArea{X: 750, Y: 245, Width: 50, Height: 55},
 		&environment.SpawnArea{X: 750, Y: 450, Width: 50, Height: 55},
-		&environment.SpawnArea{X: 750, Y: 450, Width: 50, Height: 55},
 	}
 
 	unitVectors := []utils.Vector{
