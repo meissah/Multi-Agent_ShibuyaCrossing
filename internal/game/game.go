@@ -11,6 +11,7 @@ import (
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/carstopping"
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
 	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
 	trafficmanger "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/traffic_manager"
@@ -113,6 +114,8 @@ func NewGame() *Game {
 		{477.5, 375, 55, 150, East, "Ped_E", "pedestrian", "EW"},
 	}
 
+	var chNS, chEW chan trafficlight.State
+
 	for _, cfg := range configs {
 		//objet visuel
 		tlVisu := trafficlight.NewTrafficLightObject(cfg.id, cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
@@ -128,8 +131,10 @@ func NewGame() *Game {
 		if cfg.kind == "car" {
 			if cfg.group == "NS" {
 				g.TM.CarsNS = append(g.TM.CarsNS, tlLogic)
+				chNS = tlLogic.Subscribe()
 			} else {
 				g.TM.CarsEW = append(g.TM.CarsEW, tlLogic)
+				chEW = tlLogic.Subscribe()
 			}
 		} else {
 			// Gestion des groupes piétons (NS, EW et SHIBUYA)
@@ -162,6 +167,8 @@ func NewGame() *Game {
 		}(tlVisu, tlLogic)
 
 	}
+
+	carstopping.LancerCarStopper(chNS, chEW, &g.Objets, g.AddAgtSlice, g.DelAgtSlice)
 
 	// Lancement du Traffic Manager
 

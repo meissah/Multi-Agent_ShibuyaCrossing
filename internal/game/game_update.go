@@ -7,9 +7,6 @@
 package game
 
 import (
-	"fmt"
-	"log"
-	"runtime"
 	"sync"
 	"time"
 
@@ -23,8 +20,8 @@ import (
 
 // Update est appelé 60 fois par seconde par Ebiten (boucle principale du jeu)
 func (g *Game) Update() error {
-	fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
-	log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
+	// fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
+	// log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
 	switch g.State {
 	case config.StateMenu:
 		g.UpdateMenu()
