@@ -87,13 +87,13 @@ func (g *Game) UpdateSimulation() error {
 	// Incrémenter le compteur de pas
 	g.step++
 
-	g.Objets = nil
+	// g.Objets = nil
 
-	g.Objets = append(g.Objets, g.PersistentObjets...)
+	// g.Objets = append(g.Objets, g.PersistentObjets...)
 
-	for _, agt := range g.Agents {
-		g.Objets = append(g.Objets, agt)
-	}
+	// for _, agt := range g.Agents {
+	// 	g.Objets = append(g.Objets, agt)
+	// }
 
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup

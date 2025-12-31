@@ -24,8 +24,8 @@ type Game struct {
 	Agents []Agent
 	Objets []Object
 
-	PersistentObjets []Object // pour l'affichage persistent des feux
-	TM               *trafficmanger.TrafficManager
+	//PersistentObjets []Object // pour l'affichage persistent des feux
+	TM *trafficmanger.TrafficManager
 
 	// État actuel (menu ou simulation)
 	State  config.GameState        // État actuel du jeu si menu ou simulation
@@ -117,8 +117,8 @@ func NewGame() *Game {
 		//objet visuel
 		tlVisu := trafficlight.NewTrafficLightObject(cfg.id, cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
 
-		// g.Objets = append(g.Objets, tlVisu)
-		g.PersistentObjets = append(g.PersistentObjets, tlVisu)
+		g.Objets = append(g.Objets, tlVisu)
+		//g.PersistentObjets = append(g.PersistentObjets, tlVisu)
 
 		// 2. Logique
 		tlLogic := trafficlight.NewTrafficLight(cfg.id, 1*time.Hour, 1*time.Hour)
@@ -257,7 +257,7 @@ func (g *Game) generateRepulsionAreas() {
 			ra.SetAttractorLine(sub.lineA, sub.lineB)
 
 			g.Objets = append(g.Objets, ra)
-			g.PersistentObjets = append(g.PersistentObjets, ra)
+			//g.PersistentObjets = append(g.PersistentObjets, ra)
 
 			// On ajoute à la liste des zones pour cet ID de feu
 			g.CrosswalkZones[id] = append(g.CrosswalkZones[id], ra)
@@ -273,7 +273,7 @@ func (g *Game) generateRepulsionAreas() {
 	raDiag.Deactivate() // Inactive (ne pousse pas)
 
 	g.Objets = append(g.Objets, raDiag)
-	g.PersistentObjets = append(g.PersistentObjets, raDiag)
+	//g.PersistentObjets = append(g.PersistentObjets, raDiag)
 	g.CrosswalkZones["Ped_Diag"] = append(g.CrosswalkZones["Ped_Diag"], raDiag)
 	// ________________________________________________________________________________________________________________
 
@@ -322,7 +322,7 @@ func (g *Game) addRepulsionAreas(coords [][2]Point, forceStrength, bufferSize fl
 
 		ras = append(ras, ra)
 		g.Objets = append(g.Objets, ra)
-		g.PersistentObjets = append(g.PersistentObjets, ra)
+		//g.PersistentObjets = append(g.PersistentObjets, ra)
 	}
 
 	return ras
