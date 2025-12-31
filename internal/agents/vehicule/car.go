@@ -66,12 +66,13 @@ func (ag *Car) Start(env *[]Object) {
 }
 
 type Car struct {
-	ID        AgentID
-	X, Y      float64
-	Dir       Direction
-	Angle     float64
-	LaneIndex int // 0 ou 1 pour la voie utilisée (deux voies par direction)
-	wtvthisis float64
+	ID            AgentID
+	X, Y          float64
+	Dir           Direction
+	Angle         float64
+	LaneIndex     int // 0 ou 1 pour la voie utilisée (deux voies par direction)
+	State         string
+	IsPlaceholder bool
 
 	// Pour le virage
 	TurnLeft   bool
@@ -129,11 +130,13 @@ const (
 // NewCar constructeur
 func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, syncChan chan int) *Car {
 	return &Car{
-		ID:        AgentID(id),
-		X:         x,
-		Y:         y,
-		Dir:       dir,
-		LaneIndex: lane,
+		ID:            AgentID(id),
+		X:             x,
+		Y:             y,
+		Dir:           dir,
+		LaneIndex:     lane,
+		State:         "active",
+		IsPlaceholder: false,
 
 		// virage
 		TurnLeft:   turnleft,
@@ -185,6 +188,11 @@ func (c *Car) Percept(env []Object) {
 			continue
 		}
 
+		if otherCar.State != "active" { // Ignorer les voitures inactives
+			//fmt.Println("Ignored inactive car")
+			continue
+		}
+
 		// Vérifier si la voiture est devant nous (même direction et même lane)
 		if !c.isCarAhead(otherCar) {
 			continue
@@ -216,9 +224,9 @@ func (c *Car) Percept(env []Object) {
 func (c *Car) Deliberate() {
 	//A ENLEVER QUAND YAURA LES FEUX
 	//At random stopping (to simulate stopping at red lights behavior or for pedestrians in french mode when turning left)
-	if !c.IsTurning && rand.Float64() < 0.2 && c.AgentID()%2 == 0 { //80% chance of stopping randomly si on a un agent id pair
-		return
-	}
+	// if !c.IsTurning && rand.Float64() < 0.2 && c.AgentID()%2 == 0 { //80% chance of stopping randomly si on a un agent id pair
+	// 	return
+	// }
 
 	if c.TurnLeft && !c.IsTurning {
 		// Virage pour les voitures venant du Sud (direction North)
@@ -302,12 +310,14 @@ func (c *Car) Deliberate() {
 				p1x, p1y = c.TurnStartX-30, c.TurnStartY
 				p2x, p2y = c.TurnStartX-40, c.TurnStartY+25
 				p3x, p3y = c.TurnStartX-50, c.TurnStartY+45
+				//fmt.Println("Lane gauche pour west is 0")
 			} else {
 				// Lane de droite
 				p0x, p0y = c.TurnStartX, c.TurnStartY
 				p1x, p1y = c.TurnStartX-5, c.TurnStartY
 				p2x, p2y = c.TurnStartX-12, c.TurnStartY+15
 				p3x, p3y = c.TurnStartX-22, c.TurnStartY+25
+				//fmt.Println("Lane gauche pour west is 1")
 			}
 		} else if c.Dir == East { // spawn depuis l'ouest et tourne a gauche vers le nord
 			if c.LaneIndex == 0 {
@@ -316,12 +326,14 @@ func (c *Car) Deliberate() {
 				p1x, p1y = c.TurnStartX+5, c.TurnStartY
 				p2x, p2y = c.TurnStartX+12, c.TurnStartY-15
 				p3x, p3y = c.TurnStartX+22, c.TurnStartY-25
+				//fmt.Println("Lane gauche pour East is 0")
 			} else {
 				// Lane de droite
 				p0x, p0y = c.TurnStartX, c.TurnStartY
 				p1x, p1y = c.TurnStartX+30, c.TurnStartY
 				p2x, p2y = c.TurnStartX+40, c.TurnStartY-25
 				p3x, p3y = c.TurnStartX+53, c.TurnStartY-45
+				//fmt.Println("Lane gauche pour East is 1")
 			}
 		}
 
@@ -473,8 +485,11 @@ func (c *Car) Draw() (Asset, *ebiten.DrawImageOptions) {
 
 	// Positionner à la position finale
 	op.GeoM.Translate(x, y)
-
-	return Asset(c.carColorIndex + 1), op // Asset 1 à 5 pour les voitures colorées pour debug
+	if c.IsPlaceholder == false {
+		return Asset(c.carColorIndex + 1), op // Asset 1 à 5 pour les voitures colorées pour debug
+	} else {
+		return Asset(0), op // Asset 6 pour la voiture placeholder grise
+	}
 }
 
 func (c *Car) Position() (float64, float64) {

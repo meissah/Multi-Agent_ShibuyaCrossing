@@ -37,13 +37,13 @@ func ChoisirPointSpawn() (x, y float64, dir Direction, lane int) {
 	)
 
 	//DirectionsHorizontal := [2]Direction{West, East}
-	DirectionVertical := [2]Direction{North, South}
-	// DirectionsAll := [4]Direction{North, South, East, West}
+	//DirectionVertical := [2]Direction{North, South}
+	DirectionsAll := [4]Direction{North, South, East, West}
 
 	//A ENLEVER QUAND YAURA LES FEUX
 	// Choisir un point de SPAWN aléatoire
-	//spawnPoint := DirectionsHorizontal[rand.Intn(len(DirectionsHorizontal))]
-	spawnPoint := DirectionVertical[rand.Intn(len(DirectionVertical))]
+	//spawnPoint := DirectionVertical[rand.Intn(len(DirectionVertical))]
+	spawnPoint := DirectionsAll[rand.Intn(len(DirectionsAll))]
 
 	switch spawnPoint {
 	case North: // SPAWN en HAUT (Nord)

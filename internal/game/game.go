@@ -162,13 +162,14 @@ func NewGame() *Game {
 		go func(visu *trafficlight.TrafficLightObject, logic *trafficlight.TrafficLight) {
 			chUpdate := logic.Subscribe()
 			for newState := range chUpdate {
+				//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
 				visu.SetState(newState.String())
 			}
 		}(tlVisu, tlLogic)
 
 	}
 
-	carstopping.LancerCarStopper(chNS, chEW, &g.Objets, g.AddAgtSlice, g.DelAgtSlice)
+	carstopping.LancerCarStopper(g.ObjectCountCh, chNS, chEW, &g.Objets)
 
 	// Lancement du Traffic Manager
 
