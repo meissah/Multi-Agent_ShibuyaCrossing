@@ -207,7 +207,12 @@ func (p *Pedestrian) Deliberate() {
 	for _, ra := range p.repulsionAreasUnder {
 		force := ra.ForceAtPoint(p.Coords)
 		// Les murs ont priorité absolue sur le pathfinding
-		p.velocity = p.velocity.Add(force.Scale(2.0))
+		p.velocity = p.velocity.Add(force.Scale(3.0))
+	}
+
+	//Sécurité d'arrêt complet
+	if p.velocity.Norm() < 0.1 {
+		p.velocity = utils.VectorZero
 	}
 
 	// Limiter la vitesse

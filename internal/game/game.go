@@ -56,6 +56,8 @@ type Game struct {
 
 	// pour identifier les zones de repulsion pour les piétons
 	CrosswalkZones map[string][]*environment.RepulsionArea
+
+	LightsMap map[string]*trafficlight.TrafficLight
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -69,6 +71,7 @@ func NewGame() *Game {
 		carSpawnSlider: ui.NewSlider(250, 165, 250, 15, 1.0, 50.0, 1.0), // Min=1, Max=50, aligné après le label
 		pedSpawnSlider: ui.NewSlider(250, 205, 250, 15, 1.0, 50.0, 5.0), // Min=1, Max=50, aligné après le label
 		CrosswalkZones: make(map[string][]*environment.RepulsionArea),
+		LightsMap:      make(map[string]*trafficlight.TrafficLight),
 	}
 	// permet d'éviter un deadlock
 	g.ObjectCountCh = agentcounthandler.LancerAgentCountHandler(&g.ObjectCount, &g.Objets)
@@ -90,9 +93,6 @@ func NewGame() *Game {
 	g.TM = tm
 
 	g.validateButton = ui.NewButton(600, 650, 120, 40, "Valider")
-
-	g.generateRepulsionAreas()
-	pathfinding.InitNavigationGrid()
 
 	configs := []struct {
 		x, y, w, h float64
@@ -126,6 +126,7 @@ func NewGame() *Game {
 
 		// 2. Logique
 		tlLogic := trafficlight.NewTrafficLight(cfg.id, 1*time.Hour, 1*time.Hour)
+		g.LightsMap[cfg.id] = tlLogic
 		tlLogic.Start()
 
 		// C. Classement dans le Manager
@@ -176,6 +177,16 @@ func NewGame() *Game {
 func (g *Game) InitSimulation() {
 	g.TM.SetMode(g.Config.CrossingType == "shibuya")
 
+	pathfinding.InitNavigationGrid(g.Config.CrossingType == "shibuya")
+
+	g.generateRepulsionAreas()
+	for id, zones := range g.CrosswalkZones {
+		if tl, ok := g.LightsMap[id]; ok {
+			for _, zone := range zones {
+				tl.AddZone(zone)
+			}
+		}
+	}
 	g.TM.Start()
 
 	//lance les goroutines autonome de creation de voitures et pietons
@@ -188,7 +199,7 @@ func (g *Game) InitSimulation() {
 // Génère les zones de repulsion pour les piétons (zones où ils ne doivent pas entrer)
 func (g *Game) generateRepulsionAreas() {
 
-	// 1. Définition des sous-zones pour diviser les forces
+	//  Définition des sous-zones pour diviser les forces
 	type SubZone struct {
 		p1, p2       Point // Le rectangle de la sous-zone
 		lineA, lineB Point // La ligne vers laquelle on pousse (le trottoir)
@@ -249,12 +260,25 @@ func (g *Game) generateRepulsionAreas() {
 		},
 	}
 
-	// 2. Génération des zones piétonnes divisées
+	//  Génération des zones piétonnes divisées
 	for id, subs := range crosswalksSplit {
 		for _, sub := range subs {
 			// Création de la sous-zone
-			ra := environment.NewRepulsionArea(<-g.ObjectCountCh, sub.p1, sub.p2, 0.5, 0.0)
+			ra := environment.NewRepulsionArea(<-g.ObjectCountCh, sub.p1, sub.p2, 1.5, 5.0)
 			ra.SetPedestrian(true)
+
+			switch id {
+			case "Ped_N":
+				ra.ExpandSide("N", 10.0) // Étend vers le haut (Route Nord)
+			case "Ped_S":
+				ra.ExpandSide("S", 10.0) // Étend vers le bas (Route Sud)
+			case "Ped_W":
+				ra.ExpandSide("W", 10.0) // Étend vers la gauche (Route Ouest)
+			case "Ped_E":
+				ra.ExpandSide("E", 10.0) // Étend vers la droite (Route Est)
+			}
+
+			ra.SetAttractorLine(sub.lineA, sub.lineB)
 			ra.Show()
 			ra.Activate()
 
@@ -269,7 +293,7 @@ func (g *Game) generateRepulsionAreas() {
 	}
 	// ____________________________________Trouver une solution pour virer cette partie____________________________________
 	//
-	// 3. Gestion Spéciale de la Diagonale (Réintégrée pour éviter le crash)
+	//  Gestion Spéciale de la Diagonale (Réintégrée pour éviter le crash)
 	diagP1, diagP2 := *NewPoint(305, 305), *NewPoint(445, 445)
 	raDiag := environment.NewRepulsionArea(<-g.ObjectCountCh, diagP1, diagP2, 0.5, 0.0)
 	raDiag.SetPedestrian(true)
@@ -281,7 +305,7 @@ func (g *Game) generateRepulsionAreas() {
 	g.CrosswalkZones["Ped_Diag"] = append(g.CrosswalkZones["Ped_Diag"], raDiag)
 	// ________________________________________________________________________________________________________________
 
-	// 4. Zones de répulsion des batiments
+	// Zones de répulsion des batiments
 	g.addRepulsionAreas(
 		[][2]Point{
 			{*NewPoint(245, -50), *NewPoint(-50, 245)}, // Bâtiment nord-ouest, direction est
@@ -293,27 +317,67 @@ func (g *Game) generateRepulsionAreas() {
 			{*NewPoint(505, 800), *NewPoint(800, 505)}, // Bâtiment sud-est, direction ouest
 			{*NewPoint(505, 505), *NewPoint(800, 800)}, // Bâtiment sud-est, direction nord
 		},
-		0.2, 10.0,
+		2.5, 10.0,
 	)
 
-	// 5. Zones de répulsion de la route
+	// Zones de répulsion de la route
 	g.addRepulsionAreas(
 		[][2]Point{
-			{*NewPoint(-50, 300), *NewPoint(245, 375)}, // Route ouest, moitié haute
-			{*NewPoint(245, 450), *NewPoint(-50, 375)}, // Route ouest, moitié basse
-			{*NewPoint(505, 300), *NewPoint(800, 375)}, // Route est, moitié haute
-			{*NewPoint(800, 450), *NewPoint(505, 375)}, // Route est, moitié basse
-			{*NewPoint(300, 245), *NewPoint(375, -50)}, // Route nord, moitié gauche
-			{*NewPoint(450, -50), *NewPoint(375, 245)}, // Route nord, moitié droite
-			{*NewPoint(300, 800), *NewPoint(375, 505)}, // Route sud, moitié gauche
-			{*NewPoint(450, 505), *NewPoint(375, 800)}, // Route sud, moitié droite
-			{*NewPoint(300, 300), *NewPoint(450, 375)}, // Carrefour central, moitié haute
-			{*NewPoint(450, 450), *NewPoint(300, 375)}, // Carrefour central, moitié basse
-			{*NewPoint(300, 450), *NewPoint(375, 300)}, // Carrefour central, moitié gauche
-			{*NewPoint(450, 300), *NewPoint(375, 450)}, // Carrefour central, moitié droite
+			{*NewPoint(-50, 300), *NewPoint(300, 375)}, // Route ouest, haut
+			{*NewPoint(300, 450), *NewPoint(-50, 375)}, // Route ouest, bas
+			{*NewPoint(450, 300), *NewPoint(800, 375)}, // Route est, haut
+			{*NewPoint(800, 450), *NewPoint(450, 375)}, // Route est, bas
+
+			{*NewPoint(300, 245), *NewPoint(375, -50)}, // Route nord, gauche (245 pour coller au trottoir)
+			{*NewPoint(450, -50), *NewPoint(375, 245)}, // Route nord, droite
+			{*NewPoint(300, 800), *NewPoint(375, 505)}, // Route sud, gauche
+			{*NewPoint(450, 505), *NewPoint(375, 800)}, // Route sud, droite
+
+			// Carrefour central strict
+			// {*NewPoint(300, 300), *NewPoint(450, 375)},
+			// {*NewPoint(450, 450), *NewPoint(300, 375)},
+			// {*NewPoint(300, 450), *NewPoint(375, 300)},
+			// {*NewPoint(450, 300), *NewPoint(375, 450)},
 		},
 		0.05, 0.0,
 	)
+
+	center := *NewPoint(375, 375)
+	nw, ne := *NewPoint(300, 300), *NewPoint(450, 300)
+	sw, se := *NewPoint(300, 450), *NewPoint(450, 450)
+
+	// Création des 4 triangles d'éjection
+	// Force élevée (2.5) pour un effet d'expulsion immédiat
+	triangles := []struct {
+		a, b, c Point
+		push    Vector
+		id      string
+	}{
+		{nw, ne, center, *NewVector(0, -1), "Ped_N"}, // Triangle Nord -> Pousse vers le haut
+		{sw, se, center, *NewVector(0, 1), "Ped_S"},  // Triangle Sud -> Pousse vers le bas
+		{nw, sw, center, *NewVector(-1, 0), "Ped_W"}, // Triangle Ouest -> Pousse vers la gauche
+		{ne, se, center, *NewVector(1, 0), "Ped_E"},  // Triangle Est -> Pousse vers la droite
+	}
+
+	for _, t := range triangles {
+		ra := environment.NewTriangleRepulsionArea(<-g.ObjectCountCh, t.a, t.b, t.c, t.push, 3.0)
+		ra.Hide()
+
+		// En mode French, ces zones sont toujours actives pour bloquer le centre
+		// En mode Shibuya, elles seront gérées par le TrafficManager (Actives au rouge)
+		// if g.Config.CrossingType != "shibuya" {
+		// 	ra.Activate()
+		// } else {
+		// 	ra.Deactivate()
+		// 	g.CrosswalkZones["Ped_Diag"] = append(g.CrosswalkZones["Ped_Diag"], ra)
+		// }
+		if g.Config.CrossingType == "shibuya" {
+			ra.Deactivate() // Inactif au vert
+			g.CrosswalkZones["Ped_Diag"] = append(g.CrosswalkZones["Ped_Diag"], ra)
+		}
+		g.Objets = append(g.Objets, ra)
+		g.PersistentObjets = append(g.PersistentObjets, ra)
+	}
 }
 
 // Génère un ensemble cohérent de zones de répulsion et les ajoute au jeu

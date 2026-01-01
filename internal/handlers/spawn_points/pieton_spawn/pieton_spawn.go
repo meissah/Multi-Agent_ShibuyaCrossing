@@ -101,7 +101,7 @@ func (g *PietonSpawn) Start(
 
 	go func() {
 		// Initialisation de la grille de navigation A* avant le premier spawn
-		pathfinding.InitNavigationGrid()
+		// pathfinding.InitNavigationGrid()
 
 		pedGrid := grid_handler.NewPedestrianGrid(850, 850, 20)
 		pedGrid.Start()

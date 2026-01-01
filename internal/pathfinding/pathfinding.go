@@ -59,17 +59,26 @@ type Grid struct {
 var NavGrid *Grid
 
 // InitNavigationGrid initialise la carte des zones marchables
-func InitNavigationGrid() {
+func InitNavigationGrid(isShibuya bool) {
 	NavGrid = &Grid{}
 
 	// Liste des zones autorisées (Trottoirs + Passages + Intersection)
 	walkableRects := []struct{ x, y, w, h float64 }{
-		// Trottoirs Verticaux (Inclus les marges de spawn Nord/Sud)
-		{245, -50, 55, 860}, {450, -50, 55, 860},
-		// Trottoirs Horizontaux (Inclus les marges Ouest/Est)
-		{-50, 245, 860, 55}, {-50, 450, 860, 55},
-		// Intersection centrale
-		{245, 245, 260, 260},
+		// TROTTOIRS
+		{245, -50, 55, 310}, {245, 440, 55, 410}, // Verticaux (G)
+		{450, -50, 55, 310}, {450, 440, 55, 410}, // Verticaux (D)
+		{-50, 245, 310, 55}, {440, 245, 410, 55}, // Horizontaux (H)
+		{-50, 450, 310, 55}, {440, 450, 410, 55}, // Horizontaux (B)
+
+		{290, 245, 170, 55}, // Nord (Lien NW <-> NE)
+		{290, 450, 170, 55}, // Sud
+		{245, 290, 55, 170}, // Ouest
+		{450, 290, 55, 170}, // Est
+	}
+
+	// En mode Shibuya, on ajoute l'intersection centrale comme zone marchable
+	if isShibuya {
+		walkableRects = append(walkableRects, struct{ x, y, w, h float64 }{300, 300, 150, 150})
 	}
 
 	for y := 0; y < GridDim; y++ {
@@ -100,7 +109,7 @@ func InitNavigationGrid() {
 // FindPath calcule le chemin entre deux points pixels et retourne une liste de points
 func FindPath(start, goal utils.Point) ([]utils.Point, bool) {
 	if NavGrid == nil {
-		InitNavigationGrid()
+		InitNavigationGrid(false)
 	}
 
 	sx, sy := int(start.X()+50)/CellSize, int(start.Y()+50)/CellSize

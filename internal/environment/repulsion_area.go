@@ -26,8 +26,12 @@ type RepulsionArea struct {
 	active        bool
 	isPedestrian  bool
 	side          utils.Line
+	Shape         utils.Shape
+	PushVector    utils.Vector // Direction vers laquelle la zone éjecte
 
 	minX, maxX, minY, maxY float64
+	// borne pour le visuel
+	vMinX, vMaxX, vMinY, vMaxY float64
 }
 
 func NewRepulsionArea(id utils.ObjectID, topLeft, bottomRight utils.Point, forceStrength, bufferSize float64) *RepulsionArea {
@@ -64,6 +68,11 @@ func NewRepulsionArea(id utils.ObjectID, topLeft, bottomRight utils.Point, force
 	ra.minY = math.Min(topLeft.Y(), bottomRight.Y())
 	ra.maxY = math.Max(topLeft.Y(), bottomRight.Y())
 
+	ra.Shape = utils.NewRectangle(ra.minX, ra.minY, ra.maxX-ra.minX, ra.maxY-ra.minY)
+
+	ra.vMinX, ra.vMaxX = ra.minX, ra.maxX
+	ra.vMinY, ra.vMaxY = ra.minY, ra.maxY
+
 	return ra
 }
 
@@ -80,6 +89,15 @@ func (ra RepulsionArea) Direction() utils.Direction { return utils.North }      
 func (ra RepulsionArea) State() string              { return "active" }         // placeholder
 func (ra RepulsionArea) Type() string               { return "repulsion_area" } // placeholder
 func (ra RepulsionArea) TheAngle() float64          { return 0.0 }              // placeholder
+
+func (ra *RepulsionArea) ExpandCollision(margin float64) {
+	ra.minX -= margin
+	ra.maxX += margin
+	ra.minY -= margin
+	ra.maxY += margin
+	// Met à jour la forme physique utilisée par IsPointInside
+	ra.Shape = utils.NewRectangle(ra.minX, ra.minY, ra.maxX-ra.minX, ra.maxY-ra.minY)
+}
 
 // Dessine la zone de répulsion si elle est marquée comme visible.
 func (ra RepulsionArea) Draw(screen *ebiten.Image) {
@@ -101,43 +119,72 @@ func (ra RepulsionArea) Draw(screen *ebiten.Image) {
 
 	vector.FillRect(
 		screen,
-		float32(math.Min(ra.topLeft.X(), ra.bottomRight.X())),
-		float32(math.Min(ra.topLeft.Y(), ra.bottomRight.Y())),
-		float32(math.Abs(ra.bottomRight.X()-ra.topLeft.X())),
-		float32(math.Abs(ra.bottomRight.Y()-ra.topLeft.Y())),
+		float32(ra.vMinX),
+		float32(ra.vMinY),
+		float32(ra.vMaxX-ra.vMinX),
+		float32(ra.vMaxY-ra.vMinY),
 		drawColor,
 		true,
 	)
 }
 
-// Vérifie si un point donné se trouve à l'intérieur de la zone de répulsion.
-func (ra RepulsionArea) IsPointInside(p utils.Point) bool {
-	isWithinX := p.X() >= ra.minX && p.X() <= ra.maxX
-	isWithinY := p.Y() >= ra.minY && p.Y() <= ra.maxY
-	return isWithinX && isWithinY
+func (ra *RepulsionArea) ExpandSide(side string, margin float64) {
+	switch side {
+	case "N":
+		ra.minY -= margin
+	case "S":
+		ra.maxY += margin
+	case "W":
+		ra.minX -= margin
+	case "E":
+		ra.maxX += margin
+	}
+
+	ra.Shape = utils.NewRectangle(ra.minX, ra.minY, ra.maxX-ra.minX, ra.maxY-ra.minY)
 }
 
-// Calcule la force de répulsion exercée sur un point donné.
+func NewTriangleRepulsionArea(id utils.ObjectID, a, b, c utils.Point, push utils.Vector, strength float64) *RepulsionArea {
+	return &RepulsionArea{
+		id:            id,
+		Shape:         utils.NewTriangle(a, b, c),
+		PushVector:    push,
+		forceStrength: strength,
+		active:        true,
+		isPedestrian:  true,
+		visible:       false,
+		topLeft:       a, // Point de référence
+		bottomRight:   c, // Point de référence
+	}
+}
+
+func (ra RepulsionArea) IsPointInside(p utils.Point) bool {
+	if ra.Shape == nil {
+		return false
+	}
+	return ra.Shape.IsPointInside(p)
+}
+
 func (ra RepulsionArea) ForceAtPoint(p utils.Point) utils.Vector {
 	if !ra.active || !ra.IsPointInside(p) {
 		return utils.VectorZero
 	}
+	// CAS triangle
+	if ra.PushVector.Norm() > 0 {
+		return ra.PushVector.Scale(ra.forceStrength)
+	}
 
-	// Le point le plus proche sur le côté désigné est son projeté orthogonal.
-	// On l'utilise pour calculer la distance et la direction de la force de répulsion.
+	// CAS rectangle (Passage piéton)
 	projection := p.ProjectOntoLine(ra.side)
 	repulsion := *utils.NewVectorFromPoints(p, projection)
 	distance := repulsion.Norm()
 
-	// La force de répulsion est moindre selon la distance au côté désigné.
-	repulsion = repulsion.Normalize()
-	if distance > ra.bufferSize {
-		repulsion = repulsion.Scale(ra.forceStrength)
-	} else {
-		repulsion = repulsion.Scale(ra.forceStrength * (distance / ra.bufferSize))
+	if distance < 0.1 {
+		return utils.VectorZero
 	}
 
-	return repulsion
+	// Calcul de la force selon la distance (plus on est loin du trottoir, plus on est poussé)
+	force := repulsion.Normalize().Scale(ra.forceStrength)
+	return force
 }
 
 func (ra *RepulsionArea) SetAttractorLine(p1, p2 utils.Point) {
