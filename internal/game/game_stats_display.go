@@ -208,7 +208,7 @@ func (g *Game) drawMetricSection(screen *ebiten.Image, x, y float64, title strin
 	return y + 20
 }
 
-// drawMetricLine dessine une ligne de métrique (label: valeur)
+// drawMetricLine dessine une ligne de métrique
 func (g *Game) drawMetricLine(screen *ebiten.Image, x, y float64, label, value string, col color.Color) float64 {
 	// Label à gauche
 	text.Draw(screen, label, basicfont.Face7x13,
@@ -291,7 +291,3 @@ func (g *Game) drawSaveButton(screen *ebiten.Image, x, y, w, h float64) {
 		}
 	}
 }
-
-// ----------------------------------------------------------------
-// Affichage de l'écran de comparaison des résultats
-// ----------------------------------------------------------------

@@ -34,7 +34,7 @@
                         <span class="param-label">Voitures/sec:</span>
                         <span class="param-value" id="shibuya-car-rate">-</span>
                     </div>
-                    <div class="param-item">
+                    <div class="params-box">
                         <span class="param-label">Piétons/sec:</span>
                         <span class="param-value" id="shibuya-ped-rate">-</span>
                     </div>
@@ -50,7 +50,7 @@
                         <span class="param-label">Voitures/sec:</span>
                         <span class="param-value" id="french-car-rate">-</span>
                     </div>
-                    <div class="param-item">
+                    <div class="params-box">
                         <span class="param-label">Piétons/sec:</span>
                         <span class="param-value" id="french-ped-rate">-</span>
                     </div>
@@ -164,14 +164,14 @@
                 </div>
 
                 <div class="comparison-card">
-                    <h2>📈 Comparaison des Temps de Traversée</h2>
+                    <h2> Comparaison des Temps de Traversée</h2>
                     <div class="chart-container">
                         <canvas id="comparisonBarChart"></canvas>
                     </div>
                 </div>
 
                 <div class="comparison-card">
-                    <h2>🏎️ Comparaison des Vitesses Moyennes</h2>
+                    <h2> Comparaison des Vitesses Moyennes</h2>
                     <div class="chart-container">
                         <canvas id="speedComparisonChart"></canvas>
                     </div>
@@ -292,12 +292,12 @@
             });
         }
 
-        // NOUVELLE FONCTION : Capture d'écran du dashboard et conversion en PDF
+        // Capture d'écran du dashboard et conversion en PDF
         async function downloadPDF() {
             const button = document.getElementById('downloadPdfBtn');
             const originalText = button.textContent;
             button.disabled = true;
-            button.textContent = '⏳ Capture en cours...';
+            button.textContent = 'Capture en cours';
 
             try {
                 // Nom du fichier basé sur les paramètres
@@ -318,7 +318,7 @@
                 const { jsPDF } = window.jspdf;
                 
                 // Calculer les dimensions pour bien fitter dans le PDF
-                const imgWidth = 210; // Largeur A4 en mm
+                const imgWidth = 210; // -> Largeur A4 en mm
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
                 // Créer le PDF en format portrait ou paysage selon la hauteur
@@ -350,7 +350,7 @@
                 // Sauvegarder le PDF
                 pdf.save(filename);
                 
-                button.textContent = '✅ PDF téléchargé !';
+                button.textContent = 'PDF téléchargé !';
                 setTimeout(() => {
                     button.textContent = originalText;
                     button.disabled = false;
@@ -358,7 +358,7 @@
                 
             } catch (error) {
                 console.error('Erreur génération PDF:', error);
-                button.textContent = '❌ Erreur';
+                button.textContent = 'Erreur';
                 setTimeout(() => {
                     button.textContent = originalText;
                     button.disabled = false;

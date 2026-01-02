@@ -284,6 +284,6 @@ func (sm *SimulationMetrics) SaveToFile() error {
 		return fmt.Errorf("erreur écriture fichier: %v", err)
 	}
 
-	fmt.Printf("✓ Métriques sauvegardées: %s\n", filepath)
+	fmt.Printf(" Métriques sauvegardées: %s\n", filepath)
 	return nil
 }

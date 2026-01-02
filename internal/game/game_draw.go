@@ -5,7 +5,7 @@
 //   - Draw() : router principal qui dirige vers le menu ou la simulation
 //   - DrawMenu() : affichage de l'écran de configuration
 //   - DrawSimulation() : affichage de la simulation (route + agents)
-//   - Helpers : fonctions pour dessiner boutons, voitures, crossings, etc.
+
 package game
 
 import (
@@ -59,10 +59,11 @@ func init() {
 			log.Fatalf("Erreur: Impossible de charger %s: %v", filename, err)
 		}
 		carImages = append(carImages, img)
-		log.Printf("✓ Image chargée: %s", filename)
+		log.Printf(" Image chargée: %s", filename)
 	}
 
-	// Charger les images des pietons (une par couleur)
+	// Charger les images des pietons (une par couleur) ->pas fait pour l'instant
+	// Finalement on utilise les ronds basic de ebiten engine pour les piétons
 	pedColorNames = []string{"nil", "zero"}
 	for _, color := range pedColorNames {
 		filename := fmt.Sprintf("internal/assets/ped_%s.png", color)
@@ -71,7 +72,7 @@ func init() {
 			log.Fatalf("Erreur: Impossible de charger %s: %v", filename, err)
 		}
 		pedImages = append(pedImages, img)
-		log.Printf("✓ Image chargée: %s", filename)
+		log.Printf(" Image chargée: %s", filename)
 	}
 
 	// Charger les images pour le menu (optionnel)
@@ -95,8 +96,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 // DrawMenu affiche l'écran de menu avec les options de configuration
 func (g *Game) DrawMenu(screen *ebiten.Image) {
-	// Fond dégradé  (bleu-gris foncé)
-	screen.Fill(color.RGBA{25, 30, 40, 255})
+
+	screen.Fill(color.RGBA{25, 30, 40, 255}) // Fond dégradé  (bleu-gris foncé)
 
 	// ═══════════════════════════════════════════════════════════
 	// TITRE PRINCIPAL centré
@@ -221,10 +222,10 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 	}
 
 	// ═══════════════════════════════════════════════════════════
-	// BOUTON DASHBOARD (en bas à droite )
+	// BOUTON DASHBOARD (en bas à droite ) -> pour y accéder
 	// ═══════════════════════════════════════════════════════════
 
-	// Le bouton dashboard est actif seulement si les 2 fichiers metrics existent
+	// Le bouton dashboard est actif seulement si les 2 fichiers metrics existent ( french et shibuya)
 	g.dashboardButton.Rect.X = 620
 	g.dashboardButton.Rect.Y = 700
 	g.dashboardButton.Rect.W = 110
@@ -519,7 +520,7 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 			dir := obj.Direction()
 			isHorizontal := dir == East || dir == West
 
-			// Dimensions "Standard"
+			// Dimensions Standard
 			boxW, boxH := 24, 48
 			rDx, rDy := 0.0, -12.0
 			gDx, gDy := 0.0, +12.0
@@ -603,7 +604,7 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 
 }
 
-// drawBackButton dessine le bouton de retour au menu en haut à gauche
+// drawBackButton dessine le bouton de retour au menu en haut à gauche ( quand on est en simulation)
 func (g *Game) drawBackButton(screen *ebiten.Image) {
 	// Couleurs selon l'état - GRIS
 	var bgColor, textColor, borderColor color.Color
