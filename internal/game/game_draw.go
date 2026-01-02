@@ -21,6 +21,7 @@ import (
 
 	"golang.org/x/image/font/basicfont"
 
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
@@ -750,12 +751,28 @@ func (g *Game) drawCar(screen *ebiten.Image, c Drawable) {
 }
 
 func (g *Game) drawPedestrian(screen *ebiten.Image, c Drawable) {
-	assetIndex, op := c.Draw()
+	p, ok := c.(*pedestrian.Pedestrian)
+	if !ok {
+		return
+	}
 
-	// Centrer l'image sur la position
+	// Dessin du piéton (Asset)
+	assetIndex, op := p.Draw()
 	op.GeoM.Translate(-float64(pedImages[assetIndex].Bounds().Dx())/2,
 		-float64(pedImages[assetIndex].Bounds().Dy())/2)
-
-	// Dessiner
 	screen.DrawImage(pedImages[assetIndex], op)
+
+	// VISUALISATION DEBUG (Lignes d'attraction)
+	if g.DebugMode {
+		// Dessine une ligne entre le piéton et son point visé
+		ebitenutil.DrawLine(screen,
+			p.Coords.X(), p.Coords.Y(),
+			p.DebugTarget.X(), p.DebugTarget.Y(),
+			color.RGBA{0, 255, 255, 150}) // Cyan transparent
+
+		// Dessine un petit point sur la cible
+		vector.DrawFilledCircle(screen,
+			float32(p.DebugTarget.X()), float32(p.DebugTarget.Y()),
+			2, color.RGBA{255, 255, 0, 200}, false)
+	}
 }
