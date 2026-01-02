@@ -1,12 +1,16 @@
 package carstopping
 
 import (
+	"time"
+
 	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
 	cars "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
-func LancerCarStopper(chID <-chan ObjectID, chH chan trafficlight.State, chV chan trafficlight.State, env *[]Object) {
+func LancerCarStopperAtRedLight(chID <-chan ObjectID, chH chan trafficlight.State, chV chan trafficlight.State, env *[]Object) {
 	var RedLightCarStopH, RedLightCarStopV []*cars.Car
 
 	carH1 := cars.NewCar(<-chID, 330, 510, North, 0, false, nil)
@@ -65,6 +69,95 @@ func LancerCarStopper(chID <-chan ObjectID, chH chan trafficlight.State, chV cha
 				}
 			}
 		}
+	}()
+	return
+}
+
+func LancerCarStopperForPietons(chID <-chan ObjectID, pedGrid *grid_handler.PedestrianGrid, env *[]Object) {
+
+	var PedCarStopW, PedCarStopE, PedCarStopN, PedCarStopS *cars.Car
+
+	PedCarStopW = cars.NewCar(<-chID, 285, 425, West, 1, false, nil)
+	PedCarStopE = cars.NewCar(<-chID, 470, 330, East, 0, false, nil)
+	PedCarStopN = cars.NewCar(<-chID, 330, 290, North, 0, false, nil)
+	PedCarStopS = cars.NewCar(<-chID, 425, 465, South, 1, false, nil)
+
+	PedCarStopW.State = "inative"
+	PedCarStopW.IsPlaceholder = true
+	PedCarStopE.State = "inative"
+	PedCarStopE.IsPlaceholder = true
+	PedCarStopN.State = "inative"
+	PedCarStopN.IsPlaceholder = true
+	PedCarStopS.State = "inative"
+	PedCarStopS.IsPlaceholder = true
+
+	// PedCarStopW.State = "active"
+	// PedCarStopE.State = "active"
+	// PedCarStopN.State = "active"
+	// PedCarStopS.State = "active"
+
+	*env = append(*env, PedCarStopW, PedCarStopE, PedCarStopN, PedCarStopS)
+
+	gridChan := pedGrid.RequestChan()
+
+	PedWch, PedEch, PedNch, PedSch := make(chan []Object), make(chan []Object), make(chan []Object), make(chan []Object)
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Millisecond)
+
+		for range ticker.C {
+
+			gridChan <- messaging.GetInRectRequest{
+				TopLeft:     *NewPoint(255, 400),
+				BottomRight: *NewPoint(300, 437),
+				ReplyChan:   PedWch,
+			}
+			PedW := <-PedWch
+
+			if len(PedW) > 0 {
+				PedCarStopW.State = "active"
+			} else {
+				PedCarStopW.State = "inative"
+			}
+			gridChan <- messaging.GetInRectRequest{
+				TopLeft:     *NewPoint(452, 310),
+				BottomRight: *NewPoint(506, 340),
+				ReplyChan:   PedEch,
+			}
+
+			PedE := <-PedEch
+			if len(PedE) > 0 {
+				PedCarStopE.State = "active"
+			} else {
+				PedCarStopE.State = "inative"
+			}
+			gridChan <- messaging.GetInRectRequest{
+				TopLeft:     *NewPoint(315, 250),
+				BottomRight: *NewPoint(353, 303),
+				ReplyChan:   PedNch,
+			}
+			PedN := <-PedNch
+			if len(PedN) > 0 {
+				PedCarStopN.State = "active"
+			} else {
+				PedCarStopN.State = "inative"
+			}
+			gridChan <- messaging.GetInRectRequest{
+				TopLeft:     *NewPoint(406, 453),
+				BottomRight: *NewPoint(450, 504),
+				ReplyChan:   PedSch,
+			}
+			PedS := <-PedSch
+			if len(PedS) > 0 {
+				PedCarStopS.State = "active"
+			} else {
+				PedCarStopS.State = "inative"
+			}
+
+		}
+
+		defer ticker.Stop()
+
 	}()
 	return
 }

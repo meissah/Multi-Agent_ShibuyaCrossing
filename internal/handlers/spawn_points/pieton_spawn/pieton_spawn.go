@@ -87,6 +87,7 @@ func (g *PietonSpawn) Start(
 	AgentCountCh <-chan utils.ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
 	env *[]utils.Object,
+	pedGrid *grid_handler.PedestrianGrid,
 ) {
 	spawns := environment.SpawnAreaCollection{
 		&environment.SpawnArea{X: 245, Y: -40, Width: 55, Height: 20}, // Nord G
@@ -100,11 +101,6 @@ func (g *PietonSpawn) Start(
 	}
 
 	go func() {
-		// Initialisation de la grille de navigation A* avant le premier spawn
-		// pathfinding.InitNavigationGrid()
-
-		pedGrid := grid_handler.NewPedestrianGrid(850, 850, 20)
-		pedGrid.Start()
 		gridChan := pedGrid.RequestChan()
 
 		ticker := time.NewTicker(g.SpawnInterval)

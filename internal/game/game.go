@@ -12,6 +12,7 @@ import (
 	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/carstopping"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
 	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
 	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
 	trafficmanger "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/traffic_manager"
@@ -25,6 +26,8 @@ type Game struct {
 	//New Game Env
 	Agents []Agent
 	Objets []Object
+
+	pedGrid *grid_handler.PedestrianGrid
 
 	//PersistentObjets []Object // pour l'affichage persistent des feux
 	TM *trafficmanger.TrafficManager
@@ -175,9 +178,12 @@ func NewGame() *Game {
 
 	}
 
-	carstopping.LancerCarStopper(g.ObjectCountCh, chNS, chEW, &g.Objets)
-
 	// Lancement du Traffic Manager
+
+	g.pedGrid = grid_handler.NewPedestrianGrid(850, 850, 20)
+	g.pedGrid.Start()
+
+	carstopping.LancerCarStopperAtRedLight(g.ObjectCountCh, chNS, chEW, &g.Objets)
 
 	return g
 }
@@ -200,9 +206,13 @@ func (g *Game) InitSimulation() {
 
 	//lance les goroutines autonome de creation de voitures et pietons
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
-	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
+	pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets, g.pedGrid)
+	if g.selectedCrossing == "French" {
+		carstopping.LancerCarStopperForPietons(g.ObjectCountCh, g.pedGrid, &g.Objets)
+	}
 	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // initialise la structure de spawn de voiture
 	carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)
+
 }
 
 // Génère les zones de repulsion pour les piétons (zones où ils ne doivent pas entrer)

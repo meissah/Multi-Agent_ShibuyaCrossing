@@ -268,7 +268,13 @@ func (c *Car) Deliberate() {
 	}
 
 	if c.IsTurning {
-		c.TurnStep++
+		c.adjustSpeed()
+		if c.Speed != 0 {
+			c.TurnStep++
+		} else {
+			return
+		}
+
 		t := c.TurnStep / TURN_DURATION
 
 		var p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y float64
@@ -358,12 +364,16 @@ func (c *Car) Deliberate() {
 			c.Angle = 0.0
 			if c.Dir == North {
 				c.Dir = West
+				c.LaneIndex = 1
 			} else if c.Dir == South {
 				c.Dir = East
+				c.LaneIndex = 0
 			} else if c.Dir == West {
 				c.Dir = South
+				c.LaneIndex = 1
 			} else if c.Dir == East {
 				c.Dir = North
+				c.LaneIndex = 0
 			}
 		}
 
@@ -553,6 +563,42 @@ func (c *Car) calculateRepulsionForce(myPos, otherPos utils.Point, distance floa
 // isCarAhead vérifie si une autre voiture est devant nous
 // (même direction et même lane et position devant selon la direction)
 func (c *Car) isCarAhead(other *Car) bool {
+	if c.IsTurning {
+
+		// Vérifier que l'autre voiture est bien devant nous selon la direction
+		// pas oublier que l'axe Y augmente vers le bas de l'écran et x vers la droite
+		switch c.Dir {
+		case North: // On va vers le haut, donc Y diminue
+			if other.LaneIndex != 1 {
+				return false
+			}
+			if other.Direction() == West {
+				return other.X < c.X // L'autre doit avoir un Y plus petit
+			}
+		case South: // On va vers le bas, donc Y augmente
+			if other.LaneIndex != 0 {
+				return false
+			}
+			if other.Direction() == East {
+				return other.X > c.X // L'autre doit avoir un Y plus grand
+			}
+		case East: // On va vers la droite, donc X augmente
+			if other.LaneIndex != 0 {
+				return false
+			}
+			if other.Direction() == North {
+				return other.Y < c.Y // L'autre doit avoir un X plus grand
+			}
+		case West: // On va vers la gauche, donc X diminue
+			if other.LaneIndex != 1 {
+				return false
+			}
+			if other.Direction() == South {
+				return other.Y > c.Y // L'autre doit avoir un X plus petit
+			}
+		}
+
+	}
 	// Vérifier la direction
 	if c.Dir != other.Dir {
 		return false
