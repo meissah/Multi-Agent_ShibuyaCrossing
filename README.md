@@ -107,4 +107,5 @@ Projet réalisé dans le cadre du cours AI30 à l'UTC.
 - Meïssa H'mida
 - Ahmed Misselmani
 - Enzo Maros
+- Pierrick 
 
