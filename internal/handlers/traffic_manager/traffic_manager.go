@@ -19,11 +19,11 @@ type TrafficManager struct {
 	PedsDiag []*trafficlight.TrafficLight // groupe pour la diagonale
 
 	// 1 = Shibuya, 0 = French
-	ShibuyaFlag  int32
-	StepDuration time.Duration
-	RedDuration  time.Duration
-
-	started int32
+	ShibuyaFlag     int32
+	CarStepDuration time.Duration // Durée pour les phases de voitures
+	PedStepDuration time.Duration // Durée spécifique pour les piétons (Shibuya)
+	RedDuration     time.Duration
+	started         int32
 }
 
 // Start lance la boucle de contrôle infinie
@@ -69,8 +69,9 @@ func (tm *TrafficManager) runStandardCycle() {
 	tm.setGroupState(tm.CarsEW, trafficlight.Red)
 	tm.setGroupState(tm.PedsNS, trafficlight.Red)
 	tm.setGroupState(tm.PedsDiag, trafficlight.Red) // Diagonale toujours interdite
-	time.Sleep(tm.StepDuration)
 	// 2. Phase de Sécurité
+	time.Sleep(tm.CarStepDuration)
+
 	tm.setAllRed()
 	time.Sleep(tm.RedDuration)
 
@@ -80,11 +81,12 @@ func (tm *TrafficManager) runStandardCycle() {
 	tm.setGroupState(tm.CarsEW, trafficlight.Green)
 	tm.setGroupState(tm.PedsNS, trafficlight.Green)
 	tm.setGroupState(tm.PedsDiag, trafficlight.Red)
-	time.Sleep(tm.StepDuration)
+	time.Sleep(tm.CarStepDuration)
 
 	// 4. Phase de Sécurité
 	tm.setAllRed()
 	time.Sleep(tm.RedDuration)
+
 }
 
 // shibuya
@@ -92,30 +94,28 @@ func (tm *TrafficManager) runShibuyaCycle() {
 	// 1. Voitures Nord-Sud seulement
 	tm.setGroupState(tm.CarsNS, trafficlight.Green)
 	tm.setGroupState(tm.CarsEW, trafficlight.Red)
-	tm.setAllPeds(trafficlight.Red) // Piétons attendent
-	time.Sleep(tm.StepDuration)
+	tm.setAllPeds(trafficlight.Red)
+	time.Sleep(tm.CarStepDuration) // Temps court pour les voitures
 
-	// Phase de Sécurité
 	tm.setAllRed()
 	time.Sleep(tm.RedDuration)
 
 	// 2. Voitures Est-Ouest seulement
 	tm.setGroupState(tm.CarsNS, trafficlight.Red)
 	tm.setGroupState(tm.CarsEW, trafficlight.Green)
-	tm.setAllPeds(trafficlight.Red) // Piétons attendent
-	time.Sleep(tm.StepDuration)
+	tm.setAllPeds(trafficlight.Red)
+	time.Sleep(tm.CarStepDuration) // Temps court pour les voitures
 
-	// Phase de Sécurité
 	tm.setAllRed()
 	time.Sleep(tm.RedDuration)
 
-	// 3. Tous les piétons Vert, toutes les voitures Rouge)
+	// 3. SCRAMBLE : Tous les piétons Vert
 	tm.setGroupState(tm.CarsNS, trafficlight.Red)
 	tm.setGroupState(tm.CarsEW, trafficlight.Red)
-	tm.setAllPeds(trafficlight.Green) // les piétons traversent
-	time.Sleep(tm.StepDuration)
+	tm.setAllPeds(trafficlight.Green)
+	// Temps plus long pour les piétons (défini dans game.go)
+	time.Sleep(tm.PedStepDuration)
 
-	// Sécurité avant de reprendre
 	tm.setAllRed()
 	time.Sleep(tm.RedDuration)
 }

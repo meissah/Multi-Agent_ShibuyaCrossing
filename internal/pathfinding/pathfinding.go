@@ -65,10 +65,10 @@ func InitNavigationGrid(isShibuya bool) {
 	// Liste des zones autorisées (Trottoirs + Passages + Intersection)
 	walkableRects := []struct{ x, y, w, h float64 }{
 		// TROTTOIRS
-		{245, -50, 55, 310}, {245, 440, 55, 410}, // Verticaux (G)
-		{450, -50, 55, 310}, {450, 440, 55, 410}, // Verticaux (D)
-		{-50, 245, 310, 55}, {440, 245, 410, 55}, // Horizontaux (H)
-		{-50, 450, 310, 55}, {440, 450, 410, 55}, // Horizontaux (B)
+		{245, -50, 55, 315}, {245, 435, 55, 415}, // Verticaux (G)
+		{450, -50, 55, 315}, {450, 435, 55, 415}, // Verticaux (D)
+		{-50, 245, 315, 55}, {435, 245, 415, 55}, // Horizontaux (H)
+		{-50, 450, 315, 55}, {435, 450, 415, 55}, // Horizontaux (B)
 
 		{290, 245, 170, 55}, // Nord (Lien NW <-> NE)
 		{290, 450, 170, 55}, // Sud

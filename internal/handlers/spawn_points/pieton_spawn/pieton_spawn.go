@@ -44,7 +44,7 @@ func (g *PietonSpawn) spawnPieton(
 
 	p.Coords = spawns.RandomPoint()
 	p.OldCoords = p.Coords
-	p.DesiredSeparation = utils.RandomFloatInRange(12.0, 18.0)
+	p.DesiredSeparation = utils.RandomFloatInRange(6.0, 9.0)
 	p.MaxSpeed = utils.RandomFloatInRange(0.7, 1.2)
 
 	// Choix de la destination (Ligne d'arrivée)

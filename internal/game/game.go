@@ -80,9 +80,10 @@ func NewGame() *Game {
 	g.AddAgtSlice, g.DelAgtSlice = agentslicehandler.LancerAgentSliceHandler(&g.Agents, &g.Objets, &g.syncChansAgt)
 
 	tm := &trafficmanger.TrafficManager{
-		ShibuyaFlag:  1,               // 1 pour True (Shibuya), 0 pour False (French)
-		StepDuration: 5 * time.Second, // Temps de feu vert
-		RedDuration:  2 * time.Second, // Temps de sécurité
+		ShibuyaFlag:     1,
+		CarStepDuration: 8 * time.Second,  // Temps pour les voitures
+		PedStepDuration: 16 * time.Second, // Temps long pour le Scramble
+		RedDuration:     2 * time.Second,
 
 		CarsNS:   make([]*trafficlight.TrafficLight, 0),
 		CarsEW:   make([]*trafficlight.TrafficLight, 0),
@@ -368,7 +369,13 @@ func (g *Game) generateRepulsionAreas() {
 	}
 
 	for _, t := range triangles {
-		ra := environment.NewTriangleRepulsionArea(<-g.ObjectCountCh, t.a, t.b, t.c, t.push, 3.0)
+		strength := 3.0
+
+		if g.Config.CrossingType != "shibuya" {
+			strength = 0.5
+		}
+
+		ra := environment.NewTriangleRepulsionArea(<-g.ObjectCountCh, t.a, t.b, t.c, t.push, strength)
 		ra.Hide()
 
 		// En mode French, ces zones sont toujours actives pour bloquer le centre
@@ -382,6 +389,9 @@ func (g *Game) generateRepulsionAreas() {
 		if g.Config.CrossingType == "shibuya" {
 			ra.Deactivate() // Inactif au vert
 			g.CrosswalkZones["Ped_Diag"] = append(g.CrosswalkZones["Ped_Diag"], ra)
+		} else {
+
+			ra.Activate()
 		}
 		g.Objets = append(g.Objets, ra)
 	}

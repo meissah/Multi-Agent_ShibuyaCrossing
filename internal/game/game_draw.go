@@ -758,8 +758,8 @@ func (g *Game) drawPedestrian(screen *ebiten.Image, c Drawable) {
 
 	// Dessin du piéton (Asset)
 	assetIndex, op := p.Draw()
-	op.GeoM.Translate(-float64(pedImages[assetIndex].Bounds().Dx())/2,
-		-float64(pedImages[assetIndex].Bounds().Dy())/2)
+	op.GeoM.Translate(-float64(pedImages[assetIndex].Bounds().Dx())/4,
+		-float64(pedImages[assetIndex].Bounds().Dy())/4)
 	screen.DrawImage(pedImages[assetIndex], op)
 
 	// VISUALISATION DEBUG (Lignes d'attraction)

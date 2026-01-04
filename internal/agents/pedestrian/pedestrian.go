@@ -73,6 +73,7 @@ func (p Pedestrian) OutOfBounds() bool {
 func (c *Pedestrian) Draw() (utils.Asset, *ebiten.DrawImageOptions) {
 	X, Y := c.Coords.X(), c.Coords.Y()
 	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(0.5, 0.5)
 	op.GeoM.Translate(X, Y)
 	return utils.Asset(1), op
 }
@@ -145,19 +146,40 @@ func (p *Pedestrian) Deliberate() {
 	p.velocity = utils.VectorZero
 	target := p.Coords
 
-	// Navigation le long du chemin A*
-	if len(p.Path) > 0 { //&& p.CurrentNodeIndex < len(p.Path)
-		// Si on est à la dernière étape et qu'on a une ligne d'arrivée définie
+	if len(p.Path) > 0 {
+		// Si on n'est pas au dernier noeud, on vérifie si on est trop loin du checkpoint actuel
+		if p.CurrentNodeIndex < len(p.Path)-1 {
+			currentTarget := p.Path[p.CurrentNodeIndex]
+			distToTarget := utils.NewVectorFromPoints(p.Coords, currentTarget).Norm()
+
+			// Seuil de 18 pixels
+			if distToTarget > 18.0 {
+				closestIdx := p.CurrentNodeIndex
+				minDist := distToTarget
+
+				// On cherche le noeud le plus proche parmi les noeuds futurs uniquement
+				for i := p.CurrentNodeIndex + 1; i < len(p.Path)-1; i++ {
+					d := utils.NewVectorFromPoints(p.Coords, p.Path[i]).Norm()
+					if d < minDist {
+						minDist = d
+						closestIdx = i
+					}
+				}
+				// On "saute" les checkpoints obsolètes
+				p.CurrentNodeIndex = closestIdx
+			}
+		}
+		// Calcul de la cible finale ou intermédiaire
 		if p.CurrentNodeIndex >= len(p.Path)-1 && p.FinalDestLine != nil {
-			//force le piéton à aller "tout droit" vers la sortie
+			// Direction vers la sortie de l'écran
 			target = p.Coords.ProjectOntoLine(*p.FinalDestLine)
 		} else if p.CurrentNodeIndex < len(p.Path) {
-			// STRATÉGIE OFFSET : vise le noeud A* avec un petit décalage personnel
+			// Cible avec offset pour éviter la file indienne
 			baseTarget := p.Path[p.CurrentNodeIndex]
 			target = baseTarget.Translate(p.WanderOffset)
 		}
 
-		// Calcul de la force d'attraction (Seek)
+		// Force d'attraction vers la cible choisie
 		desiredDir := utils.NewVectorFromPoints(p.Coords, target)
 		dist := desiredDir.Norm()
 
@@ -166,12 +188,12 @@ func (p *Pedestrian) Deliberate() {
 			p.velocity = p.velocity.Add(steering)
 		}
 
-		// Si on est assez proche du nœud intermédiaire (5px), on passe au suivant
-		// On ne le fait pas pour le dernier nœud (la sortie), car on veut sortir de l'écran
-		if dist < 15.0 && p.CurrentNodeIndex < len(p.Path)-1 {
+		// Passage au noeud suivant si on est assez proche (15px)
+		if dist < 10.0 && p.CurrentNodeIndex < len(p.Path)-1 {
 			p.CurrentNodeIndex++
 		}
 	}
+
 	// le debug (Visualisation)
 	p.DebugTarget = target
 
@@ -182,7 +204,7 @@ func (p *Pedestrian) Deliberate() {
 
 		// La force de répulsion est telle que les piétons mettent
 		// plus d'effort à s'éloigner qu'à se diriger vers leur objectif
-		repulsionFactor := 3.0 // ajustable
+		repulsionFactor := 1.8 // ajustable
 		repulsionDirection := diff.Normalize()
 		if distance < 0.1 {
 			distance = 0.1
