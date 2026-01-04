@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
 
@@ -36,6 +37,10 @@ type Pedestrian struct {
 	repulsionAreasUnder []*environment.RepulsionArea
 
 	StartTime time.Time
+
+	// pour statistiques
+	spawnRecorded   bool // Pour éviter d'enregistrer plusieurs fois
+	destroyRecorded bool // Pour éviter d'enregistrer plusieurs fois la destruction
 }
 
 // Constructeur de piéton
@@ -72,10 +77,18 @@ func (p Pedestrian) Alive() bool {
 } // Placeholder
 
 // Vérifie si le piéton est hors des limites de la zone de simulation.
-func (p Pedestrian) OutOfBounds() bool {
+func (p *Pedestrian) OutOfBounds() bool {
 	isOutsideX := p.Coords.X() < -50 || p.Coords.X() > 800
 	isOutsideY := p.Coords.Y() < -50 || p.Coords.Y() > 800
-	return isOutsideX || isOutsideY
+	isOut := isOutsideX || isOutsideY
+
+	// Si le piéton sort, enregistrer la destruction (une seule fois) -> pour les statistiques
+	if isOut && p.spawnRecorded && !p.destroyRecorded {
+		stats.RecordPedestrianDestroy(uint(p.id))
+		p.destroyRecorded = true
+	}
+
+	return isOut
 }
 
 // Méthode de dessin du piéton.
@@ -89,6 +102,13 @@ func (c *Pedestrian) Draw() (utils.Asset, *ebiten.DrawImageOptions) {
 
 // Lance la goroutine du piéton.
 func (p *Pedestrian) Start(env *[]utils.Object) {
+	// Enregistrer le spawn dans les métriques (une seule fois)
+	if !p.spawnRecorded {
+		dirStr := vectorToDirectionStr(p.DesiredDirection)
+		stats.RecordPedestrianSpawn(uint(p.id), dirStr)
+		p.spawnRecorded = true
+	}
+	// Boucle principale du piéton
 	go func() {
 		var step int
 		p.StartTime = time.Now()
@@ -113,6 +133,32 @@ func (p *Pedestrian) Start(env *[]utils.Object) {
 			}
 		}
 	}()
+}
+
+// Convertit un vecteur en une chaîne de caractères représentant la direction principale -> besoin pour les statistiques
+// car les piétons n'ont pas de direction fixe comme les voitures
+func vectorToDirectionStr(v utils.Vector) string {
+	// Normaliser le vecteur
+	norm := v.Norm()
+	if norm < 0.1 {
+		return "stationnaire"
+	}
+
+	nx := v.X() / norm
+	ny := v.Y() / norm
+
+	// Déterminer la direction principale suivant les composantes
+	if ny < -0.5 {
+		return "North"
+	} else if ny > 0.5 {
+		return "South"
+	} else if nx > 0.5 {
+		return "East"
+	} else if nx < -0.5 {
+		return "West"
+	}
+
+	return "Diagonal"
 }
 
 // Perception du piéton

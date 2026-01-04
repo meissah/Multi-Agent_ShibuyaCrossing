@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
 )
@@ -129,7 +130,7 @@ const (
 
 // NewCar constructeur
 func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, syncChan chan int) *Car {
-	return &Car{
+	car := &Car{
 		ID:            AgentID(id),
 		X:             x,
 		Y:             y,
@@ -154,6 +155,27 @@ func NewCar(id ObjectID, x, y float64, dir Direction, lane int, turnleft bool, s
 		carAhead:           nil,
 		distanceToCarAhead: 0,
 		forces:             utils.VectorZero,
+	}
+	// Enregistrer le spawn dans les métriques ( pour les statistiques )
+	dirStr := directionToString(dir)
+	stats.RecordCarSpawn(uint(id), dirStr)
+
+	return car
+}
+
+// Convertit la direction ( qui est en iota ) en chaîne de caractères pour les métriques
+func directionToString(dir Direction) string {
+	switch dir {
+	case North:
+		return "North"
+	case South:
+		return "South"
+	case East:
+		return "East"
+	case West:
+		return "West"
+	default:
+		return "Unknown"
 	}
 }
 
@@ -411,13 +433,13 @@ func (c *Car) Deliberate() {
 			c.Angle = -t * (math.Pi / 2)
 		}
 	}
-
-	if c.X < -50 || c.X > 800 || c.Y < -50 || c.Y > 800 {
-		c.AmIAlive = false
-	}
 }
 
 func (c *Car) Act() {
+	// Enregistrer la vitesse pour les statistiques
+	if c.Speed > 0 {
+		stats.RecordCarSpeed(uint(c.ID), c.Speed)
+	}
 }
 
 func (c *Car) Type() string {
@@ -516,6 +538,15 @@ func (c *Car) CarColorIndex() int {
 }
 
 func (c *Car) Alive() bool {
+	// Vérifier d'abord si la voiture est hors limites
+	if c.X < -50 || c.X > 800 || c.Y < -50 || c.Y > 800 {
+		// Enregistrer la destruction si pas encore fait
+		if c.AmIAlive {
+			c.AmIAlive = false
+			stats.RecordCarDestroy(uint(c.ID))
+		}
+		return false
+	}
 	return c.AmIAlive
 }
 

@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
+	pedestrian "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
@@ -16,6 +16,7 @@ import (
 // on a besoin d'une durée pour connaitre la frequence d'introduction d'une voiture
 type PietonSpawn struct {
 	SpawnInterval time.Duration
+	stopChan      chan bool // pour arrêter proprement le spawner ( quand on cliquer sur le bouton retour au menu )
 }
 
 var exitLines = []utils.Line{
@@ -88,7 +89,10 @@ func (g *PietonSpawn) Start(
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
 	env *[]utils.Object,
 	pedGrid *grid_handler.PedestrianGrid,
-) {
+) chan bool {
+	// Créer le channel d'arrêt
+	g.stopChan = make(chan bool)
+
 	spawns := environment.SpawnAreaCollection{
 		&environment.SpawnArea{X: 245, Y: -40, Width: 55, Height: 20}, // Nord G
 		&environment.SpawnArea{X: 450, Y: -40, Width: 55, Height: 20}, // Nord D
@@ -106,8 +110,18 @@ func (g *PietonSpawn) Start(
 		ticker := time.NewTicker(g.SpawnInterval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			g.spawnPieton(AgentCountCh, AgtsSliceCh, gridChan, env, spawns)
+		for {
+			select {
+			case <-ticker.C:
+				// Spawn normal d'un piéton
+				g.spawnPieton(AgentCountCh, AgtsSliceCh, gridChan, env, spawns)
+			case <-g.stopChan:
+				// Signal d'arrêt reçu, on termine la goroutine
+				return
+			}
 		}
 	}()
+
+	// Retourner le channel pour que Game puisse l'arrêter
+	return g.stopChan
 }

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparaison Simulations - Shibuya Crossing</title>
+    
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Bibliothèque pour capturer l'écran en image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="container" id="dashboardContainer">
+        <header>
+            <div>
+                <h1>Comparaison des Simulations</h1>
+                <p class="subtitle">Analyse comparative : Shibuya vs French Crossing</p>
+            </div>
+            <button id="downloadPdfBtn" class="download-btn">
+                 ⬇️ PDF
+            </button>
+        </header>
+
+        <!-- Panneau des paramètres -->
+        <div id="parametersPanel" class="parameters-panel">
+            <h2>⚙️ Paramètres des Simulations</h2>
+            <div class="parameters-grid">
+                <div class="param-card">
+                    <h3>Shibuya Crossing</h3>
+                    <div class="param-item">
+                        <span class="param-label">Voitures/sec:</span>
+                        <span class="param-value" id="shibuya-car-rate">-</span>
+                    </div>
+                    <div class="params-box">
+                        <span class="param-label">Piétons/sec:</span>
+                        <span class="param-value" id="shibuya-ped-rate">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Durée simulation:</span>
+                        <span class="param-value" id="shibuya-duration">-</span>
+                    </div>
+                </div>
+                
+                <div class="param-card">
+                    <h3>French Crossing</h3>
+                    <div class="param-item">
+                        <span class="param-label">Voitures/sec:</span>
+                        <span class="param-value" id="french-car-rate">-</span>
+                    </div>
+                    <div class="params-box">
+                        <span class="param-label">Piétons/sec:</span>
+                        <span class="param-value" id="french-ped-rate">-</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Durée simulation:</span>
+                        <span class="param-value" id="french-duration">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="content"></div>
+    </div>
+
+    <script>
+        // Variables globales
+        let shibuyaData = null;
+        let frenchData = null;
+        let charts = {};
+
+        // Chargement des données depuis l'API
+        async function loadData() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"> Chargement des données...</div>';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/comparison');
+                const data = await response.json();
+
+                if (data.ShibuyaAvailable && data.FrenchAvailable) {
+                    shibuyaData = {
+                        avgCarLifetime: data.ShibuyaStats.AvgCarLifetime,
+                        avgPedLifetime: data.ShibuyaStats.AvgPedLifetime,
+                        totalCars: data.ShibuyaStats.TotalCars,
+                        totalPeds: data.ShibuyaStats.TotalPeds,
+                        avgCarSpeed: data.ShibuyaStats.AvgCarSpeed || 0,
+                        carSpawnRate: data.ShibuyaStats.CarSpawnRate,
+                        pedSpawnRate: data.ShibuyaStats.PedestrianSpawnRate,
+                        duration: data.ShibuyaStats.Duration
+                    };
+                    
+                    frenchData = {
+                        avgCarLifetime: data.FrenchStats.AvgCarLifetime,
+                        avgPedLifetime: data.FrenchStats.AvgPedLifetime,
+                        totalCars: data.FrenchStats.TotalCars,
+                        totalPeds: data.FrenchStats.TotalPeds,
+                        avgCarSpeed: data.FrenchStats.AvgCarSpeed || 0,
+                        carSpawnRate: data.FrenchStats.CarSpawnRate,
+                        pedSpawnRate: data.FrenchStats.PedestrianSpawnRate,
+                        duration: data.FrenchStats.Duration
+                    };
+                    
+                    renderParameters();
+                    renderDashboard();
+                } else {
+                    content.innerHTML = '<div class="error"> Données incomplètes.<br>Lance une simulation Shibuya ET une simulation French pour voir la comparaison.</div>';
+                }
+            } catch (error) {
+                content.innerHTML = `<div class="error"> Erreur de connexion à l'API: ${error.message}<br>Vérifie que la simulation Go est lancée.</div>`;
+            }
+        }
+
+        // Affichage des paramètres
+        function renderParameters() {
+            document.getElementById('shibuya-car-rate').textContent = shibuyaData.carSpawnRate.toFixed(1);
+            document.getElementById('shibuya-ped-rate').textContent = shibuyaData.pedSpawnRate.toFixed(1);
+            document.getElementById('shibuya-duration').textContent = shibuyaData.duration.toFixed(1) + 's';
+            
+            document.getElementById('french-car-rate').textContent = frenchData.carSpawnRate.toFixed(1);
+            document.getElementById('french-ped-rate').textContent = frenchData.pedSpawnRate.toFixed(1);
+            document.getElementById('french-duration').textContent = frenchData.duration.toFixed(1) + 's';
+        }
+
+        // Génération du dashboard
+        function renderDashboard() {
+            const html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3><span class="icon">🚗</span> Voitures</h3>
+                        <div class="stat-row">
+                            <div class="stat-item">
+                                <div class="stat-label">Shibuya</div>
+                                <div class="stat-value" style="color: #00d4ff;">${shibuyaData.totalCars}</div>
+                                <div class="stat-sub">${shibuyaData.avgCarLifetime.toFixed(1)}s durée moy.</div>
+                                <div class="stat-sub">${shibuyaData.avgCarSpeed.toFixed(1)} px/s vitesse moy.</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">French</div>
+                                <div class="stat-value" style="color: #a78bfa;">${frenchData.totalCars}</div>
+                                <div class="stat-sub">${frenchData.avgCarLifetime.toFixed(1)}s durée moy.</div>
+                                <div class="stat-sub">${frenchData.avgCarSpeed.toFixed(1)} px/s vitesse moy.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3><span class="icon">🚶</span> Piétons</h3>
+                        <div class="stat-row">
+                            <div class="stat-item">
+                                <div class="stat-label">Shibuya</div>
+                                <div class="stat-value" style="color: #51cf66;">${shibuyaData.totalPeds}</div>
+                                <div class="stat-sub">${shibuyaData.avgPedLifetime.toFixed(1)}s durée moy.</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">French</div>
+                                <div class="stat-value" style="color: #ff9800;">${frenchData.totalPeds}</div>
+                                <div class="stat-sub">${frenchData.avgPedLifetime.toFixed(1)}s durée moy.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comparison-card">
+                    <h2> Comparaison des Temps de Traversée</h2>
+                    <div class="chart-container">
+                        <canvas id="comparisonBarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="comparison-card">
+                    <h2> Comparaison des Vitesses Moyennes</h2>
+                    <div class="chart-container">
+                        <canvas id="speedComparisonChart"></canvas>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content').innerHTML = html;
+            renderCharts();
+        }
+
+        // Création des graphiques
+        function renderCharts() {
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            // Graphique 1 : Temps de traversée
+            const ctx1 = document.getElementById('comparisonBarChart').getContext('2d');
+            charts.comparisonBar = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Temps Voitures', 'Temps Piétons'],
+                    datasets: [{
+                        label: 'Shibuya',
+                        data: [shibuyaData.avgCarLifetime, shibuyaData.avgPedLifetime],
+                        backgroundColor: 'rgba(0, 212, 255, 0.7)',
+                        borderColor: '#00d4ff',
+                        borderWidth: 2
+                    }, {
+                        label: 'French',
+                        data: [frenchData.avgCarLifetime, frenchData.avgPedLifetime],
+                        backgroundColor: 'rgba(167, 139, 250, 0.7)',
+                        borderColor: '#a78bfa',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#fff', font: { size: 14 } } },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#475569',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + 's';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' },
+                            title: { display: true, text: 'Temps (secondes)', color: '#fff' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' }
+                        }
+                    }
+                }
+            });
+
+            // Graphique 2 : Vitesses
+            const ctx2 = document.getElementById('speedComparisonChart').getContext('2d');
+            charts.speedComparison = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Vitesse Moyenne des Voitures'],
+                    datasets: [{
+                        label: 'Shibuya',
+                        data: [shibuyaData.avgCarSpeed],
+                        backgroundColor: 'rgba(0, 212, 255, 0.7)',
+                        borderColor: '#00d4ff',
+                        borderWidth: 2
+                    }, {
+                        label: 'French',
+                        data: [frenchData.avgCarSpeed],
+                        backgroundColor: 'rgba(167, 139, 250, 0.7)',
+                        borderColor: '#a78bfa',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#fff', font: { size: 14 } } },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' px/s';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' },
+                            title: { display: true, text: 'Vitesse (pixels/seconde)', color: '#fff' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#fff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Capture d'écran du dashboard et conversion en PDF
+        async function downloadPDF() {
+            const button = document.getElementById('downloadPdfBtn');
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Capture en cours';
+
+            try {
+                // Nom du fichier basé sur les paramètres
+                const timestamp = new Date().toISOString().split('T')[0];
+                const filename = `Comparaison_Shibuya-${Math.round(shibuyaData.carSpawnRate)}cars-${Math.round(shibuyaData.pedSpawnRate)}peds_vs_French-${Math.round(frenchData.carSpawnRate)}cars-${Math.round(frenchData.pedSpawnRate)}peds_${timestamp}.pdf`;
+                
+                // Capturer le dashboard complet en image
+                const container = document.getElementById('dashboardContainer');
+                const canvas = await html2canvas(container, {
+                    backgroundColor: '#16213e',
+                    scale: 2, // Qualité d'image doublée
+                    logging: false,
+                    windowWidth: container.scrollWidth,
+                    windowHeight: container.scrollHeight
+                });
+
+                // Créer le PDF
+                const { jsPDF } = window.jspdf;
+                
+                // Calculer les dimensions pour bien fitter dans le PDF
+                const imgWidth = 210; // -> Largeur A4 en mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                // Créer le PDF en format portrait ou paysage selon la hauteur
+                let pdf;
+                if (imgHeight > 297) { // Si trop haut pour une page A4
+                    pdf = new jsPDF('p', 'mm', 'a4');
+                    const pageHeight = 297;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+
+                    // Ajouter l'image page par page si nécessaire
+                    const imgData = canvas.toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                } else {
+                    // Une seule page suffit
+                    pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgData = canvas.toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                }
+
+                // Sauvegarder le PDF
+                pdf.save(filename);
+                
+                button.textContent = 'PDF téléchargé !';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Erreur génération PDF:', error);
+                button.textContent = 'Erreur';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Event listener pour le bouton
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('downloadPdfBtn').addEventListener('click', downloadPDF);
+        });
+
+        // Chargement initial
+        loadData();
+    </script>
+</body>
+</html>

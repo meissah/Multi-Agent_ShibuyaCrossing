@@ -5,7 +5,7 @@
 //   - Draw() : router principal qui dirige vers le menu ou la simulation
 //   - DrawMenu() : affichage de l'écran de configuration
 //   - DrawSimulation() : affichage de la simulation (route + agents)
-//   - Helpers : fonctions pour dessiner boutons, voitures, crossings, etc.
+
 package game
 
 import (
@@ -60,10 +60,11 @@ func init() {
 			log.Fatalf("Erreur: Impossible de charger %s: %v", filename, err)
 		}
 		carImages = append(carImages, img)
-		log.Printf("✓ Image chargée: %s", filename)
+		log.Printf(" Image chargée: %s", filename)
 	}
 
-	// Charger les images des voitures (une par couleur)
+	// Charger les images des pietons (une par couleur) ->pas fait pour l'instant
+	// Finalement on utilise les ronds basic de ebiten engine pour les piétons
 	pedColorNames = []string{"nil", "zero"}
 	for _, color := range pedColorNames {
 		filename := fmt.Sprintf("internal/assets/ped_%s.png", color)
@@ -72,7 +73,7 @@ func init() {
 			log.Fatalf("Erreur: Impossible de charger %s: %v", filename, err)
 		}
 		pedImages = append(pedImages, img)
-		log.Printf("✓ Image chargée: %s", filename)
+		log.Printf(" Image chargée: %s", filename)
 	}
 
 	// Charger les images pour le menu (optionnel)
@@ -96,8 +97,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 // DrawMenu affiche l'écran de menu avec les options de configuration
 func (g *Game) DrawMenu(screen *ebiten.Image) {
-	// Fond dégradé  (bleu-gris foncé)
-	screen.Fill(color.RGBA{25, 30, 40, 255})
+
+	screen.Fill(color.RGBA{25, 30, 40, 255}) // Fond dégradé  (bleu-gris foncé)
 
 	// ═══════════════════════════════════════════════════════════
 	// TITRE PRINCIPAL centré
@@ -220,6 +221,19 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 		text.Draw(screen, helpText, basicfont.Face7x13,
 			helpX, 700, color.RGBA{255, 100, 100, 255})
 	}
+
+	// ═══════════════════════════════════════════════════════════
+	// BOUTON DASHBOARD (en bas à droite ) -> pour y accéder
+	// ═══════════════════════════════════════════════════════════
+
+	// Le bouton dashboard est actif seulement si les 2 fichiers metrics existent ( french et shibuya)
+	g.dashboardButton.Rect.X = 620
+	g.dashboardButton.Rect.Y = 700
+	g.dashboardButton.Rect.W = 110
+	g.dashboardButton.Rect.H = 30
+
+	dashboardEnabled := g.checkBothMetricsExist()
+	g.drawDashboardButton(screen, g.dashboardButton, dashboardEnabled)
 }
 
 // drawCrossingOption dessine une option de crossing
@@ -289,6 +303,62 @@ func (g *Game) drawCrossingOption(screen *ebiten.Image, name string, rect ui.Rec
 		textX, int(rect.Y+rect.H+25), labelColor)
 }
 
+// drawDashboardButton dessine le bouton dashboard avec un style gris spécifique
+func (g *Game) drawDashboardButton(screen *ebiten.Image, btn ui.Button, enabled bool) {
+	var bgColor, textColor color.Color
+
+	if !enabled {
+		// Désactivé (gris foncé)
+		bgColor = color.RGBA{50, 55, 60, 255}
+		textColor = color.RGBA{90, 95, 100, 255}
+	} else if btn.IsMouseOver {
+		// Hover (gris clair avec bordure bleu clair)
+		bgColor = color.RGBA{90, 100, 110, 255}
+		textColor = color.RGBA{255, 255, 255, 255}
+
+		// Petit effet de lueur au survol
+		glowBtn := ebiten.NewImage(int(btn.Rect.W+4), int(btn.Rect.H+4))
+		glowBtn.Fill(color.RGBA{100, 150, 200, 40})
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(btn.Rect.X-2, btn.Rect.Y-2)
+		screen.DrawImage(glowBtn, op)
+	} else {
+		// Normal (gris moyen)
+		bgColor = color.RGBA{70, 80, 90, 255}
+		textColor = color.RGBA{220, 220, 220, 255}
+	}
+
+	// Fond du bouton
+	btnImg := ebiten.NewImage(int(btn.Rect.W), int(btn.Rect.H))
+	btnImg.Fill(bgColor)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(btn.Rect.X, btn.Rect.Y)
+	screen.DrawImage(btnImg, op)
+
+	// Bordure du bouton
+	var borderColor color.Color
+	if enabled {
+		borderColor = color.RGBA{100, 150, 200, 255} // Bleu gris
+	} else {
+		borderColor = color.RGBA{60, 65, 70, 255} // Gris très foncé
+	}
+	g.drawRectBorder(screen, btn.Rect, 2, borderColor)
+
+	// Texte centré
+	textX := int(btn.Rect.X + btn.Rect.W/2 - float64(len(btn.Text)*7)/2)
+	textY := int(btn.Rect.Y + btn.Rect.H/2 + 5)
+	text.Draw(screen, btn.Text, basicfont.Face7x13, textX, textY, textColor)
+
+	// Petit message sous le bouton si désactivé
+	if !enabled {
+		infoText := "Lancez les 2 simulations d'abord"
+		textX := int(btn.Rect.X + 5)
+		textY := int(btn.Rect.Y + btn.Rect.H + 15)
+		text.Draw(screen, infoText, basicfont.Face7x13,
+			textX, textY, color.RGBA{150, 160, 170, 255})
+	}
+}
+
 // drawButton dessine un bouton avec état hover (bouton validé dans le menu par exemple)
 func (g *Game) drawButton(screen *ebiten.Image, btn ui.Button, enabled bool) {
 	var bgColor, textColor color.Color
@@ -303,10 +373,10 @@ func (g *Game) drawButton(screen *ebiten.Image, btn ui.Button, enabled bool) {
 		textColor = color.RGBA{255, 255, 255, 255}
 
 		// Effet de lueur au survol
-		glowBtn := ebiten.NewImage(int(btn.Rect.W+10), int(btn.Rect.H+10))
+		glowBtn := ebiten.NewImage(int(btn.Rect.W+4), int(btn.Rect.H+4))
 		glowBtn.Fill(color.RGBA{0, 255, 150, 40})
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(btn.Rect.X-5, btn.Rect.Y-5)
+		op.GeoM.Translate(btn.Rect.X-2, btn.Rect.Y-2)
 		screen.DrawImage(glowBtn, op)
 	} else {
 		// Normal activé
@@ -451,7 +521,7 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 			dir := obj.Direction()
 			isHorizontal := dir == East || dir == West
 
-			// Dimensions "Standard"
+			// Dimensions Standard
 			boxW, boxH := 24, 48
 			rDx, rDy := 0.0, -12.0
 			gDx, gDy := 0.0, +12.0
@@ -534,7 +604,53 @@ func (g *Game) DrawSimulation(screen *ebiten.Image) {
 		}
 
 	}
+	// bouton retour au menu principal
+	g.drawBackButton(screen)
+	// Dessiner le panneau de métriques (pour les statistiques en temps réel)
+	g.DrawMetricsPanel(screen)
 
+}
+
+// drawBackButton dessine le bouton de retour au menu en haut à gauche ( quand on est en simulation)
+func (g *Game) drawBackButton(screen *ebiten.Image) {
+	// Couleurs selon l'état - GRIS
+	var bgColor, textColor, borderColor color.Color
+
+	if g.backButton.IsMouseOver {
+		// Hover - gris plus clair
+		bgColor = color.RGBA{120, 120, 120, 255}
+		textColor = color.RGBA{255, 255, 255, 255}
+		borderColor = color.RGBA{180, 180, 180, 255}
+	} else {
+		// Normal - gris foncé
+		bgColor = color.RGBA{70, 70, 70, 255}
+		textColor = color.RGBA{220, 220, 220, 255}
+		borderColor = color.RGBA{100, 100, 100, 255}
+	}
+
+	// Fond du bouton
+	btnImg := ebiten.NewImage(int(g.backButton.Rect.W), int(g.backButton.Rect.H))
+	btnImg.Fill(bgColor)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(g.backButton.Rect.X, g.backButton.Rect.Y)
+	screen.DrawImage(btnImg, op)
+
+	// Bordure
+	g.drawRectBorder(screen, g.backButton.Rect, 2, borderColor)
+
+	// Texte centré
+	textX := int(g.backButton.Rect.X + g.backButton.Rect.W/2 - float64(len(g.backButton.Text)*7)/2)
+	textY := int(g.backButton.Rect.Y + g.backButton.Rect.H/2 + 5)
+	text.Draw(screen, g.backButton.Text, basicfont.Face7x13, textX, textY, textColor)
+
+	// Petit effet d'ombre si hover
+	if g.backButton.IsMouseOver {
+		shadowBtn := ebiten.NewImage(int(g.backButton.Rect.W+4), int(g.backButton.Rect.H+4))
+		shadowBtn.Fill(color.RGBA{0, 0, 0, 50})
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(g.backButton.Rect.X+2, g.backButton.Rect.Y+2)
+		screen.DrawImage(shadowBtn, op)
+	}
 }
 
 // drawShibuyaCrossing dessine le carrefour de type Shibuya (avec diagonale)

@@ -12,6 +12,7 @@ import (
 // CarSpawn gère l'apparition des voitures
 type CarSpawn struct {
 	SpawnInterval time.Duration
+	stopChan      chan bool // pour arrêter proprement le spawner ( quand on cliquer sur le bouton retour au menu )
 }
 
 // ChoisirPointSpawn choisit aléatoirement un point de spawn
@@ -139,6 +140,8 @@ func (g *CarSpawn) spawnCars(AgentCountCh <-chan ObjectID, AgtsSliceCh chan<- ag
 	x, y, dir, lane := ChoisirPointSpawn()
 
 	var occupied bool = false
+
+	// Vérifier la présence de voitures proches du point de spawn
 	for _, pC := range *env {
 		if pC == nil || pC.Type() != "car" {
 			continue
@@ -189,13 +192,26 @@ func (g *CarSpawn) Start(
 	AgentCountCh <-chan ObjectID,
 	AgtsSliceCh chan<- agentslicehandler.AddAgtRequest,
 	env *[]Object,
-) {
+) chan bool {
+	// Créer le channel d'arrêt
+	g.stopChan = make(chan bool)
+
 	go func() {
-		ticker := time.NewTicker(g.SpawnInterval) // emet un tick(signal) à chaque intervalle de spawn
+		ticker := time.NewTicker(g.SpawnInterval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			g.spawnCars(AgentCountCh, AgtsSliceCh, env)
+		for {
+			select {
+			case <-ticker.C:
+				// Spawn normal d'une voiture
+				g.spawnCars(AgentCountCh, AgtsSliceCh, env)
+			case <-g.stopChan:
+				// Signal d'arrêt reçu, on termine la goroutine
+				return
+			}
 		}
 	}()
+
+	// Retourner le channel pour que Game puisse l'arrêter
+	return g.stopChan
 }
