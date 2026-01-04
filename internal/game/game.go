@@ -384,7 +384,6 @@ func (g *Game) generateRepulsionAreas() {
 			g.CrosswalkZones["Ped_Diag"] = append(g.CrosswalkZones["Ped_Diag"], ra)
 		}
 		g.Objets = append(g.Objets, ra)
-		g.PersistentObjets = append(g.PersistentObjets, ra)
 	}
 }
 
