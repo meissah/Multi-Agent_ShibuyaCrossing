@@ -86,7 +86,7 @@ func NewGame() *Game {
 		ShibuyaFlag:     1,
 		CarStepDuration: 8 * time.Second,  // Temps pour les voitures
 		PedStepDuration: 16 * time.Second, // Temps long pour le Scramble
-		RedDuration:     2 * time.Second,
+		RedDuration:     5 * time.Second,
 
 		CarsNS:   make([]*trafficlight.TrafficLight, 0),
 		CarsEW:   make([]*trafficlight.TrafficLight, 0),

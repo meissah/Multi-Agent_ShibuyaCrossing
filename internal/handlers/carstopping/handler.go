@@ -80,7 +80,7 @@ func LancerCarStopperForPietons(chID <-chan ObjectID, pedGrid *grid_handler.Pede
 	PedCarStopW = cars.NewCar(<-chID, 285, 425, West, 1, false, nil)
 	PedCarStopE = cars.NewCar(<-chID, 470, 330, East, 0, false, nil)
 	PedCarStopN = cars.NewCar(<-chID, 330, 290, North, 0, false, nil)
-	PedCarStopS = cars.NewCar(<-chID, 425, 465, South, 1, false, nil)
+	PedCarStopS = cars.NewCar(<-chID, 425, 470, South, 1, false, nil)
 
 	PedCarStopW.State = "inative"
 	PedCarStopW.IsPlaceholder = true
@@ -109,7 +109,7 @@ func LancerCarStopperForPietons(chID <-chan ObjectID, pedGrid *grid_handler.Pede
 
 			gridChan <- messaging.GetInRectRequest{
 				TopLeft:     *NewPoint(255, 400),
-				BottomRight: *NewPoint(300, 437),
+				BottomRight: *NewPoint(300, 428),
 				ReplyChan:   PedWch,
 			}
 			PedW := <-PedWch
@@ -144,7 +144,7 @@ func LancerCarStopperForPietons(chID <-chan ObjectID, pedGrid *grid_handler.Pede
 			}
 			gridChan <- messaging.GetInRectRequest{
 				TopLeft:     *NewPoint(406, 453),
-				BottomRight: *NewPoint(450, 504),
+				BottomRight: *NewPoint(427, 504),
 				ReplyChan:   PedSch,
 			}
 			PedS := <-PedSch

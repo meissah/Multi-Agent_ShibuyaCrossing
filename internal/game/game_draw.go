@@ -698,54 +698,55 @@ func (g *Game) drawCar(screen *ebiten.Image, c Drawable) {
 
 	// Dessiner la voiture
 	screen.DrawImage(carImages[assetIndex], op)
+	if g.DebugMode {
+		// VISUALISATION DU SYSTÈME DE RALENTISSEMENT
+		// Cast en *Car pour accéder aux méthodes spécifiques
+		if car, ok := c.(*vehicule.Car); ok {
+			// 1. Afficher la vitesse au-dessus de la voiture
+			speed := car.GetSpeed()
+			speedText := fmt.Sprintf("%.1f", speed)
+			speedColor := color.RGBA{0, 255, 0, 255} // Vert par défaut
 
-	// VISUALISATION DU SYSTÈME DE RALENTISSEMENT
-	// Cast en *Car pour accéder aux méthodes spécifiques
-	if car, ok := c.(*vehicule.Car); ok {
-		// 1. Afficher la vitesse au-dessus de la voiture
-		speed := car.GetSpeed()
-		speedText := fmt.Sprintf("%.1f", speed)
-		speedColor := color.RGBA{0, 255, 0, 255} // Vert par défaut
-
-		// Changer la couleur selon la vitesse
-		if speed < 1.0 {
-			speedColor = color.RGBA{255, 0, 0, 255} // Rouge si très lent
-		} else if speed < 1.5 {
-			speedColor = color.RGBA{255, 165, 0, 255} // Orange si ralenti
-		}
-
-		text.Draw(screen, speedText, basicfont.Face7x13,
-			int(car.PositionX())-10, int(car.PositionY())-15, speedColor)
-
-		// 2. Dessiner une ligne vers la voiture détectée
-		carAhead, distance := car.GetCarAhead()
-		if carAhead != nil && distance > 0 {
-			// Récupérer la position de la voiture devant
-			// Couleur de la ligne selon la distance
-			lineColor := color.RGBA{255, 255, 0, 180} // Jaune
-			if distance < 70 {
-				lineColor = color.RGBA{255, 0, 0, 200} // Rouge si trop proche
+			// Changer la couleur selon la vitesse
+			if speed < 1.0 {
+				speedColor = color.RGBA{255, 0, 0, 255} // Rouge si très lent
+			} else if speed < 1.5 {
+				speedColor = color.RGBA{255, 165, 0, 255} // Orange si ralenti
 			}
 
-			// Dessiner la ligne de détection
-			ebitenutil.DrawLine(screen,
-				car.PositionX(), car.PositionY(),
-				carAhead.PositionX(), carAhead.PositionY(),
-				lineColor)
+			text.Draw(screen, speedText, basicfont.Face7x13,
+				int(car.PositionX())-10, int(car.PositionY())-15, speedColor)
 
-			// strokeWidth := float32(1.0)
+			// 2. Dessiner une ligne vers la voiture détectée
+			carAhead, distance := car.GetCarAhead()
+			if carAhead != nil && distance > 0 {
+				// Récupérer la position de la voiture devant
+				// Couleur de la ligne selon la distance
+				lineColor := color.RGBA{255, 255, 0, 180} // Jaune
+				if distance < 70 {
+					lineColor = color.RGBA{255, 0, 0, 200} // Rouge si trop proche
+				}
 
-			// vector.StrokeLine(screen,
-			// 	float32(car.PositionX()), float32(car.PositionY()),
-			// 	float32(carAhead.PositionX()), float32(carAhead.PositionY()),
-			// 	strokeWidth, lineColor, false)
+				// Dessiner la ligne de détection
+				ebitenutil.DrawLine(screen,
+					car.PositionX(), car.PositionY(),
+					carAhead.PositionX(), carAhead.PositionY(),
+					lineColor)
 
-			// Afficher la distance
-			distText := fmt.Sprintf("%.0f", distance)
-			midX := (car.PositionX() + carAhead.PositionX()) / 2
-			midY := (car.PositionY() + carAhead.PositionY()) / 2
-			text.Draw(screen, distText, basicfont.Face7x13,
-				int(midX)-10, int(midY), color.RGBA{255, 255, 255, 255})
+				// strokeWidth := float32(1.0)
+
+				// vector.StrokeLine(screen,
+				// 	float32(car.PositionX()), float32(car.PositionY()),
+				// 	float32(carAhead.PositionX()), float32(carAhead.PositionY()),
+				// 	strokeWidth, lineColor, false)
+
+				// Afficher la distance
+				distText := fmt.Sprintf("%.0f", distance)
+				midX := (car.PositionX() + carAhead.PositionX()) / 2
+				midY := (car.PositionY() + carAhead.PositionY()) / 2
+				text.Draw(screen, distText, basicfont.Face7x13,
+					int(midX)-10, int(midY), color.RGBA{255, 255, 255, 255})
+			}
 		}
 	}
 }

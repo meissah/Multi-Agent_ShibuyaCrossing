@@ -1,6 +1,8 @@
 package pedestrian
 
 import (
+	"time"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
@@ -32,6 +34,8 @@ type Pedestrian struct {
 	gridChan            chan messaging.GridRequest
 	pedestriansAround   []*Pedestrian
 	repulsionAreasUnder []*environment.RepulsionArea
+
+	StartTime time.Time
 }
 
 // Constructeur de piéton
@@ -56,11 +60,16 @@ func (p Pedestrian) SyncChan() chan int         { return p.syncChan }
 func (p Pedestrian) EndChan() chan int          { return p.endChan }
 func (p Pedestrian) PositionX() float64         { return p.Coords.X() }
 func (p Pedestrian) PositionY() float64         { return p.Coords.Y() }
-func (p Pedestrian) Direction() utils.Direction { return utils.North }      // Placeholder
-func (p Pedestrian) TheAngle() float64          { return 0.0 }              // Placeholder
-func (p Pedestrian) State() string              { return "walking" }        // Placeholder
-func (p Pedestrian) Type() string               { return "pieton" }         // Placeholder
-func (p Pedestrian) Alive() bool                { return !p.OutOfBounds() } // Placeholder
+func (p Pedestrian) Direction() utils.Direction { return utils.North } // Placeholder
+func (p Pedestrian) TheAngle() float64          { return 0.0 }         // Placeholder
+func (p Pedestrian) State() string              { return "walking" }   // Placeholder
+func (p Pedestrian) Type() string               { return "pieton" }    // Placeholder
+func (p Pedestrian) Alive() bool {
+	if time.Since(p.StartTime) > 90*time.Second {
+		return false
+	}
+	return !p.OutOfBounds()
+} // Placeholder
 
 // Vérifie si le piéton est hors des limites de la zone de simulation.
 func (p Pedestrian) OutOfBounds() bool {
@@ -82,6 +91,7 @@ func (c *Pedestrian) Draw() (utils.Asset, *ebiten.DrawImageOptions) {
 func (p *Pedestrian) Start(env *[]utils.Object) {
 	go func() {
 		var step int
+		p.StartTime = time.Now()
 		for {
 			select {
 			case step = <-p.syncChan:

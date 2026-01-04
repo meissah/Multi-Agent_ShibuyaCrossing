@@ -97,7 +97,7 @@ func ChooseToTurn(lane int, dir Direction) bool {
 	if (lane == 0) && (dir == West || dir == South) {
 		return false
 	}
-	return rand.Float64() < 0.50
+	return rand.Float64() < 0.20
 
 }
 
