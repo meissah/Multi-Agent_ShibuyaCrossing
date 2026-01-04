@@ -1,93 +1,110 @@
-# ShibuyaCrossing_AI30
+# 🚦 Shibuya Crossing Simulator
+
+Shibuya Crossing Simulator est une simulation multi-agents d'un carrefour inspiré du célèbre passage piéton de Shibuya à Tokyo. Ce projet permet d'étudier et de comparer différents types de configurations de carrefours (Shibuya vs French Crossing) et d'analyser les flux de circulation de véhicules et de piétons. La simulation est écrite en Go et utilise le moteur de jeu [Ebiten](https://ebiten.org/).
+
+
+<div align="center" style="margin-top: 20px">
+    <img src="assets/screen/screen_menu.png" width="80%" alt="Menu" />
+</div>
+
+
+<div align="center">
+    <img src="assets/screen/screen_simu.png" width="100%" alt="Simu" />
+</div>
 
 
 
-## Getting started
+## Principales Technologies utilisées
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **Go** : Langage principal
+- **Ebiten** : Moteur de jeu 2D
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Fonctionnalités
 
-## Add your files
+- **Simulation en temps réel** : Visualisation dynamique des mouvements de véhicules et de piétons
+- **Deux types de carrefours** : Comparaison entre le système Shibuya (tous piétons simultanément) et le système French (passages piétons traditionnels)
+- **Pathfinding intelligent** : Calcul automatique des trajets optimaux pour chaque agent
+- **Métriques détaillées** : 
+  - Temps de traversée moyen
+  - Vitesses moyennes
+  - Nombre d'agents actifs et détruits
+  - Durée de simulation
+- **Dashboard web** : Interface de visualisation comparative avec graphiques et export PDF
+- **API REST** : Récupération des métriques en temps réel
+- **Configuration flexible** : Paramètres de simulation ajustables (taux de spawn, etc.)
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Prérequis
 
-```
-cd existing_repo
-git remote add origin https://gitlab.utc.fr/amisselm/shibuyacrossing_ai30.git
-git branch -M main
-git push -uf origin main
-```
+Avant de commencer, assurez-vous d'avoir installé :
 
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.utc.fr/amisselm/shibuyacrossing_ai30/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- [Go](https://golang.org/dl/) version 1.25.0 ou supérieure
+- Un navigateur web moderne (pour le dashboard)
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+**Cloner le dépôt** :
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+git clone https://gitlab.utc.fr/amisselm/shibuyacrossing_ai30.git
+cd shibuyacrossing_ai30
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Les dépendances seront automatiquement téléchargées au premier lancement.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## Lancer la simulation
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Démarrage de la simulation
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Pour lancer la simulation principale :
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+```bash
+go run cmd/simulation/main.go
+```
 
-## License
-For open source projects, say how it is licensed.
+Ou depuis la racine du projet :
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```bash
+go run gitlab.utc.fr/amisselm/shibuyacrossing_ai30/cmd/simulation
+```
+
+### Accès aux interfaces
+
+Une fois la simulation lancée, vous aurez accès à :
+
+- **Fenêtre de simulation** : Interface graphique de la simulation (Ebiten)
+- **API REST** : `http://localhost:8080`
+- **Dashboard web** : Accessible via le bouton "Dashboard" dans l'interface de simulation
+
+
+## Structure du projet
+
+```
+shibuyacrossing_ai30/
+├── cmd/
+│   └── simulation/
+│       └── main.go              # Point d'entrée de la simulation
+├── internal/
+│   ├── agents/                  # Agents (piétons, véhicules, feux)
+│   ├── api/                     # Serveur API REST
+│   ├── config/                  # Configuration de simulation
+│   ├── environment/             # Zones de spawn et de répulsion
+│   ├── game/                    # Logique principale du jeu
+│   ├── handlers/                # Gestionnaires d'agents
+│   ├── pathfinding/             # Calcul des trajets optimaux
+│   ├── stats/                   # Calcul et comparaison des métriques
+│   └── ui/                      # Composants d'interface
+├── metrics_data/                # Données de métriques sauvegardées
+├── dashboard.html               # Dashboard de visualisation
+├── dashboard.css                # Styles du dashboard
+└── README.md                    # Ce fichier
+
+```
+
+
+## 👥 Auteurs
+
+Projet réalisé dans le cadre du cours AI30 à l'UTC.
+- Meïssa H'mida
+- Ahmed Misselmani
+- Enzo Maros
+
