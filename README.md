@@ -23,10 +23,13 @@ Ce projet vise à étudier et comparer différentes configurations de carrefours
 
 ## Principales Technologies utilisées
 
-- **Go** : Langage principal
-- **Ebiten** : Moteur de jeu 2D
-- **Serveur HTTP** : API REST pour la récupération des métriques en temps réel
-- **HTML/CSS/JavaScript** : Dashboard web pour la visualisation et l'analyse des données
+| Technologie | Description |
+|-------------|-------------|
+| **Forces Piétons/Voitures** | Répartition spatiale des différents agents, respectant une zone de distance |
+| **Système de Grille des Piétons** | Algorithme d'optimisation du requêtage des piétons voisins |
+| **A* Pathfinding** | Algorithme de recherche de chemin pour les déplacements des piétons |
+| **Serveur Web** | Affichage des graphes dynamiques (HTML, CSS, JavaScript, Chart.js, html2canvas, jsPDF) |
+| **Ebitengine** | Moteur de la simulation et de l'architecture globale de la boucle de jeu |
 
 ## Fonctionnalités
 
