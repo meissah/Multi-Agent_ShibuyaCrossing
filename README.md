@@ -105,8 +105,9 @@ shibuyacrossing_ai30/
 ## 👥 Auteurs
 
 Projet réalisé dans le cadre du cours AI30 à l'UTC.
+- Pierrick Clause
 - Meïssa H'mida
 - Ahmed Misselmani
 - Enzo Maros
-- Pierrick 
+
 
