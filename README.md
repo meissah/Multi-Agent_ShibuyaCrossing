@@ -23,7 +23,6 @@ Shibuya Crossing Simulator est une simulation multi-agents d'un carrefour inspir
 
 - **Simulation en temps réel** : Visualisation dynamique des mouvements de véhicules et de piétons
 - **Deux types de carrefours** : Comparaison entre le système Shibuya (tous piétons simultanément) et le système French (passages piétons traditionnels)
-- **Pathfinding intelligent** : Calcul automatique des trajets optimaux pour chaque agent
 - **Métriques détaillées** : 
   - Temps de traversée moyen
   - Vitesses moyennes
@@ -35,7 +34,7 @@ Shibuya Crossing Simulator est une simulation multi-agents d'un carrefour inspir
 
 ## Prérequis
 
-Avant de commencer, assurez-vous d'avoir installé :
+Avant de commencer, il faut s'assurer d'avoir installé :
 
 - [Go](https://golang.org/dl/) version 1.25.0 ou supérieure
 - Un navigateur web moderne (pour le dashboard)
@@ -90,7 +89,7 @@ shibuyacrossing_ai30/
 │   ├── environment/             # Zones de spawn et de répulsion
 │   ├── game/                    # Logique principale du jeu
 │   ├── handlers/                # Gestionnaires d'agents
-│   ├── pathfinding/             # Calcul des trajets optimaux
+│   ├── pathfinding/             # Calcul des trajets optimaux pour les piétons
 │   ├── stats/                   # Calcul et comparaison des métriques
 │   └── ui/                      # Composants d'interface
 ├── metrics_data/                # Données de métriques sauvegardées
