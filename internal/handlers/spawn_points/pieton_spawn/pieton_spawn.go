@@ -1,6 +1,7 @@
 package pietonspawn
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -117,6 +118,7 @@ func (g *PietonSpawn) Start(
 				g.spawnPieton(AgentCountCh, AgtsSliceCh, gridChan, env, spawns)
 			case <-g.stopChan:
 				// Signal d'arrêt reçu, on termine la goroutine
+				fmt.Println("arrété")
 				return
 			}
 		}

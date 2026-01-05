@@ -8,7 +8,6 @@ package game
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,7 +18,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 
+	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/carstopping"
+	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
+	trafficmanger "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/traffic_manager"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
 
 	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
@@ -27,8 +31,8 @@ import (
 
 // Update est appelé 60 fois par seconde par Ebiten (boucle principale du jeu)
 func (g *Game) Update() error {
-	fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
-	log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
+	// fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
+	// log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
 	switch g.State {
 	case config.StateMenu:
 		g.UpdateMenu()
@@ -234,33 +238,21 @@ func (g *Game) cleanupSimulation() {
 
 	// Envoyer signal de fin à tous les agents existants
 	for _, agt := range g.Agents {
-		select {
-		case agt.EndChan() <- 1:
-			// Signal envoyé avec succès
-		default:
-			// Le channel est peut-être déjà fermé, on ignore
-		}
+		g.DelAgtSlice <- agt
 	}
 
-	// Attendre un peu que les goroutines se terminent proprement
-	time.Sleep(100 * time.Millisecond)
+	if g.endChanCarsStop4Peds != nil {
+		g.endChanCarsStop4Peds <- 1
+		g.endChanCarsStop4Peds = nil
+	}
 
-	// Nettoyer les channels de synchronisation
-	g.syncChansAgt.Range(func(key, value interface{}) bool {
-		// Fermer le channel si possible
-		if ch, ok := value.(chan int); ok {
-			select {
-			case <-ch: // Vider le channel
-			default:
-			}
-		}
-		g.syncChansAgt.Delete(key)
-		return true
-	})
+	fmt.Println("Arrivé ici 1")
 
-	// Réinitialiser complètement les slices
-	g.Agents = make([]Agent, 0)
-	g.Objets = make([]Object, 0)
+	g.endChanCarsRedLight <- 1
+	fmt.Println("Arrivé ici 3")
+	g.TM.Stop()
+	fmt.Println("Arrivé ici 4")
+	g.pedGrid.Stop()
 
 	// Remettre les objets persistants (feux de circulation)
 	// Important : on recrée une nouvelle slice, pas de réutilisation
@@ -268,9 +260,115 @@ func (g *Game) cleanupSimulation() {
 	// 	g.Objets = append(g.Objets, obj)
 	// }
 
-	// Réinitialiser les compteurs
-	g.ObjectCount = ObjectID(len(g.Objets))
-	g.step = 0
+	fmt.Println("Arrivé ici 4321")
+	//reinit de traffic
+	g.CrosswalkZones = make(map[string][]*environment.RepulsionArea)
+	g.LightsMap = make(map[string]*trafficlight.TrafficLight)
+
+	fmt.Println("Arrivé ici 1")
+
+	g.TM = &trafficmanger.TrafficManager{
+		ShibuyaFlag:     1,
+		CarStepDuration: 8 * time.Second,  // Temps pour les voitures
+		PedStepDuration: 16 * time.Second, // Temps long pour le Scramble
+		RedDuration:     5 * time.Second,
+
+		CarsNS:   make([]*trafficlight.TrafficLight, 0),
+		CarsEW:   make([]*trafficlight.TrafficLight, 0),
+		PedsNS:   make([]*trafficlight.TrafficLight, 0),
+		PedsEW:   make([]*trafficlight.TrafficLight, 0),
+		PedsDiag: make([]*trafficlight.TrafficLight, 0),
+	}
+
+	g.Objets = make([]Object, 0)
+
+	// Configuration des feux de circulation (positions et types)
+	// Pour chaque feu on définit : position, direction, type (voiture/piéton), et groupe (NS/EW)
+	configs := []struct {
+		x, y, w, h float64
+		dir        Direction
+		id         string
+		kind       string // "car" ou "pedestrian"
+		group      string // "NS" (Nord/Sud) ou "EW" (Est/Ouest)
+	}{ // --- FEUX VOITURES ---
+
+		{325, 525, 0, 0, East, "Car_Sud", "car", "NS"},
+		{225, 325, 0, 0, North, "Car_Ouest", "car", "EW"},
+		{525, 425, 0, 0, North, "Car_Est", "car", "EW"},
+		{425, 225, 0, 0, East, "Car_Nord", "car", "NS"},
+		{375, 375, 155, 55, North, "Ped_Diag", "pedestrian", "SHIBUYA"}, // FEU FANTÔME DIAGONALE
+
+		// --- PIETONS
+		// Ped_N (en haut) et Ped_S (en bas) traversent l'axe Vertical -> NS
+		{375, 272.5, 150, 55, North, "Ped_N", "pedestrian", "NS"},
+		{375, 477.5, 150, 55, North, "Ped_S", "pedestrian", "NS"},
+		// Ped_W (à gauche) et Ped_E (à droite) traversent l'axe Horizontal -> EW
+		{272.5, 375, 55, 150, East, "Ped_W", "pedestrian", "EW"},
+		{477.5, 375, 55, 150, East, "Ped_E", "pedestrian", "EW"},
+	}
+
+	var chNS, chEW chan trafficlight.State
+
+	for _, cfg := range configs {
+		//objet visuel
+		tlVisu := trafficlight.NewTrafficLightObject(cfg.id, cfg.x, cfg.y, cfg.w, cfg.h, cfg.dir, "Red", cfg.kind)
+
+		g.Objets = append(g.Objets, tlVisu)
+		//g.PersistentObjets = append(g.PersistentObjets, tlVisu)
+
+		// 2. Créer la logique du feu
+		tlLogic := trafficlight.NewTrafficLight(cfg.id, 1*time.Hour, 1*time.Hour)
+		g.LightsMap[cfg.id] = tlLogic
+		tlLogic.Start()
+
+		// 3. Classer le feu dans le manager selon son type et son groupe
+		if cfg.kind == "car" {
+			if cfg.group == "NS" {
+				g.TM.CarsNS = append(g.TM.CarsNS, tlLogic)
+				chNS = tlLogic.Subscribe()
+			} else {
+				g.TM.CarsEW = append(g.TM.CarsEW, tlLogic)
+				chEW = tlLogic.Subscribe()
+			}
+		} else {
+			// Gestion des groupes piétons (NS, EW et SHIBUYA)
+			// On ajoute la diagonale (SHIBUYA) aux groupes NS pour qu'elle s'allume lors du scramble
+			if cfg.group == "NS" {
+				g.TM.PedsNS = append(g.TM.PedsNS, tlLogic)
+			} else if cfg.group == "EW" {
+				g.TM.PedsEW = append(g.TM.PedsEW, tlLogic)
+			} else if cfg.group == "SHIBUYA" {
+				g.TM.PedsDiag = append(g.TM.PedsDiag, tlLogic)
+			}
+		}
+
+		//abonnement de la zone au feu correspondant
+		if cfg.kind == "pedestrian" {
+			if zones, ok := g.CrosswalkZones[cfg.id]; ok {
+				// Le feu va maintenant appeler Activate/Deactivate sur la zone
+				for _, zone := range zones {
+					tlLogic.AddZone(zone)
+				}
+			}
+		}
+
+		// D. Liaison Visuel <-> Logique (Goroutine d'écoute)
+		go func(visu *trafficlight.TrafficLightObject, logic *trafficlight.TrafficLight) {
+			chUpdate := logic.Subscribe()
+			for newState := range chUpdate {
+				//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
+				visu.SetState(newState.String())
+			}
+		}(tlVisu, tlLogic)
+
+	}
+
+	// Lancement du Traffic Manager
+
+	g.pedGrid = grid_handler.NewPedestrianGrid(850, 850, 20)
+	g.pedGrid.Start()
+
+	g.endChanCarsRedLight = carstopping.LancerCarStopperAtRedLight(g.ObjectCountCh, chNS, chEW, &g.Objets)
 
 	// Force le garbage collector à nettoyer
 	runtime.GC() // permet de libérer la mémoire des goroutines terminées

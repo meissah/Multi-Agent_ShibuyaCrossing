@@ -1,6 +1,7 @@
 package traffic_manager
 
 import (
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -24,6 +25,7 @@ type TrafficManager struct {
 	PedStepDuration time.Duration // Durée spécifique pour les piétons (Shibuya)
 	RedDuration     time.Duration
 	started         int32
+	endChan         chan int
 }
 
 // Start lance la boucle de contrôle infinie
@@ -33,15 +35,28 @@ func (tm *TrafficManager) Start() {
 		return
 	}
 
+	tm.endChan = make(chan int, 1)
+
 	go func() {
 		for {
-			if atomic.LoadInt32(&tm.ShibuyaFlag) == 1 {
-				tm.runShibuyaCycle()
-			} else {
-				tm.runStandardCycle()
+			select {
+			case <-tm.endChan:
+				return // Exit the goroutine
+			default:
+				if atomic.LoadInt32(&tm.ShibuyaFlag) == 1 {
+					tm.runShibuyaCycle()
+				} else {
+					tm.runStandardCycle()
+				}
 			}
 		}
 	}()
+}
+
+// Start lance la boucle de contrôle infinie
+func (tm *TrafficManager) Stop() {
+	tm.endChan <- 1
+	fmt.Println("arrive ici 543")
 }
 
 // SetMode change le mode de manière sécurisée

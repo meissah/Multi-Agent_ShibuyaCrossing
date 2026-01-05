@@ -70,6 +70,11 @@ type Game struct {
 	// pour arreter les spawners à la fin de la simulation ( c'est a dire quand on clique sur le bouton retour au menu )
 	carSpawnerStop chan bool
 	pedSpawnerStop chan bool
+
+	endChanCarsRedLight  chan int
+	endChanCarsStop4Peds chan int
+	chUpdateTL           chan trafficlight.State
+	endChanTL            chan int
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -182,10 +187,17 @@ func NewGame() *Game {
 
 		// D. Liaison Visuel <-> Logique (Goroutine d'écoute)
 		go func(visu *trafficlight.TrafficLightObject, logic *trafficlight.TrafficLight) {
-			chUpdate := logic.Subscribe()
-			for newState := range chUpdate {
-				//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
-				visu.SetState(newState.String())
+			g.chUpdateTL = logic.Subscribe()
+			g.endChanTL = make(chan int)
+			for {
+				select {
+				case newState := <-g.chUpdateTL:
+					//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
+					visu.SetState(newState.String())
+
+				case <-g.endChanTL:
+					return
+				}
 			}
 		}(tlVisu, tlLogic)
 
@@ -196,7 +208,7 @@ func NewGame() *Game {
 	g.pedGrid = grid_handler.NewPedestrianGrid(850, 850, 20)
 	g.pedGrid.Start()
 
-	carstopping.LancerCarStopperAtRedLight(g.ObjectCountCh, chNS, chEW, &g.Objets)
+	g.endChanCarsRedLight = carstopping.LancerCarStopperAtRedLight(g.ObjectCountCh, chNS, chEW, &g.Objets)
 
 	return g
 }
@@ -224,7 +236,7 @@ func (g *Game) InitSimulation() {
 	pietonspawner := pietonspawn.PietonSpawn{SpawnInterval: g.Config.PedestrianSpawnRate}
 	g.pedSpawnerStop = pietonspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets, g.pedGrid)
 	if g.selectedCrossing == "French" {
-		carstopping.LancerCarStopperForPietons(g.ObjectCountCh, g.pedGrid, &g.Objets)
+		g.endChanCarsStop4Peds = carstopping.LancerCarStopperForPietons(g.ObjectCountCh, g.pedGrid, &g.Objets)
 	}
 	carspawner := carspawn.CarSpawn{SpawnInterval: g.Config.CarSpawnRate} // initialise la structure de spawn de voiture
 	g.carSpawnerStop = carspawner.Start(g.ObjectCountCh, g.AddAgtSlice, &g.Objets)

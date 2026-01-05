@@ -1,6 +1,8 @@
 package grid_handler
 
 import (
+	"fmt"
+
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
@@ -29,6 +31,7 @@ type PedestrianGrid struct {
 	cellSize    float64
 	cells       [][]PedestrianCell
 	requestChan chan messaging.GridRequest
+	endChan     chan int
 }
 
 // Constructeur de la grille des piétons.
@@ -79,11 +82,26 @@ func (grid PedestrianGrid) CoordsToCellIdx(p utils.Point) (int, int) {
 
 // Démarre le gestionnaire de la grille des piétons.
 func (grid *PedestrianGrid) Start() {
+
 	go func() {
-		for req := range grid.requestChan {
-			req.Handle(grid)
+		grid.endChan = make(chan int)
+		for {
+			select {
+			case req := <-grid.requestChan:
+				req.Handle(grid)
+				fmt.Println("Bouclé-ing dans la grille")
+			case <-grid.endChan:
+				fmt.Println("Arrivée au end de pdGrid")
+				return
+			}
 		}
 	}()
+}
+
+func (grid *PedestrianGrid) Stop() {
+	fmt.Println("Arrivée au beg de stop de pdGrid")
+	grid.endChan <- 1
+	fmt.Println("Arrivée au end de stop de pdGrid")
 }
 
 // Ajoute un piéton à la grille.
