@@ -354,10 +354,18 @@ func (g *Game) cleanupSimulation() {
 
 		// D. Liaison Visuel <-> Logique (Goroutine d'écoute)
 		go func(visu *trafficlight.TrafficLightObject, logic *trafficlight.TrafficLight) {
-			chUpdate := logic.Subscribe()
-			for newState := range chUpdate {
-				//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
-				visu.SetState(newState.String())
+			mychUpdate := logic.Subscribe()
+			myEndChan := make(chan int)
+			g.endChanTL = append(g.endChanTL, myEndChan)
+			for {
+				select {
+				case newState := <-mychUpdate:
+					//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
+					visu.SetState(newState.String())
+
+				case <-myEndChan:
+					return
+				}
 			}
 		}(tlVisu, tlLogic)
 

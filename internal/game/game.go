@@ -73,8 +73,8 @@ type Game struct {
 
 	endChanCarsRedLight  chan int
 	endChanCarsStop4Peds chan int
-	chUpdateTL           chan trafficlight.State
-	endChanTL            chan int
+	chUpdateTL           []chan trafficlight.State
+	endChanTL            []chan int
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -187,15 +187,16 @@ func NewGame() *Game {
 
 		// D. Liaison Visuel <-> Logique (Goroutine d'écoute)
 		go func(visu *trafficlight.TrafficLightObject, logic *trafficlight.TrafficLight) {
-			g.chUpdateTL = logic.Subscribe()
-			g.endChanTL = make(chan int)
+			mychUpdate := logic.Subscribe()
+			myEndChan := make(chan int)
+			g.endChanTL = append(g.endChanTL, myEndChan)
 			for {
 				select {
-				case newState := <-g.chUpdateTL:
+				case newState := <-mychUpdate:
 					//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
 					visu.SetState(newState.String())
 
-				case <-g.endChanTL:
+				case <-myEndChan:
 					return
 				}
 			}

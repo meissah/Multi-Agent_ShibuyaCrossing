@@ -1,8 +1,6 @@
 package grid_handler
 
 import (
-	"fmt"
-
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
 	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
@@ -89,9 +87,9 @@ func (grid *PedestrianGrid) Start() {
 			select {
 			case req := <-grid.requestChan:
 				req.Handle(grid)
-				fmt.Println("Bouclé-ing dans la grille")
+				//fmt.Println("Bouclé-ing dans la grille")
 			case <-grid.endChan:
-				fmt.Println("Arrivée au end de pdGrid")
+				//fmt.Println("Arrivée au end de pdGrid")
 				return
 			}
 		}
@@ -99,9 +97,9 @@ func (grid *PedestrianGrid) Start() {
 }
 
 func (grid *PedestrianGrid) Stop() {
-	fmt.Println("Arrivée au beg de stop de pdGrid")
+	//fmt.Println("Arrivée au beg de stop de pdGrid")
 	grid.endChan <- 1
-	fmt.Println("Arrivée au end de stop de pdGrid")
+	//fmt.Println("Arrivée au end de stop de pdGrid")
 }
 
 // Ajoute un piéton à la grille.
