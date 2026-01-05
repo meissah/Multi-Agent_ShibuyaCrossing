@@ -121,13 +121,14 @@ func (g *Game) UpdateSimulation() error {
 	// Synchroniser tous les agents vivants en parallèle
 	var wg sync.WaitGroup
 	currentAgtSlice := g.Agents
-	var agentsToRemove []Agent
+	var agentsToRemove, agentsSynced []Agent
 
 	//fmt.Println("THE AGENT SLICE: ", currentAgtSlice)
 
 	// phase de perception et delibération
 	for _, agt := range currentAgtSlice {
 		if agt.Alive() {
+			agentsSynced = append(agentsSynced, agt)
 			wg.Add(1)
 			go func(agt Agent) {
 				defer wg.Done()
@@ -151,22 +152,20 @@ func (g *Game) UpdateSimulation() error {
 	// Action des agents
 	var wg2 sync.WaitGroup
 
-	for _, agt := range currentAgtSlice {
-		if agt.Alive() {
-			wg2.Add(1)
-			go func(agt Agent) {
-				defer wg2.Done()
+	for _, agt := range agentsSynced {
+		wg2.Add(1)
+		go func(agt Agent) {
+			defer wg2.Done()
 
-				// Récupérer le channel de synchronisation de l'agent
-				c, _ := g.syncChansAgt.Load(agt.AgentID())
+			// Récupérer le channel de synchronisation de l'agent
+			c, _ := g.syncChansAgt.Load(agt.AgentID())
 
-				// Signaler à l'agent de faire son prochain pas
-				c.(chan int) <- g.step
+			// Signaler à l'agent de faire son prochain pas
+			c.(chan int) <- g.step
 
-				// Attendre que l'agent ait terminé
-				<-c.(chan int)
-			}(agt)
-		}
+			// Attendre que l'agent ait terminé
+			<-c.(chan int)
+		}(agt)
 
 	}
 
@@ -191,7 +190,7 @@ func (g *Game) handleBackButton() bool {
 	g.backButton.UpdateHover(mouseX, mouseY)
 
 	// Détecter le clic
-	if (inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && g.backButton.IsMouseOver) || time.Since(g.startTime) > 60*time.Second {
+	if (inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && g.backButton.IsMouseOver) || time.Since(g.startTime) > 180*time.Second {
 
 		// Sauvegarder les métriques avant de retourner au menu
 		if stats.GlobalMetrics != nil {

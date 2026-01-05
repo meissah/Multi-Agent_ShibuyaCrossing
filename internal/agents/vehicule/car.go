@@ -49,10 +49,11 @@ func (ag *Car) Start(env *[]Object) {
 
 				ag.Percept(*env)
 
+				ag.Deliberate()
+
 				ag.syncChan <- step
 				<-ag.syncChan
 
-				ag.Deliberate()
 				ag.Act()
 
 				ag.syncChan <- step

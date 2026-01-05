@@ -186,7 +186,7 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 		crossingTitleX, 290, color.RGBA{100, 200, 255, 255})
 
 	// Instructions centrées
-	instructionText := "Cliquez sur une option ci-dessous - duree maximale de simulation : 60s"
+	instructionText := "Cliquez sur une option ci-dessous - duree maximale de simulation : 3 MIN / 180 S"
 	instructionWidth := len(instructionText) * 7
 	instructionX := (750 - instructionWidth) / 2
 	text.Draw(screen, instructionText, basicfont.Face7x13,

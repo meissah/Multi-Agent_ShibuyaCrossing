@@ -70,14 +70,20 @@ func (p Pedestrian) TheAngle() float64          { return 0.0 }         // Placeh
 func (p Pedestrian) State() string              { return "walking" }   // Placeholder
 func (p Pedestrian) Type() string               { return "pieton" }    // Placeholder
 func (p Pedestrian) Alive() bool {
-	if time.Since(p.StartTime) > 90*time.Second {
-		return false
-	}
+
 	return !p.OutOfBounds()
 } // Placeholder
 
 // Vérifie si le piéton est hors des limites de la zone de simulation.
 func (p *Pedestrian) OutOfBounds() bool {
+
+	if time.Since(p.StartTime) > 45*time.Second {
+		if p.spawnRecorded && !p.destroyRecorded {
+			stats.RecordPedestrianDestroy(uint(p.id))
+			p.destroyRecorded = true
+		}
+		return true
+	}
 	isOutsideX := p.Coords.X() < -50 || p.Coords.X() > 800
 	isOutsideY := p.Coords.Y() < -50 || p.Coords.Y() > 800
 	isOut := isOutsideX || isOutsideY
