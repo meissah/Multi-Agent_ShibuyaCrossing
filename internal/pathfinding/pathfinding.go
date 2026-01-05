@@ -10,8 +10,8 @@ import (
 // Constantes de la grille
 const (
 	WorldSize = 850
-	CellSize  = 10
-	GridDim   = 86
+	CellSize  = 5
+	GridDim   = 172
 	Offset    = 50
 )
 
