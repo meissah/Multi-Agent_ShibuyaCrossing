@@ -18,6 +18,8 @@ Shibuya Crossing Simulator est une simulation multi-agents d'un carrefour inspir
 
 - **Go** : Langage principal
 - **Ebiten** : Moteur de jeu 2D
+- **Serveur HTTP** : API REST pour la récupération des métriques en temps réel
+- **HTML/CSS/JavaScript** : Dashboard web pour la visualisation et l'analyse des données
 
 ## Fonctionnalités
 
