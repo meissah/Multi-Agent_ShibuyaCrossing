@@ -246,12 +246,12 @@ func (g *Game) cleanupSimulation() {
 		g.endChanCarsStop4Peds = nil
 	}
 
-	fmt.Println("Arrivé ici 1")
+	//fmt.Println("Arrivé ici 1")
 
 	g.endChanCarsRedLight <- 1
-	fmt.Println("Arrivé ici 3")
+	//fmt.Println("Arrivé ici 3")
 	g.TM.Stop()
-	fmt.Println("Arrivé ici 4")
+	//fmt.Println("Arrivé ici 4")
 	g.pedGrid.Stop()
 
 	// Remettre les objets persistants (feux de circulation)
@@ -260,12 +260,12 @@ func (g *Game) cleanupSimulation() {
 	// 	g.Objets = append(g.Objets, obj)
 	// }
 
-	fmt.Println("Arrivé ici 4321")
+	//fmt.Println("Arrivé ici 4321")
 	//reinit de traffic
 	g.CrosswalkZones = make(map[string][]*environment.RepulsionArea)
 	g.LightsMap = make(map[string]*trafficlight.TrafficLight)
 
-	fmt.Println("Arrivé ici 1")
+	//fmt.Println("Arrivé ici 1")
 
 	g.TM = &trafficmanger.TrafficManager{
 		ShibuyaFlag:     1,

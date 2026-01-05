@@ -1,7 +1,6 @@
 package traffic_manager
 
 import (
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -56,7 +55,7 @@ func (tm *TrafficManager) Start() {
 // Start lance la boucle de contrôle infinie
 func (tm *TrafficManager) Stop() {
 	tm.endChan <- 1
-	fmt.Println("arrive ici 543")
+	//fmt.Println("arrive ici 543")
 }
 
 // SetMode change le mode de manière sécurisée
