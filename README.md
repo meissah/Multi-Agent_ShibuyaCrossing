@@ -1,6 +1,13 @@
 # 🚦 Shibuya Crossing Simulator
 
-Shibuya Crossing Simulator est une simulation multi-agents d'un carrefour inspiré du célèbre passage piéton de Shibuya à Tokyo. Ce projet permet d'étudier et de comparer différents types de configurations de carrefours (Shibuya vs French Crossing) et d'analyser les flux de circulation de véhicules et de piétons. La simulation est écrite en Go et utilise le moteur de jeu [Ebiten](https://ebiten.org/).
+Shibuya Crossing Simulator est une simulation multi-agents reproduisant le fonctionnement d'un carrefour urbain inspiré du célèbre passage piéton de Shibuya à Tokyo. 
+
+Le système de gestion des flux du Shibuya Crossing se distingue par une organisation séquentielle en trois phases distinctes :
+- Phase de circulation véhiculaire verticale (trafic piétonnier suspendu)
+- Phase de circulation véhiculaire horizontale (trafic piétonnier suspendu)
+- Phase de circulation piétonnière omnidirectionnelle, autorisant les traversées diagonales
+  
+Ce projet vise à étudier et comparer différentes configurations de carrefours urbains (modèle Shibuya et modèle français traditionnel) afin d'analyser les dynamiques de circulation des véhicules et des piétons. La simulation est développée en Go et s'appuie sur le moteur de jeu 2D [Ebiten](https://ebiten.org/).
 
 
 <div align="center" style="margin-top: 20px">
