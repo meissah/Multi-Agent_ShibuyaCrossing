@@ -186,7 +186,7 @@ func (g *Game) DrawMenu(screen *ebiten.Image) {
 		crossingTitleX, 290, color.RGBA{100, 200, 255, 255})
 
 	// Instructions centrées
-	instructionText := "Cliquez sur une option ci-dessous"
+	instructionText := "Cliquez sur une option ci-dessous - duree maximale de simulation : 60s"
 	instructionWidth := len(instructionText) * 7
 	instructionX := (750 - instructionWidth) / 2
 	text.Draw(screen, instructionText, basicfont.Face7x13,
@@ -351,8 +351,8 @@ func (g *Game) drawDashboardButton(screen *ebiten.Image, btn ui.Button, enabled 
 
 	// Petit message sous le bouton si désactivé
 	if !enabled {
-		infoText := "Lancez les 2 simulations d'abord"
-		textX := int(btn.Rect.X + 5)
+		infoText := "Lancez les 2 modes de simulations d'abord"
+		textX := int(btn.Rect.X - 175)
 		textY := int(btn.Rect.Y + btn.Rect.H + 15)
 		text.Draw(screen, infoText, basicfont.Face7x13,
 			textX, textY, color.RGBA{150, 160, 170, 255})

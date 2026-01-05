@@ -75,6 +75,8 @@ type Game struct {
 	endChanCarsStop4Peds chan int
 	chUpdateTL           []chan trafficlight.State
 	endChanTL            []chan int
+
+	startTime time.Time
 }
 
 // NewGame crée et initialise une nouvelle instance du jeu en mode menu
@@ -216,6 +218,7 @@ func NewGame() *Game {
 
 // InitSimulation initialise tous les handlers et spawners pour démarrer la simulation
 func (g *Game) InitSimulation() {
+	g.startTime = time.Now()
 	g.TM.SetMode(g.Config.CrossingType == "shibuya")
 
 	pathfinding.InitNavigationGrid(g.Config.CrossingType == "shibuya")

@@ -183,6 +183,7 @@ func (g *Game) UpdateSimulation() error {
 
 // handleBackButton gère le clic sur le bouton de retour au menu
 func (g *Game) handleBackButton() bool {
+
 	mx, my := ebiten.CursorPosition()
 	mouseX, mouseY := float64(mx), float64(my)
 
@@ -190,29 +191,29 @@ func (g *Game) handleBackButton() bool {
 	g.backButton.UpdateHover(mouseX, mouseY)
 
 	// Détecter le clic
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		if g.backButton.IsMouseOver {
-			// Sauvegarder les métriques avant de retourner au menu
-			if stats.GlobalMetrics != nil {
-				stats.GlobalMetrics.SaveToFile()
-			}
+	if (inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && g.backButton.IsMouseOver) || time.Since(g.startTime) > 60*time.Second {
 
-			// Sauvegarder les paramètres actuels avant de nettoyer ( objectif = les réutiliser pour la prochaine simu pour garder la meme config de spawn )
-			carRate := 1.0 / g.Config.CarSpawnRate.Seconds()
-			pedRate := 1.0 / g.Config.PedestrianSpawnRate.Seconds()
-
-			// Nettoyer la simulation actuelle
-			g.cleanupSimulation()
-
-			// Retourner au menu
-			g.State = config.StateMenu
-			g.selectedCrossing = ""
-
-			// On garde donc les mêmes valeurs en retournant au menu ( on garde meme nbr par seconde pour chaque type d'agent )
-			g.carSpawnSlider.Value = carRate
-			g.pedSpawnSlider.Value = pedRate
-			return true
+		// Sauvegarder les métriques avant de retourner au menu
+		if stats.GlobalMetrics != nil {
+			stats.GlobalMetrics.SaveToFile()
 		}
+
+		// Sauvegarder les paramètres actuels avant de nettoyer ( objectif = les réutiliser pour la prochaine simu pour garder la meme config de spawn )
+		carRate := 1.0 / g.Config.CarSpawnRate.Seconds()
+		pedRate := 1.0 / g.Config.PedestrianSpawnRate.Seconds()
+
+		// Nettoyer la simulation actuelle
+		g.cleanupSimulation()
+
+		// Retourner au menu
+		g.State = config.StateMenu
+		g.selectedCrossing = ""
+
+		// On garde donc les mêmes valeurs en retournant au menu ( on garde meme nbr par seconde pour chaque type d'agent )
+		g.carSpawnSlider.Value = carRate
+		g.pedSpawnSlider.Value = pedRate
+		return true
+
 	}
 
 	return false
