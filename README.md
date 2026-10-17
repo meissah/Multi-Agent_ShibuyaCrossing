@@ -58,8 +58,8 @@ Avant de commencer, il faut s'assurer d'avoir installé :
 **Cloner le dépôt** :
 
 ```bash
-git clone https://gitlab.utc.fr/amisselm/shibuyacrossing_ai30.git
-cd shibuyacrossing_ai30
+git clone https://github.com/meissah/Multi-Agent_ShibuyaCrossing.git
+cd Multi-Agent_ShibuyaCrossing
 ```
 
 Les dépendances seront automatiquement téléchargées au premier lancement.
@@ -92,7 +92,7 @@ Une fois la simulation lancée, vous aurez accès à :
 ## Structure du projet
 
 ```
-shibuyacrossing_ai30/
+Multi-Agent_ShibuyaCrossing/
 ├── cmd/
 │   └── simulation/
 │       └── main.go              # Point d'entrée de la simulation
@@ -185,8 +185,8 @@ Before getting started, make sure you have installed:
 **Clone the repository**:
 
 ```bash
-git clone https://gitlab.utc.fr/amisselm/shibuyacrossing_ai30.git
-cd shibuyacrossing_ai30
+git clone https://github.com/meissah/Multi-Agent_ShibuyaCrossing.git
+cd Multi-Agent_ShibuyaCrossing
 ```
 
 Dependencies are downloaded automatically on the first run.
@@ -219,7 +219,7 @@ Once the simulation is running, you have access to:
 ## Project structure
 
 ```
-shibuyacrossing_ai30/
+Multi-Agent_ShibuyaCrossing/
 ├── cmd/
 │   └── simulation/
 │       └── main.go              # Simulation entry point
