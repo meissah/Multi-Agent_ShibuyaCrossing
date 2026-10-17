@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/config"
 )
 
 // AgentMetrics contient les métriques pour un agent individuel

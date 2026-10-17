@@ -18,21 +18,19 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 
-	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/carstopping"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
-	trafficmanger "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/traffic_manager"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
+	trafficlight "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/traffic_light"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/config"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/environment"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/carstopping"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/grid_handler"
+	trafficmanger "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/traffic_manager"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/stats"
 
-	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	. "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // Update est appelé 60 fois par seconde par Ebiten (boucle principale du jeu)
 func (g *Game) Update() error {
-	// fmt.Println("Goroutines running at the end of Update:", runtime.NumGoroutine())
-	// log.Printf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
 	switch g.State {
 	case config.StateMenu:
 		g.UpdateMenu()
@@ -122,8 +120,6 @@ func (g *Game) UpdateSimulation() error {
 	var wg sync.WaitGroup
 	currentAgtSlice := g.Agents
 	var agentsToRemove, agentsSynced []Agent
-
-	//fmt.Println("THE AGENT SLICE: ", currentAgtSlice)
 
 	// phase de perception et delibération
 	for _, agt := range currentAgtSlice {
@@ -246,12 +242,8 @@ func (g *Game) cleanupSimulation() {
 		g.endChanCarsStop4Peds = nil
 	}
 
-	//fmt.Println("Arrivé ici 1")
-
 	g.endChanCarsRedLight <- 1
-	//fmt.Println("Arrivé ici 3")
 	g.TM.Stop()
-	//fmt.Println("Arrivé ici 4")
 	g.pedGrid.Stop()
 
 	// Remettre les objets persistants (feux de circulation)
@@ -260,12 +252,9 @@ func (g *Game) cleanupSimulation() {
 	// 	g.Objets = append(g.Objets, obj)
 	// }
 
-	//fmt.Println("Arrivé ici 4321")
 	//reinit de traffic
 	g.CrosswalkZones = make(map[string][]*environment.RepulsionArea)
 	g.LightsMap = make(map[string]*trafficlight.TrafficLight)
-
-	//fmt.Println("Arrivé ici 1")
 
 	g.TM = &trafficmanger.TrafficManager{
 		ShibuyaFlag:     1,
@@ -360,7 +349,6 @@ func (g *Game) cleanupSimulation() {
 			for {
 				select {
 				case newState := <-mychUpdate:
-					//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
 					visu.SetState(newState.String())
 
 				case <-myEndChan:

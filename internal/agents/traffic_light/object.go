@@ -1,7 +1,7 @@
 package trafficlight
 
 import (
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // TrafficLightObject est une représentation visuelle simple du feu, utilisée

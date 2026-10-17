@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/api"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/game"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/api"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/game"
 )
 
 // Initialise quelques paramètres de la boucle du jeu, puis la lance
@@ -30,7 +30,7 @@ func main() {
 	game := game.NewGame()
 
 	log.Println("Simulation démarrée")
-	log.Println("Dashboard disponible sur: http://localhost:3000")
+	log.Println("Dashboard disponible via le bouton \"Dashboard\" du menu (dashboard.html)")
 	log.Println("API disponible sur: http://localhost:8080")
 
 	if err := ebiten.RunGame(game); err != nil {

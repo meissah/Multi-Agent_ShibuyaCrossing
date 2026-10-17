@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/environment"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/messaging"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/stats"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // Réprésente un piéton dans la simulation.

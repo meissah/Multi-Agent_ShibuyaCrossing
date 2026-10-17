@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/stats"
 )
 
 // Structure du serveur API

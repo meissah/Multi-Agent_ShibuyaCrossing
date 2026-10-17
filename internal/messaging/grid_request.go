@@ -1,6 +1,6 @@
 package messaging
 
-import "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+import "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 
 // Grille stockant des objets quelconques.
 type Grid interface {

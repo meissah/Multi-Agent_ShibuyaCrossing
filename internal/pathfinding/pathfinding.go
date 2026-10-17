@@ -4,7 +4,7 @@ import (
 	"math"
 
 	astar "github.com/beefsack/go-astar"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // Constantes de la grille

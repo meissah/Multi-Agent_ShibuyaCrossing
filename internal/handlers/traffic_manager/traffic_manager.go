@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
+	trafficlight "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/traffic_light"
 )
 
 type TrafficManager struct {
@@ -55,7 +55,6 @@ func (tm *TrafficManager) Start() {
 // Start lance la boucle de contrôle infinie
 func (tm *TrafficManager) Stop() {
 	tm.endChan <- 1
-	//fmt.Println("arrive ici 543")
 }
 
 // SetMode change le mode de manière sécurisée

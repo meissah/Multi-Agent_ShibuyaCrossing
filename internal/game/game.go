@@ -6,20 +6,20 @@ import (
 	"sync"
 	"time"
 
-	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
-	agentcounthandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_count_handler"
-	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/carstopping"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
-	carspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/car_spawn"
-	pietonspawn "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/spawn_points/pieton_spawn"
-	trafficmanger "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/traffic_manager"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
-	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	trafficlight "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/traffic_light"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/config"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/environment"
+	agentcounthandler "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/agent_count_handler"
+	agentslicehandler "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/agent_slice_handler"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/carstopping"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/grid_handler"
+	carspawn "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/spawn_points/car_spawn"
+	pietonspawn "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/spawn_points/pieton_spawn"
+	trafficmanger "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/traffic_manager"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/pathfinding"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/stats"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/ui"
+	. "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // Game représente l'état complet de l'application
@@ -195,7 +195,6 @@ func NewGame() *Game {
 			for {
 				select {
 				case newState := <-mychUpdate:
-					//fmt.Println("Traffic Light", visu.ID, "changed to", newState.String())
 					visu.SetState(newState.String())
 
 				case <-myEndChan:

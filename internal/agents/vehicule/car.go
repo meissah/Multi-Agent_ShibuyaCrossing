@@ -5,9 +5,9 @@ import (
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
-	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/stats"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
+	. "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 type Bounds struct {
@@ -212,7 +212,6 @@ func (c *Car) Percept(env []Object) {
 		}
 
 		if otherCar.State != "active" { // Ignorer les voitures inactives
-			//fmt.Println("Ignored inactive car")
 			continue
 		}
 
@@ -339,14 +338,12 @@ func (c *Car) Deliberate() {
 				p1x, p1y = c.TurnStartX-30, c.TurnStartY
 				p2x, p2y = c.TurnStartX-40, c.TurnStartY+25
 				p3x, p3y = c.TurnStartX-50, c.TurnStartY+45
-				//fmt.Println("Lane gauche pour west is 0")
 			} else {
 				// Lane de droite
 				p0x, p0y = c.TurnStartX, c.TurnStartY
 				p1x, p1y = c.TurnStartX-5, c.TurnStartY
 				p2x, p2y = c.TurnStartX-12, c.TurnStartY+15
 				p3x, p3y = c.TurnStartX-22, c.TurnStartY+25
-				//fmt.Println("Lane gauche pour west is 1")
 			}
 		} else if c.Dir == East { // spawn depuis l'ouest et tourne a gauche vers le nord
 			if c.LaneIndex == 0 {
@@ -355,14 +352,12 @@ func (c *Car) Deliberate() {
 				p1x, p1y = c.TurnStartX+5, c.TurnStartY
 				p2x, p2y = c.TurnStartX+12, c.TurnStartY-15
 				p3x, p3y = c.TurnStartX+22, c.TurnStartY-25
-				//fmt.Println("Lane gauche pour East is 0")
 			} else {
 				// Lane de droite
 				p0x, p0y = c.TurnStartX, c.TurnStartY
 				p1x, p1y = c.TurnStartX+30, c.TurnStartY
 				p2x, p2y = c.TurnStartX+40, c.TurnStartY-25
 				p3x, p3y = c.TurnStartX+53, c.TurnStartY-45
-				//fmt.Println("Lane gauche pour East is 1")
 			}
 		}
 

@@ -10,7 +10,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/stats"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/stats"
 	"golang.org/x/image/font/basicfont"
 )
 

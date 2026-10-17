@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
-	cars "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
-	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	trafficlight "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/traffic_light"
+	cars "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/vehicule"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/grid_handler"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/messaging"
+	. "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 func LancerCarStopperAtRedLight(chID <-chan ObjectID, chH chan trafficlight.State, chV chan trafficlight.State, env *[]Object) chan int {
@@ -43,28 +43,22 @@ func LancerCarStopperAtRedLight(chID <-chan ObjectID, chH chan trafficlight.Stat
 		for {
 			select {
 			case stateH := <-chH:
-				//fmt.Println("RECEIVED FROM CHANNEL H")
 				if stateH == trafficlight.Red {
-					//fmt.Println("Just RECEIVED A STOP HORIZONTAL")
 					for _, car := range RedLightCarStopH {
 						car.State = "active"
 					}
 				} else {
-					//fmt.Println("Just RECEIVED A GO HORIZONTAL")
 					for _, car := range RedLightCarStopH {
 						car.State = "inative"
 					}
 				}
 
 			case stateV := <-chV:
-				//fmt.Println("RECEIVED FROM CHANNEL V")
 				if stateV == trafficlight.Red {
-					//fmt.Println("Just RECEIVED A STOP VERTICAL")
 					for _, car := range RedLightCarStopV {
 						car.State = "active"
 					}
 				} else {
-					//fmt.Println("Just RECEIVED A GO VERTICAL")
 					for _, car := range RedLightCarStopV {
 						car.State = "inative"
 					}

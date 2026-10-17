@@ -1,7 +1,7 @@
 package agentcounthandler
 
 import (
-	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	. "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // microservice pour avoir le prochain objectID disponible, evite des ecritures concurrentes en car et pieton spawn

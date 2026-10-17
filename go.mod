@@ -1,4 +1,4 @@
-module gitlab.utc.fr/amisselm/shibuyacrossing_ai30
+module github.com/meissah/Multi-Agent_ShibuyaCrossing
 
 go 1.25.0
 

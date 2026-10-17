@@ -21,13 +21,13 @@ import (
 
 	"golang.org/x/image/font/basicfont"
 
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
-	trafficlight "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/traffic_light"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/vehicule"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/config"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/ui"
-	. "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/pedestrian"
+	trafficlight "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/traffic_light"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/vehicule"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/config"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/environment"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/ui"
+	. "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // Variables globales pour les ressources graphiques

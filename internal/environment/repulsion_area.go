@@ -1,13 +1,12 @@
 package environment
 
 import (
-	"fmt"
 	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // Zone rectangulaire repoussant les agents qui la traversent vers un côté défini.
@@ -60,7 +59,6 @@ func NewRepulsionArea(id utils.ObjectID, topLeft, bottomRight utils.Point, force
 	}
 
 	ra.side = *utils.NewLineFromPoints(topLeft, topRight)
-	fmt.Println(ra.side)
 
 	// Calcul des bornes pour optimiser IsPointInside
 	ra.minX = math.Min(topLeft.X(), bottomRight.X())

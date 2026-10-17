@@ -1,6 +1,6 @@
 package environment
 
-import "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+import "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 
 // Définition d'une zone de spawn rectangulaire
 type SpawnArea struct {

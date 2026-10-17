@@ -1,17 +1,16 @@
 package pietonspawn
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
-	pedestrian "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/agents/pedestrian"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/environment"
-	agentslicehandler "gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/agent_slice_handler"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/handlers/grid_handler"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/messaging"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/pathfinding"
-	"gitlab.utc.fr/amisselm/shibuyacrossing_ai30/internal/utils"
+	pedestrian "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/agents/pedestrian"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/environment"
+	agentslicehandler "github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/agent_slice_handler"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/handlers/grid_handler"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/messaging"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/pathfinding"
+	"github.com/meissah/Multi-Agent_ShibuyaCrossing/internal/utils"
 )
 
 // on a besoin d'une durée pour connaitre la frequence d'introduction d'une voiture
@@ -118,7 +117,6 @@ func (g *PietonSpawn) Start(
 				g.spawnPieton(AgentCountCh, AgtsSliceCh, gridChan, env, spawns)
 			case <-g.stopChan:
 				// Signal d'arrêt reçu, on termine la goroutine
-				fmt.Println("arrété")
 				return
 			}
 		}

@@ -1,6 +1,12 @@
+# macOS / éditeurs
 .DS_Store
-<<<<<<< HEAD
-.vscode
-=======
-.vscode
->>>>>>> f8dddcf (abonnement aux feu et affichage)
+.vscode/
+.idea/
+
+# Binaires compilés
+/main
+/simulation
+*.exe
+
+# Métriques générées à l'exécution (bouton "Sauvegarder les métriques")
+metrics_data/
