@@ -112,8 +112,10 @@ Dans le menu, on choisit le nombre de voitures et de piétons par seconde ainsi 
 Une fois la simulation lancée, vous aurez accès à :
 
 - **Fenêtre de simulation** : Interface graphique de la simulation (Ebiten), avec les métriques en temps réel à droite
-- **API REST** : `http://localhost:8080`
-- **Dashboard web** : Accessible via le bouton "Dashboard" du menu, une fois qu'une simulation Shibuya et une simulation French ont été sauvegardées avec le bouton "Sauvegarder les métriques"
+- **Dashboard web** : sur `http://localhost:8080` ou via le bouton "Dashboard" du menu, une fois qu'une simulation Shibuya et une simulation French ont été sauvegardées avec le bouton "Sauvegarder les métriques"
+- **API REST** : `http://localhost:8080/api/comparison` (renvoie la comparaison en JSON)
+
+Le serveur ne tourne que tant que la fenêtre de simulation est ouverte : si on la ferme, `localhost:8080` ne répond plus.
 
 <div align="center">
     <img src="docs/screen_simu.png" width="100%" alt="Simu" />
@@ -280,8 +282,10 @@ In the menu, choose the number of cars and pedestrians per second and the type o
 Once the simulation is running, you have access to:
 
 - **Simulation window**: Graphical interface of the simulation (Ebiten), with live metrics on the right
-- **REST API**: `http://localhost:8080`
-- **Web dashboard**: Available through the "Dashboard" button in the menu, once a Shibuya run and a French run have been saved with the "Sauvegarder les métriques" (save metrics) button
+- **Web dashboard**: at `http://localhost:8080` or through the "Dashboard" button in the menu, once a Shibuya run and a French run have been saved with the "Sauvegarder les métriques" (save metrics) button
+- **REST API**: `http://localhost:8080/api/comparison` (returns the comparison as JSON)
+
+The server only runs while the simulation window is open: once it is closed, `localhost:8080` stops responding.
 
 <div align="center">
     <img src="docs/screen_simu.png" width="100%" alt="Simulation" />

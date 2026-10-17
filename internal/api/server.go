@@ -24,12 +24,15 @@ func NewServer(port int) *Server {
 
 // Démarrage du serveur HTTP
 func (s *Server) Start() {
-	// Une seule route -> celle des comparaisons
+	// Route des comparaisons
 	http.HandleFunc("/api/comparison", s.ajouterCORS(s.recupererComparaison))
+
+	// Le dashboard est aussi servi par le serveur, pour qu'il s'affiche sur http://localhost:8080
+	http.HandleFunc("/", s.servirDashboard)
 
 	adresse := fmt.Sprintf(":%d", s.port)
 	log.Printf("Serveur API lancé sur http://localhost%s", adresse)
-	log.Printf("Route disponible : GET /api/comparison")
+	log.Printf("Routes disponibles : GET / (dashboard) et GET /api/comparison")
 
 	if err := http.ListenAndServe(adresse, nil); err != nil {
 		log.Fatalf("Erreur serveur: %v", err)
@@ -51,6 +54,19 @@ func (s *Server) ajouterCORS(handler http.HandlerFunc) http.HandlerFunc {
 		}
 
 		handler(w, req)
+	}
+}
+
+// Route GET / - Renvoie le dashboard HTML et sa feuille de style (fichiers à la racine du projet)
+// On ne sert que ces deux fichiers pour ne pas exposer le reste du dossier
+func (s *Server) servirDashboard(w http.ResponseWriter, req *http.Request) {
+	switch req.URL.Path {
+	case "/", "/dashboard.html":
+		http.ServeFile(w, req, "dashboard.html")
+	case "/dashboard.css":
+		http.ServeFile(w, req, "dashboard.css")
+	default:
+		http.NotFound(w, req)
 	}
 }
 

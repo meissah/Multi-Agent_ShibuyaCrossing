@@ -30,8 +30,8 @@ func main() {
 	game := game.NewGame()
 
 	log.Println("Simulation démarrée")
-	log.Println("Dashboard disponible via le bouton \"Dashboard\" du menu (dashboard.html)")
-	log.Println("API disponible sur: http://localhost:8080")
+	log.Println("Dashboard disponible sur http://localhost:8080 ou via le bouton \"Dashboard\" du menu")
+	log.Println("API disponible sur: http://localhost:8080/api/comparison")
 
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
