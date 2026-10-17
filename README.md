@@ -1,5 +1,7 @@
 # 🚦 Shibuya Crossing Simulator
 
+**🇫🇷 Français** · [🇬🇧 English version](#english-version)
+
 Shibuya Crossing Simulator est une simulation multi-agents reproduisant le fonctionnement d'un carrefour urbain inspiré du célèbre passage piéton de Shibuya à Tokyo. 
 
 Le système de gestion des flux du Shibuya Crossing se distingue par une organisation séquentielle en trois phases distinctes :
@@ -121,3 +123,128 @@ Projet réalisé dans le cadre du cours AI30 à l'UTC.
 - Enzo Maros
 
 
+---
+
+# English version
+
+**🇬🇧 English** · [🇫🇷 Version française](#-shibuya-crossing-simulator)
+
+Shibuya Crossing Simulator is a multi-agent simulation reproducing the behaviour of an urban intersection inspired by the famous Shibuya pedestrian scramble in Tokyo.
+
+The Shibuya Crossing traffic management system stands out for its sequential organisation in three distinct phases:
+- Vertical vehicle traffic phase (pedestrian traffic suspended)
+- Horizontal vehicle traffic phase (pedestrian traffic suspended)
+- Omnidirectional pedestrian phase, allowing diagonal crossings
+
+This project aims to study and compare different urban intersection layouts (the Shibuya model and the traditional French model) in order to analyse vehicle and pedestrian traffic dynamics. The simulation is written in Go and built on the 2D game engine [Ebiten](https://ebiten.org/).
+
+
+<div align="center" style="margin-top: 20px">
+    <img src="assets/screen/screen_menu.png" width="80%" alt="Menu" />
+</div>
+
+
+<div align="center">
+    <img src="assets/screen/screen_simu.png" width="100%" alt="Simulation" />
+</div>
+
+
+
+## Main technologies
+
+| Technology | Description |
+|------------|-------------|
+| **Pedestrian/Car forces** | Spatial distribution of the agents, keeping a safety distance between them |
+| **Pedestrian grid system** | Optimisation algorithm for querying neighbouring pedestrians |
+| **A* Pathfinding** | Path-finding algorithm for pedestrian movement |
+| **Web server** | Display of dynamic charts (HTML, CSS, JavaScript, Chart.js, html2canvas, jsPDF) |
+| **Ebitengine** | Simulation engine and overall game-loop architecture |
+
+## Features
+
+- **Real-time simulation**: Dynamic visualisation of vehicle and pedestrian movements
+- **Two intersection types**: Comparison between the Shibuya system (all pedestrians cross at the same time) and the French system (traditional pedestrian crossings)
+- **Detailed metrics**:
+  - Average crossing time
+  - Average speeds
+  - Number of active and destroyed agents
+  - Simulation duration
+- **Web dashboard**: Comparative visualisation interface with charts and PDF export
+- **REST API**: Real-time metrics retrieval
+- **Flexible configuration**: Adjustable simulation parameters (spawn rate, etc.)
+
+## Prerequisites
+
+Before getting started, make sure you have installed:
+
+- [Go](https://golang.org/dl/) version 1.25.0 or higher
+- A modern web browser (for the dashboard)
+
+## Installation
+
+**Clone the repository**:
+
+```bash
+git clone https://gitlab.utc.fr/amisselm/shibuyacrossing_ai30.git
+cd shibuyacrossing_ai30
+```
+
+Dependencies are downloaded automatically on the first run.
+
+## Running the simulation
+
+### Starting the simulation
+
+To start the main simulation:
+
+```bash
+go run cmd/simulation/main.go
+```
+
+Or from the project root:
+
+```bash
+go run gitlab.utc.fr/amisselm/shibuyacrossing_ai30/cmd/simulation
+```
+
+### Accessing the interfaces
+
+Once the simulation is running, you have access to:
+
+- **Simulation window**: Graphical interface of the simulation (Ebiten)
+- **REST API**: `http://localhost:8080`
+- **Web dashboard**: Available through the "Dashboard" button in the simulation interface
+
+
+## Project structure
+
+```
+shibuyacrossing_ai30/
+├── cmd/
+│   └── simulation/
+│       └── main.go              # Simulation entry point
+├── internal/
+│   ├── agents/                  # Agents (pedestrians, vehicles, traffic lights)
+│   ├── api/                     # REST API server
+│   ├── config/                  # Simulation configuration
+│   ├── environment/             # Spawn and repulsion areas
+│   ├── game/                    # Main game logic
+│   ├── handlers/                # Agent handlers
+│   ├── pathfinding/             # Optimal path computation for pedestrians
+│   ├── stats/                   # Metrics computation and comparison
+│   └── ui/                      # Interface components
+├── metrics_data/                # Saved metrics data
+├── dashboard.html               # Visualisation dashboard
+├── dashboard.css                # Dashboard styles
+└── README.md                    # This file
+
+```
+
+
+## 👥 Authors
+
+Project carried out as part of the AI30 course at UTC (Université de Technologie de Compiègne).
+- Pierrick Clause
+- Meïssa H'mida
+- Ahmed Misselmani
+- Enzo Maros
