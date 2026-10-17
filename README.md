@@ -45,6 +45,26 @@ Ce projet vise à étudier et comparer différentes configurations de carrefours
 - **API REST** : Récupération des métriques en temps réel
 - **Configuration flexible** : Paramètres de simulation ajustables (nombre de voitures et de piétons par seconde, type de carrefour)
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph sim["Simulation Go, boucle Ebitengine à 60 ticks/s"]
+        direction LR
+        TM["TrafficManager"] -->|"cycle des feux"| TL["Feux (goroutines)"]
+        TL -->|"activent / désactivent"| RA["Zones de répulsion"]
+        SP["Spawners"] --> AG["Agents : voitures et piétons"]
+        RA -->|"forces"| AG
+        GR["Grille des piétons"] <-->|"voisins"| AG
+        CS["Arrêt des voitures (feux, piétons)"] --> AG
+    end
+    AG -->|"métriques"| JS[("metrics_data/*.json")]
+    JS --> API["API REST :8080"]
+    API --> DB["Dashboard web (Chart.js, export PDF)"]
+```
+
+Chaque microservice (gestion des ID, des agents, des feux, des spawns, de la grille des piétons et de l'arrêt des voitures) tourne dans sa propre goroutine et communique avec le reste de la simulation par des channels. Les feux fonctionnent comme des acteurs : les objets visuels s'y abonnent pour changer de couleur, et ce sont eux qui activent ou désactivent les zones de répulsion des passages piétons.
+
 ## Résultats
 
 Pour comparer les deux carrefours, nous avons lancé chaque modèle pendant 60 secondes dans trois situations différentes. Voici les résultats présentés lors de notre soutenance :
@@ -192,6 +212,26 @@ The goal of this project is to study and compare different intersection layouts 
 - **Web dashboard**: Side-by-side comparison with charts and PDF export
 - **REST API**: Real-time access to the metrics
 - **Flexible configuration**: Adjustable parameters (cars and pedestrians per second, intersection type)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph sim["Go simulation, Ebitengine loop at 60 ticks/s"]
+        direction LR
+        TM["TrafficManager"] -->|"light cycle"| TL["Traffic lights (goroutines)"]
+        TL -->|"enable / disable"| RA["Repulsion areas"]
+        SP["Spawners"] --> AG["Agents: cars and pedestrians"]
+        RA -->|"forces"| AG
+        GR["Pedestrian grid"] <-->|"neighbours"| AG
+        CS["Car stopping (lights, pedestrians)"] --> AG
+    end
+    AG -->|"metrics"| JS[("metrics_data/*.json")]
+    JS --> API["REST API :8080"]
+    API --> DB["Web dashboard (Chart.js, PDF export)"]
+```
+
+Each microservice (ID management, agents, traffic lights, spawning, the pedestrian grid and car stopping) runs in its own goroutine and talks to the rest of the simulation through channels. Traffic lights work as actors: visual objects subscribe to them to change colour, and the lights themselves enable or disable the crosswalk repulsion areas.
 
 ## Results
 
